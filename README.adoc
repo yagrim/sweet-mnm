@@ -1,0 +1,4 @@
+= Sweet MnM
+
+Alternative Launcher for https://monstersandmemories.com/[Monsters and Memories] game.
+

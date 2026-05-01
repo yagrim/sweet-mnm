@@ -1,0 +1,9 @@
+= Notes
+
+== Chunks and Bundles
+
+* Max chunks count per bundle is 600.
+* Files that re-use bundles are 100% the same file but with different name.
+* Max bundle size is 45MB
+
+<
