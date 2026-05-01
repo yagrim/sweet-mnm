@@ -16,6 +16,9 @@ public class Downloader {
 
     private static final Logger logger = LoggerFactory.getLogger(Downloader.class);
 
+    private Downloader() {
+    }
+
     public static void downloadFile(String url, Path destination) {
         try {
 

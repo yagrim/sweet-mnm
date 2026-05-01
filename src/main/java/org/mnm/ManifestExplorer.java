@@ -5,10 +5,7 @@ import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
 
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 public class ManifestExplorer {
@@ -32,7 +29,17 @@ public class ManifestExplorer {
             });
         });
 
+        Set<Integer> sizes2 = new TreeSet<>();
+
+        files.forEach(file -> {
+            file.getBundlesList().forEach(bundle -> {
+                int i = bundle.fileSectionLength();
+                sizes2.add(i);
+            });
+        });
+        Integer i = sizes2.stream().reduce((first, second) -> second).get();
         System.out.println("Files with more than 1 bundle:");
+
         files.stream()
                 .forEach(file -> {
                     List<String> crcs = file.bundleCrcs();
