@@ -2,6 +2,9 @@ package org.mnm.ui;
 
 public class CommandParser {
 
+    private CommandParser() {
+    }
+
     /**
      * Returns Help if no command is recognized.
      */

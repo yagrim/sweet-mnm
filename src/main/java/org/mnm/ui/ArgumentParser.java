@@ -5,6 +5,9 @@ import java.util.Map;
 
 public class ArgumentParser {
 
+    private ArgumentParser() {
+    }
+
     public static ParsedArguments parse(String[] args) {
         Map<String, String> argsMap = new HashMap<>();
 
