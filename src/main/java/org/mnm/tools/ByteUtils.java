@@ -2,7 +2,6 @@ package org.mnm.tools;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -31,9 +30,9 @@ public class ByteUtils {
         }
     }
 
-    public static void writeAllBytes(Path destination, byte[] bytesUncompressed) {
+    public static void writeAllBytes(Path destination, byte[] bytes) {
         try {
-            Files.write(destination, bytesUncompressed, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(destination, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
