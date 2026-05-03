@@ -31,6 +31,7 @@ dependencies {
     implementation("net.openhft:zero-allocation-hashing:2026.0")
     // Graal partial support for previous version https://github.com/oracle/graalvm-reachability-metadata/pull/121/changes
     implementation("com.github.luben:zstd-jni:1.5.7-7")
+    implementation("org.xerial:sqlite-jdbc:3.53.0.0")
 
     testImplementation platform("org.junit:junit-bom:$junitVersion")
     testImplementation 'org.junit.jupiter:junit-jupiter'

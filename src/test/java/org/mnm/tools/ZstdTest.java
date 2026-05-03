@@ -3,12 +3,10 @@ package org.mnm.tools;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.TestUtils.classpathFile;
 
 class ZstdTest {
 
@@ -25,7 +23,7 @@ class ZstdTest {
                         ----
                         Hello test!!
                         Generated with 'zstd --compress test-file.txt'
-                        ----z
+                        ----
                         """)
                 .hasSize(70);
 
@@ -53,16 +51,6 @@ class ZstdTest {
                         """)
                 .hasSize(100);
 
-    }
-
-    private Path classpathFile(String path) {
-        final ClassLoader classLoader = ZstdTest.class.getClassLoader();
-        try {
-            URI uri = classLoader.getResource(path).toURI();
-            return Paths.get(uri);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }
