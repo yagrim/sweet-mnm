@@ -1,7 +1,7 @@
 package org.mnm;
 
-import org.mnm.ui.Command;
-import org.mnm.ui.CommandParser;
+import org.mnm.cli.Command;
+import org.mnm.cli.CommandParser;
 
 public class MainClazz {
 

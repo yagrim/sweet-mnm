@@ -1,4 +1,4 @@
-package org.mnm.ui;
+package org.mnm.cli;
 
 import org.junit.jupiter.api.Test;
 

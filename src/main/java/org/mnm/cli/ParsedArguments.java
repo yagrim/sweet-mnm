@@ -1,4 +1,4 @@
-package org.mnm.ui;
+package org.mnm.cli;
 
 import java.util.Collections;
 import java.util.HashMap;
