@@ -12,7 +12,7 @@ public class HelpCommand implements Command {
     }
 
     @Override
-    public void run() {
+    public void run(Arguments args) {
         int indentation = commands.stream()
                 .mapToInt(command -> command.name().length())
                 .max()
@@ -41,8 +41,13 @@ public class HelpCommand implements Command {
     }
 
     @Override
-    public String help() {
+    public String description() {
         return "Displays available commands";
+    }
+
+    @Override
+    public String help() {
+        return description();
     }
 
 }

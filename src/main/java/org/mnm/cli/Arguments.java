@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParsedArguments {
+public class Arguments {
 
     private final Map<String, String> argsMap;
 
-    public ParsedArguments(Map<String, String> argsMap) {
+    public Arguments(Map<String, String> argsMap) {
         this.argsMap = new HashMap<>(argsMap);
     }
 

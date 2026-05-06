@@ -10,7 +10,7 @@ class ArgumentParserTest {
     void parsesKeyValuePairs() {
         String[] args = {"--name", "Alice", "--age", "30"};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.get("name")).isEqualTo("Alice");
         assertThat(parsed.getInt("age", 0)).isEqualTo(30);
@@ -20,7 +20,7 @@ class ArgumentParserTest {
     void parsesBooleanFlag() {
         String[] args = {"--verbose"};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.getBoolean("verbose")).isTrue();
     }
@@ -29,7 +29,7 @@ class ArgumentParserTest {
     void missingValueDefaultsToTrueFlag() {
         String[] args = {"--debug"};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.get("debug")).isEqualTo("true");
     }
@@ -38,7 +38,7 @@ class ArgumentParserTest {
     void returnsDefaultsWhenKeyMissing() {
         String[] args = {};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.getOrDefault("missing", "default")).isEqualTo("default");
         assertThat(parsed.getInt("missingInt", 42)).isEqualTo(42);
@@ -49,7 +49,7 @@ class ArgumentParserTest {
     void ignoresNonPrefixedArguments() {
         String[] args = {"name", "Alice", "--age", "25"};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.get("name")).isNull();
         assertThat(parsed.getInt("age", 0)).isEqualTo(25);
@@ -63,7 +63,7 @@ class ArgumentParserTest {
                 "--count", "5"
         };
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.get("name")).isEqualTo("Bob");
         assertThat(parsed.getBoolean("verbose")).isTrue();
@@ -74,7 +74,7 @@ class ArgumentParserTest {
     void invalidIntegerFallsBackToDefault() {
         String[] args = {"--age", "notANumber"};
 
-        ParsedArguments parsed = ArgumentParser.parse(args);
+        Arguments parsed = ArgumentsParser.parse(args);
 
         assertThat(parsed.getInt("age", 99)).isEqualTo(99);
     }

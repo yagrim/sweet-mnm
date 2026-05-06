@@ -3,7 +3,9 @@ package org.mnm;
 import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
+import org.mnm.tools.FileUtils;
 import org.mnm.tools.HashFunctions;
+import org.mnm.tools.StringUtils;
 import org.mnm.tools.Zstd;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +18,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mnm.tools.ProcessUtils.panic;
 
+// TODO test
 public class ClientInstaller {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientInstaller.class);
 
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            panic("Usage: ClientInstaller <username> <password>");
+    public void install(String username, String password) {
+
+        if (StringUtils.isEmpty(username)) {
+            panic("Missing parameter: 'username'");
+        }
+        if (StringUtils.isEmpty(password)) {
+            panic("Missing parameter: 'password'");
         }
 
-        ManifestService manifestService = ManifestService.login(args[0], args[1]);
+        ManifestService manifestService = ManifestService.login(username, password);
         ManifestHandler manifestHandler = manifestService.getManifestHandler();
         List<Manifest.File> files = manifestHandler.getFiles();
 
@@ -43,10 +50,8 @@ public class ClientInstaller {
         AtomicInteger totalProcessedFiles = new AtomicInteger(0);
         sizes.forEach(i -> {
             ValidationResult result = validatingFiles(files, i);
-            logger.info("Total validated files: {}", totalProcessedFiles.addAndGet(result.validated));
+            logger.info("Total validated files: {} of {}", totalProcessedFiles.addAndGet(result.validated), files.size());
         });
-        System.out.println("-------------------------------------------------");
-
     }
 
     private static ValidationResult validatingFiles(List<Manifest.File> files, Integer chunks) {
@@ -70,7 +75,7 @@ public class ClientInstaller {
     // we cal calculate the bigger bundle size, currently 85,621634 MB
     private static void validateFileAndExtract(Manifest.File file) {
         final Path destination = Environment.mnm.resolve(file.path().substring(1));
-        destination.getParent().toFile().mkdirs();
+        FileUtils.createDirectories(destination);
 
         Zstd.Section[] sections = file.getBundlesList()
                 .stream()

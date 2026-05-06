@@ -2,9 +2,12 @@ package org.mnm.cli;
 
 public interface Command {
 
-    void run();
+    void run(Arguments args);
 
     String name();
 
+    String description();
+
     String help();
+
 }

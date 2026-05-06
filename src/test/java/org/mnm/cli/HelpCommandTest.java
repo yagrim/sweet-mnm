@@ -25,7 +25,7 @@ class HelpCommandTest {
     void shouldReturnListOfCommands(SystemOutCaptureExtension out) {
         HelpCommand command = new HelpCommand(List.of(new InstallCommand(), new RepairCommand()));
 
-        command.run();
+        command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
                 install   Installs MnM client in the current location.

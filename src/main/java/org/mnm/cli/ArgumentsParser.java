@@ -3,12 +3,12 @@ package org.mnm.cli;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ArgumentParser {
+public class ArgumentsParser {
 
-    private ArgumentParser() {
+    private ArgumentsParser() {
     }
 
-    public static ParsedArguments parse(String[] args) {
+    public static Arguments parse(String[] args) {
         Map<String, String> argsMap = new HashMap<>();
 
         for (int i = 0; i < args.length; i++) {
@@ -26,6 +26,6 @@ public class ArgumentParser {
             }
         }
 
-        return new ParsedArguments(argsMap);
+        return new Arguments(argsMap);
     }
 }

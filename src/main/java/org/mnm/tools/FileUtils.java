@@ -14,6 +14,14 @@ public class FileUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
+    public static void createDirectories(Path path) {
+        try {
+            Files.createDirectories(path.getParent());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void assemble(List<byte[]> fileSections, Path destination) {
         long start = System.currentTimeMillis();
         try (OutputStream out = Files.newOutputStream(destination)) {

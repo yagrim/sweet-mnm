@@ -6,10 +6,12 @@ import org.mnm.config.Environment;
 import org.mnm.config.Factories;
 import org.mnm.manifest.ManifestHandler;
 import org.mnm.tools.Downloader;
+import org.mnm.tools.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -72,11 +74,11 @@ public class ManifestService {
 
     public Path downloadChunk(String bundleCrc) {
         final String bundleName = bundleCrc + ".bin";
-        String url = gameVersion.chunksUrl() + "/" + bundleName;
-
         final Path downloadPath = Environment.chunks.resolve(bundleName);
+        System.out.println("Downloading chunks for bundle: " + downloadPath.toAbsolutePath());
+
         if (!fileExists(downloadPath)) {
-            Downloader.downloadFile(url, downloadPath);
+            Downloader.downloadFile(gameVersion.chunksUrl() + "/" + bundleName, downloadPath);
         }
         return downloadPath;
     }
