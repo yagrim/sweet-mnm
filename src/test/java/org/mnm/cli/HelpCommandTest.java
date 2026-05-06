@@ -28,9 +28,10 @@ class HelpCommandTest {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                install   Installs MnM client in the current location.
-                repair    Checks installation and updates if necessary
-                help      Displays available commands
+                Available commands:
+                  install   Installs MnM client in the current location.
+                  repair    Checks installation and updates if necessary
+                  help      Displays available commands
                 """);
     }
 

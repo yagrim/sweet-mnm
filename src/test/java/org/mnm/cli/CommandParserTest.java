@@ -23,18 +23,19 @@ class CommandParserTest {
     static Stream<Arguments> supportedCommands() {
         return Stream.of(
                 Arguments.of("install", InstallCommand.class),
-                Arguments.of("repair", RepairCommand.class)
+                Arguments.of("repair", RepairCommand.class),
+                Arguments.of("help", HelpCommand.class)
         );
     }
 
     @ParameterizedTest
-    @MethodSource("helpArguments")
-    void shouldReturnHelpWhenEmptyInput(String[] args) {
+    @MethodSource("unknownArguments")
+    void shouldReturnNullWhenEmptyInput(String[] args) {
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(HelpCommand.class);
+                .isInstanceOf(UnknownCommand.class);
     }
 
-    static Stream<Arguments> helpArguments() {
+    static Stream<Arguments> unknownArguments() {
         return Stream.of(
                 Arguments.of((Object) null),
                 Arguments.of((Object) new String[]{}),
@@ -44,16 +45,16 @@ class CommandParserTest {
     }
 
     @Test
-    void shouldIgnoreFurtherArguments() {
+    void shouldIgnoreFurtherArgumentsWithUnknownCommand() {
         String[] args = {"something", "else", "here"};
 
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(HelpCommand.class);
+                .isInstanceOf(UnknownCommand.class);
     }
 
     @Test
-    void shouldParseFirstArguments() {
-        String[] args = {"something", "install", "here"};
+    void shouldIgnoreFurtherArgumentsWithKnownCommand() {
+        String[] args = {"help", "something", "else"};
 
         assertThat(CommandParser.parse(args))
                 .isInstanceOf(HelpCommand.class);

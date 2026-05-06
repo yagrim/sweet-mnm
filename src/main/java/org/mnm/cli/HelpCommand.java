@@ -19,6 +19,7 @@ public class HelpCommand implements Command {
                 .getAsInt() + 3;
 
         final StringBuilder sb = new StringBuilder();
+        sb.append("Available commands:\n");
 
         commands.stream()
                 .sorted(Comparator.comparing(Command::name))
@@ -32,7 +33,7 @@ public class HelpCommand implements Command {
     }
 
     public static String format(String first, String second, int distance) {
-        return String.format("%-" + distance + "s%s", first, second);
+        return String.format("  %-" + distance + "s%s", first, second);
     }
 
     @Override

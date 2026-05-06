@@ -7,16 +7,12 @@ public class CommandParser {
     private CommandParser() {
     }
 
-    /**
-     * Returns Help if no command is recognized.
-     */
     public static Command parse(String[] args) {
-
         final var commands = List.of(new InstallCommand(), new RepairCommand());
-        final Command helpCommand = new HelpCommand(commands);
+        final Command help = new HelpCommand(commands);
 
         if (args == null || args.length == 0) {
-            return helpCommand;
+            return new UnknownCommand(null, help);
         }
 
         for (Command command : commands) {
@@ -25,7 +21,11 @@ public class CommandParser {
             }
         }
 
-        return helpCommand;
+        if (help.name().equals(args[0])) {
+            return help;
+        }
+
+        return new UnknownCommand(args[0], help);
     }
 
 }

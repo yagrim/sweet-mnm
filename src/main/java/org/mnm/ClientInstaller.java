@@ -26,10 +26,10 @@ public class ClientInstaller {
     public void install(String username, String password) {
 
         if (StringUtils.isEmpty(username)) {
-            panic("Missing parameter: 'username'");
+            panic("Missing parameter: '--username'");
         }
         if (StringUtils.isEmpty(password)) {
-            panic("Missing parameter: 'password'");
+            panic("Missing parameter: '--password'");
         }
 
         ManifestService manifestService = ManifestService.login(username, password);
