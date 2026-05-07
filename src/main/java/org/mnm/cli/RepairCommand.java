@@ -1,10 +1,15 @@
 package org.mnm.cli;
 
+import org.mnm.ClientInstaller;
+
 public class RepairCommand implements Command {
 
     @Override
     public void run(Arguments args) {
-        System.out.println("Repair Command");
+        ClientInstaller client = new ClientInstaller();
+        client.install(args.get("username"), args.get("password"));
+
+        System.out.println("Repair completed");
     }
 
     @Override

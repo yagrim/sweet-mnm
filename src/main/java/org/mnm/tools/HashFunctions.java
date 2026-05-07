@@ -53,6 +53,6 @@ public class HashFunctions {
     }
 
     private static void logTime(long init) {
-        logger.info("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
+//        logger.debug("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
     }
 }
