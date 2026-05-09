@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -22,7 +23,7 @@ class ApiConnectionTest {
 
     @BeforeEach
     void setup() {
-        restConnector = mock ? Mockito.mock(RestClient.class) : new RestClient();
+        restConnector = mock ? Mockito.mock(RestClient.class) : new RestClient(API_BASE_URL);
         apiConnector = new ApiConnector(restConnector);
 
         if (mock) {

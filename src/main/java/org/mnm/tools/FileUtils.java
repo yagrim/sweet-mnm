@@ -3,6 +3,7 @@ package org.mnm.tools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -13,6 +14,11 @@ import java.util.List;
 public class FileUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+
+    public static boolean fileExists(Path downloadPath) {
+        File file = downloadPath.toFile();
+        return file.exists() && file.length() > 0;
+    }
 
     public static void createDirectories(Path path) {
         try {

@@ -24,13 +24,13 @@ public class ApiConnection {
 
     void isTokenValid() {
         Map<String, Object> headers = Map.of("Authorization", session.token());
-        HttpJsonResponse response = restClient.get(ApiConnector.url("account/me"), headers);
+        HttpJsonResponse response = restClient.get("account/me", headers);
         parseResponse(response);
     }
 
     public List<GameInfo> getGamesInfo() {
         Map<String, Object> headers = Map.of("Authorization", session.token());
-        HttpJsonResponse response = restClient.get(ApiConnector.url("account/games"), headers);
+        HttpJsonResponse response = restClient.get("account/games", headers);
         Map<String, Object> responseMap = parseResponse(response);
 
         Map<String, Object> games = (Map<String, Object>) responseMap.get("games");
@@ -51,7 +51,7 @@ public class ApiConnection {
     }
 
     public List<GameVersion> getGamesVersions() {
-        HttpJsonResponse response = restClient.get(ApiConnector.url("game/versions?token=" + session.token()));
+        HttpJsonResponse response = restClient.get("game/versions?token=" + session.token());
         if (response.statusCode() != 200) {
             exception(response);
         }

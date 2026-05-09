@@ -16,7 +16,7 @@ public class ManifestParser {
     public List<Manifest.File> parse(Path manifestPath) {
         long init = System.currentTimeMillis();
         Manifest manifest = objectMapper.readValue(manifestPath, Manifest.class);
-        logger.info("Manifest parsed: found {} entries, {} ms", manifest.manifest().size(), System.currentTimeMillis() - init);
+        logger.info("Manifest parsed: found {} entries({} ms)", manifest.manifest().size(), System.currentTimeMillis() - init);
         return manifest.manifest();
     }
 
