@@ -20,6 +20,7 @@ class MainClazzTest {
                         Available commands:
                           install   Installs MnM client in the current location.
                           repair    Checks installation and updates if necessary
+                          token     User token utilities
                           help      Displays available commands
                         """);
     }
@@ -33,6 +34,7 @@ class MainClazzTest {
                 Available commands:
                   install   Installs MnM client in the current location.
                   repair    Checks installation and updates if necessary
+                  token     User token utilities
                   help      Displays available commands
                 """);
     }

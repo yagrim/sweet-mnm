@@ -21,7 +21,7 @@ class LauncherDbTest {
         assertThat(settings)
                 .containsEntry("current_game", "mnm")
                 .containsEntry("remember", "true")
-                .containsEntry("token", "1234567890")
+                .containsEntry("token", "123.456.789")
                 .containsEntry("username", "a-username@some-email.com")
                 .hasSize(4);
     }
