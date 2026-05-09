@@ -49,6 +49,9 @@ tasks.named('test') {
 
 application {
     applicationName = 'sweet'
+    applicationDefaultJvmArgs = [
+            '--enable-native-access=ALL-UNNAMED'
+    ]
     executableDir = ''
     mainClass = 'org.mnm.MainClazz'
 }
