@@ -1,9 +1,12 @@
 package org.mnm.cli;
 
 import org.mnm.config.Environment;
+import org.mnm.launcher.LogoutCommand;
 import org.mnm.launcher.TokenCommand;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class CommandParser {
 
@@ -11,10 +14,12 @@ public class CommandParser {
     }
 
     public static Command parse(String[] args) {
+        final Supplier<Path> databasePathSupplier = () -> Environment.launcherDb;
         final var commands = List.of(
                 new InstallCommand(),
                 new RepairCommand(),
-                new TokenCommand(() -> Environment.launcherDb)
+                new TokenCommand(databasePathSupplier),
+                new LogoutCommand(databasePathSupplier)
         );
         final Command help = new HelpCommand(commands);
 

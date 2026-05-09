@@ -20,7 +20,7 @@ public class InstallCommand implements Command {
 
     @Override
     public String description() {
-        return "Installs MnM client in the current location.";
+        return "Installs MnM client in the current location";
     }
 
     @Override
