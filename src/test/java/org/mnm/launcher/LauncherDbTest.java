@@ -22,7 +22,7 @@ class LauncherDbTest {
                 .containsEntry("current_game", "mnm")
                 .containsEntry("remember", "true")
                 .containsEntry("token", "1234567890")
-                .containsEntry("username", "a-username@some-maill.com")
+                .containsEntry("username", "a-username@some-email.com")
                 .hasSize(4);
     }
 
