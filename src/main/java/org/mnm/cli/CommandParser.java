@@ -1,5 +1,7 @@
 package org.mnm.cli;
 
+import org.mnm.client.InstallCommand;
+import org.mnm.client.RepairCommand;
 import org.mnm.config.Environment;
 import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;

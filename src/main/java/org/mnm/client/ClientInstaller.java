@@ -1,5 +1,6 @@
-package org.mnm;
+package org.mnm.client;
 
+import org.mnm.api.Session;
 import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;

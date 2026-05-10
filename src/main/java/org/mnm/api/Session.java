@@ -1,8 +1,5 @@
-package org.mnm;
+package org.mnm.api;
 
-import org.mnm.api.ApiConnection;
-import org.mnm.api.ApiConnector;
-import org.mnm.api.RestClient;
 import org.mnm.config.Environment;
 import org.mnm.manifest.ManifestHandler;
 import org.mnm.tools.Downloader;

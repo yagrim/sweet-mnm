@@ -1,5 +1,6 @@
-package org.mnm.cli;
+package org.mnm.client;
 
+import org.mnm.cli.Arguments;
 import org.mnm.tools.StringUtils;
 
 import static org.mnm.tools.ProcessUtils.panic;

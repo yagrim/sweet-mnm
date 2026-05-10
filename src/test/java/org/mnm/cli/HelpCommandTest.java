@@ -3,6 +3,8 @@ package org.mnm.cli;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mnm.SystemOutCaptureExtension;
+import org.mnm.client.InstallCommand;
+import org.mnm.client.RepairCommand;
 
 import java.util.List;
 

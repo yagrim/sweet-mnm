@@ -1,10 +1,11 @@
-package org.mnm.cli;
+package org.mnm.client;
 
-import org.mnm.ClientInstaller;
+import org.mnm.cli.Arguments;
+import org.mnm.cli.Command;
 
-import static org.mnm.cli.Validators.validateArguments;
+import static org.mnm.client.Validators.validateArguments;
 
-public class RepairCommand implements Command {
+public class InstallCommand implements Command {
 
     @Override
     public void run(Arguments args) {
@@ -13,21 +14,22 @@ public class RepairCommand implements Command {
         ClientInstaller client = new ClientInstaller();
         client.install(args.get("username"), args.get("password"));
 
-        System.out.println("Repair completed");
+        System.out.println("Installation completed");
     }
 
     @Override
     public String name() {
-        return "repair";
+        return "install";
     }
 
     @Override
     public String description() {
-        return "Checks installation and updates if necessary";
+        return "Installs MnM client in the current location";
     }
 
     @Override
     public String help() {
         return description();
     }
+
 }
