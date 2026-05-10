@@ -5,8 +5,12 @@ import java.net.URI;
 public class UrlBuilder {
 
     public static URI buildUrl(String base, String path) {
-        return URI.create(base)
+        return URI.create(ensureTrailingSlash(base))
                 .resolve(cleanPath(path));
+    }
+
+    public static String ensureTrailingSlash(String url) {
+        return url.endsWith("/") ? url : url + "/";
     }
 
     private static String cleanPath(String path) {

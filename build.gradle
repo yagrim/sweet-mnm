@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.graalvm.buildtools.native' version '1.1.0'
 }
 
 group = 'org.mnm'
@@ -45,13 +46,29 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+//    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
 }
 
 application {
     applicationName = 'sweet'
     applicationDefaultJvmArgs = [
-            '--enable-native-access=ALL-UNNAMED'
+            '--enable-native-access=ALL-UNNAMED',
     ]
     executableDir = ''
     mainClass = 'org.mnm.MainClazz'
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            imageName = application.applicationName
+            buildArgs.addAll('--enable-native-access=ALL-UNNAMED', '--enable-url-protocols=https')
+        }
+    }
 }

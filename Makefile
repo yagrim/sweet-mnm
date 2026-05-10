@@ -22,3 +22,6 @@ test:
 clean:
 	@./gradlew clean
 	@rm -rf build/
+
+native: clean
+	@./gradlew nativeCompile
