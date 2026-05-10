@@ -17,14 +17,7 @@ class MainClazzTest {
                 .isEqualTo("""
                         Unrecognized command: 'unknown'
                         
-                        Available commands:
-                          install   Installs MnM client in the current location
-                          login     Login with your username and password (can update launcher database)
-                          logout    Removes token from the launcher database
-                          repair    Checks installation and updates if necessary
-                          token     User token utilities
-                          help      Displays available commands
-                        """);
+                        %s""".formatted(expectedAvailableCommands()));
     }
 
     @Test
@@ -32,15 +25,20 @@ class MainClazzTest {
         MainClazz mainClazz = new MainClazz();
         mainClazz.main(new String[]{"help"});
 
-        assertThat(out.getOutput()).isEqualTo("""
+        assertThat(out.getOutput()).isEqualTo(expectedAvailableCommands());
+    }
+
+    private static String expectedAvailableCommands() {
+        return """
                 Available commands:
-                  install   Installs MnM client in the current location
-                  login     Login with your username and password (can update launcher database)
-                  logout    Removes token from the launcher database
-                  repair    Checks installation and updates if necessary
-                  token     User token utilities
-                  help      Displays available commands
-                """);
+                  install      Installs MnM client in the current location
+                  login        Login with your username and password (can update launcher database)
+                  logout       Removes token from the launcher database
+                  repair       Checks installation and updates if necessary
+                  token        User token utilities
+                  token-info   User token utilities
+                  help         Displays available commands
+                """;
     }
 
 }

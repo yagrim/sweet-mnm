@@ -2,6 +2,7 @@ package org.mnm.launcher;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -61,7 +62,6 @@ class LoginCommandTest {
         final Command command = new LoginCommand(() -> path);
 
         assertTokenInDbHasNotBeenModified(path);
-
         Arguments arguments = new Arguments(Map.of("password", "password"));
         Throwable t = catchThrowable(() -> command.run(arguments));
 

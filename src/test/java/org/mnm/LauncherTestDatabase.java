@@ -47,4 +47,18 @@ public class LauncherTestDatabase {
         return dbFile;
     }
 
+    public static void clearTestDatabaseToken(Path dbFile) {
+        updateTestDatabaseToken(dbFile, "");
+    }
+
+    public static void updateTestDatabaseToken(Path dbFile, String token) {
+        try (var connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath());
+             var st = connection.prepareStatement("update settings set value = ? where variable = ?;")) {
+            st.setString(1, token);
+            st.setString(2, "token");
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

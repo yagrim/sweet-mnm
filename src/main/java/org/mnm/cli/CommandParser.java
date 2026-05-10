@@ -4,6 +4,7 @@ import org.mnm.config.Environment;
 import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;
 import org.mnm.launcher.TokenCommand;
+import org.mnm.launcher.TokenInfoCommand;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -19,9 +20,11 @@ public class CommandParser {
         final var commands = List.of(
                 new InstallCommand(),
                 new RepairCommand(),
+
                 new LoginCommand(databasePathSupplier),
                 new LogoutCommand(databasePathSupplier),
-                new TokenCommand(databasePathSupplier)
+                new TokenCommand(databasePathSupplier),
+                new TokenInfoCommand(databasePathSupplier)
         );
         final Command help = new HelpCommand(commands);
 
