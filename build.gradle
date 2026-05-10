@@ -59,6 +59,7 @@ application {
     applicationName = 'sweet'
     applicationDefaultJvmArgs = [
             '--enable-native-access=ALL-UNNAMED',
+            '-Xmx256m'
     ]
     executableDir = ''
     mainClass = 'org.mnm.MainClazz'
@@ -68,7 +69,11 @@ graalvmNative {
     binaries {
         named("main") {
             imageName = application.applicationName
-            buildArgs.addAll('--enable-native-access=ALL-UNNAMED', '--enable-url-protocols=https')
+            buildArgs.addAll(
+                    '--enable-native-access=ALL-UNNAMED',
+                    '--enable-url-protocols=https',
+                    '-R:MaxHeapSize=256m'
+            )
         }
     }
 }
