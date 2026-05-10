@@ -2,10 +2,13 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.tools.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.function.Supplier;
+
+import static org.mnm.tools.StringUtils.isEmpty;
 
 public class TokenCommand implements Command {
 
@@ -18,7 +21,12 @@ public class TokenCommand implements Command {
     @Override
     public void run(Arguments args) {
         try (LauncherDb launcherDb = new LauncherDb(databaseFileLocator.get())) {
-            System.out.println(launcherDb.getSettings().get("token"));
+            String token = launcherDb.getSettings().get("token");
+            if (isEmpty(token)) {
+                System.out.println("No token found");
+            } else {
+                System.out.println(token);
+            }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {

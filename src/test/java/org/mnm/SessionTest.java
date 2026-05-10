@@ -8,35 +8,22 @@ import org.junit.jupiter.api.Test;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mnm.ApiServerStubs.stubAccountLogin;
+import static org.mnm.ApiServerStubs.stubGameVersions;
 
 @WireMockTest(httpsEnabled = true)
 public class SessionTest {
 
     @Test
     void shouldLoginAndRetrieveSession(WireMockRuntimeInfo wiremock) {
-        stubFor(post(urlEqualTo("/account/login"))
-                .willReturn(ResponseDefinitionBuilder.responseDefinition()
-                        .withStatus(200)
-                        .withBody("""
-                                {"status": 0, "token": "123.456.789"}
-                                """)));
-
-        stubFor(get(urlPathEqualTo("/game/versions"))
-                .withQueryParam("token", matching(".*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
-                                { "versions": [{
-                                    "version": "publish-0.24.1.0-65ab2c20cf879a5a25ea4212df4f6774ef96774e",
-                                    "slug": "mnm",
-                                    "chunks_url": "https://clients.domain.com/chunks",
-                                    "manifest_url": "http://clients.domain.com/manifests/65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest"
-                                }]}
-                                """)));
+        stubAccountLogin();
+        stubGameVersions();
 
         Session session = Session.login("username", "password", wiremock.getHttpBaseUrl());
 
         assertThat(session).isNotNull();
+        assertThat(session.getSlug()).isEqualTo("mnm");
+        assertThat(session.getChunksUrl()).isEqualTo("https://clients.domain.com/chunks");
     }
 
     @Test

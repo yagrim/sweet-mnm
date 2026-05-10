@@ -16,7 +16,7 @@ public class ApiConnector {
         this.restClient = restConnector;
     }
 
-    public ApiConnection getConnection(String username, String password) {
+    public ApiConnection login(String username, String password) {
 
         HttpJsonResponse response = restClient.post("account/login", Map.of(
                 "email", username,

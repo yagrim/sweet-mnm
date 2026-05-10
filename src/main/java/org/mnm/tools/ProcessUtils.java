@@ -8,8 +8,7 @@ import java.nio.file.Path;
 public class ProcessUtils {
 
     public static void panic(String message) {
-        System.out.println(message);
-        System.exit(1);
+        throw new PanicException(message);
     }
 
     static String run(Path workingDirectory, String[] command) {
@@ -33,4 +32,5 @@ public class ProcessUtils {
             throw new RuntimeException("XXH3 failed for: " + workingDirectory, e);
         }
     }
+
 }

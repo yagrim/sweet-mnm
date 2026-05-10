@@ -19,7 +19,8 @@ class MainClazzTest {
                         
                         Available commands:
                           install   Installs MnM client in the current location
-                          logout    Clears token from the launcher database
+                          login     Login with your username and password (can update launcher database)
+                          logout    Removes token from the launcher database
                           repair    Checks installation and updates if necessary
                           token     User token utilities
                           help      Displays available commands
@@ -34,7 +35,8 @@ class MainClazzTest {
         assertThat(out.getOutput()).isEqualTo("""
                 Available commands:
                   install   Installs MnM client in the current location
-                  logout    Clears token from the launcher database
+                  login     Login with your username and password (can update launcher database)
+                  logout    Removes token from the launcher database
                   repair    Checks installation and updates if necessary
                   token     User token utilities
                   help      Displays available commands

@@ -3,6 +3,7 @@ package org.mnm;
 import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.cli.CommandParser;
+import org.mnm.tools.PanicException;
 
 public class MainClazz {
 
@@ -12,6 +13,11 @@ public class MainClazz {
             System.out.printf("Unrecognized command: '%s'%n", args[0]);
             return;
         }
-        command.run(ArgumentsParser.parse(args));
+        try {
+            command.run(ArgumentsParser.parse(args));
+        } catch (PanicException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
     }
 }

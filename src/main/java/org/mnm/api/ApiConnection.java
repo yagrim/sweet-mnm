@@ -70,6 +70,10 @@ public class ApiConnection {
                 .toList();
     }
 
+    public String getToken() {
+        return session.token();
+    }
+
     public record GameInfo(String id, String name, String dir, String uriBase, String uriKey) {
     }
 

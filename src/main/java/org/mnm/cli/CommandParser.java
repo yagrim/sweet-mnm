@@ -1,6 +1,7 @@
 package org.mnm.cli;
 
 import org.mnm.config.Environment;
+import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;
 import org.mnm.launcher.TokenCommand;
 
@@ -18,8 +19,9 @@ public class CommandParser {
         final var commands = List.of(
                 new InstallCommand(),
                 new RepairCommand(),
-                new TokenCommand(databasePathSupplier),
-                new LogoutCommand(databasePathSupplier)
+                new LoginCommand(databasePathSupplier),
+                new LogoutCommand(databasePathSupplier),
+                new TokenCommand(databasePathSupplier)
         );
         final Command help = new HelpCommand(commands);
 

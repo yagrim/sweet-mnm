@@ -27,11 +27,11 @@ class ApiConnectionTest {
         apiConnector = new ApiConnector(restConnector);
 
         if (mock) {
-            connection = new ApiConnection(new ApiSession("123.456.789"), restConnector);
+            connection = new ApiConnection(new ApiSession("123.45678.90"), restConnector);
         } else {
             final String username = "";
             final String password = "";
-            connection = apiConnector.getConnection(username, password);
+            connection = apiConnector.login(username, password);
         }
     }
 

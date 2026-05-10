@@ -9,7 +9,6 @@ import org.mnm.tools.Downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -37,7 +36,7 @@ public class Session {
         }
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-        ApiConnection connection = apiConnector.getConnection(username, password);
+        ApiConnection connection = apiConnector.login(username, password);
 
         List<ApiConnection.GameVersion> gamesVersions = connection.getGamesVersions();
         if (gamesVersions.isEmpty()) {

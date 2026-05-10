@@ -36,7 +36,7 @@ class ApiConnectorTest {
                     .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0, "token", "123.456.789")));
         }
 
-        ApiConnection connection = apiConnector.getConnection(username, password);
+        ApiConnection connection = apiConnector.login(username, password);
 
         assertThat(connection.isActive()).isTrue();
     }
@@ -51,7 +51,7 @@ class ApiConnectorTest {
                     .thenThrow(new RuntimeException("Response error: 200, {error=Incorrect Email/Password, status=4}"));
         }
 
-        Throwable t = catchThrowable(() -> apiConnector.getConnection(username, password));
+        Throwable t = catchThrowable(() -> apiConnector.login(username, password));
 
         assertThat(t)
                 .isInstanceOf(RuntimeException.class)

@@ -2,7 +2,6 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
-import org.mnm.config.Environment;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -19,8 +18,8 @@ public class LogoutCommand implements Command {
     @Override
     public void run(Arguments args) {
         try (LauncherDb launcherDb = new LauncherDb(databaseFileLocator.get())) {
-            launcherDb.updateSettings("token", null);
-            System.out.println(launcherDb.getSettings().get("token"));
+            launcherDb.updateSetting("token", "");
+            System.out.println("Token removed from launcher database");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
@@ -35,7 +34,7 @@ public class LogoutCommand implements Command {
 
     @Override
     public String description() {
-        return "Clears token from the launcher database";
+        return "Removes token from the launcher database";
     }
 
     @Override

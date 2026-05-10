@@ -25,7 +25,7 @@ class LauncherDb implements AutoCloseable {
             throw new FileNotFoundException(dbFile.toString());
         }
         try {
-            this.connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath().toString());
+            this.connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -47,9 +47,19 @@ class LauncherDb implements AutoCloseable {
         }
     }
 
-    public void updateSettings(String key, Object value) {
+    public void insertSetting(String key, Object value) {
+        try (PreparedStatement statement = connection.prepareStatement("insert into settings(variable, value) values (?, ?);")) {
+            statement.setString(1, key);
+            statement.setString(2, value != null ? value.toString() : null);
+            logger.debug("Inserted settings rows: {}", statement.executeUpdate());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateSetting(String key, Object value) {
         try (PreparedStatement statement = connection.prepareStatement("update settings set value = ? where variable = ?;")) {
-            statement.setObject(1, value);
+            statement.setString(1, value != null ? value.toString() : null);
             statement.setString(2, key);
             logger.debug("Updated settings rows: {}", statement.executeUpdate());
         } catch (SQLException e) {

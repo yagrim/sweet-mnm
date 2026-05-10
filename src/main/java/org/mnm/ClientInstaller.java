@@ -3,7 +3,10 @@ package org.mnm;
 import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
-import org.mnm.tools.*;
+import org.mnm.tools.Downloader;
+import org.mnm.tools.FileUtils;
+import org.mnm.tools.HashFunctions;
+import org.mnm.tools.Zstd;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +18,6 @@ import java.util.TreeSet;
 
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.tools.FileUtils.fileExists;
-import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.UrlBuilder.buildUrl;
 
 /**
@@ -27,14 +29,6 @@ public class ClientInstaller {
     private static final Logger logger = LoggerFactory.getLogger(ClientInstaller.class);
 
     public void install(String username, String password) {
-
-        if (StringUtils.isEmpty(username)) {
-            panic("Missing parameter: '--username'");
-        }
-        if (StringUtils.isEmpty(password)) {
-            panic("Missing parameter: '--password'");
-        }
-
         Session session = Session.login(username, password, API_BASE_URL);
         ManifestHandler manifestHandler = session.getManifestHandler();
         List<Manifest.File> files = manifestHandler.getFiles();
