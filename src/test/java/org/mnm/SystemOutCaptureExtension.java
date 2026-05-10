@@ -4,6 +4,7 @@ import org.junit.jupiter.api.extension.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 public class SystemOutCaptureExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
@@ -14,7 +15,7 @@ public class SystemOutCaptureExtension implements BeforeEachCallback, AfterEachC
     public void beforeEach(ExtensionContext context) {
         originalOut = System.out;
         outputStream = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outputStream));
+        System.setOut(new PrintStream(outputStream, false, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -23,7 +24,7 @@ public class SystemOutCaptureExtension implements BeforeEachCallback, AfterEachC
     }
 
     public String getOutput() {
-        return outputStream.toString();
+        return outputStream.toString(StandardCharsets.UTF_8);
     }
 
     @Override

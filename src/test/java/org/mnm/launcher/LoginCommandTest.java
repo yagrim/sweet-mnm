@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mnm.LauncherTestDatabase;
+import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.LauncherTestDatabase.INITIAL_TOKEN;
-import static org.mnm.LauncherTestDatabase.copyTestDb;
+import static org.mnm.LauncherTestDatabase.withSettings;
 
 @ExtendWith(SystemOutCaptureExtension.class)
 @WireMockTest(httpsEnabled = true)
@@ -28,14 +28,14 @@ class LoginCommandTest {
     @Test
     void shouldLoginAndUpdateToken(SystemOutCaptureExtension out,
                                    WireMockRuntimeInfo wiremock,
-                                   @TempDir Path tempDir) throws Exception {
+                                   @TempDir Path tempDir) {
         String uuid = UUID.randomUUID().toString();
         stubAccountLogin(uuid);
 
-        final Path path = copyTestDb(tempDir);
-        final Command command = new LoginCommand(() -> path);
+        final TestDatabase testDb = withSettings(tempDir);
+        final Command command = new LoginCommand(() -> testDb.path());
 
-        assertTokenInDbHasNotBeenModified(path);
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         Arguments arguments = new Arguments(Map.of(
                 "username", "username",
@@ -50,22 +50,20 @@ class LoginCommandTest {
                 .contains("LoginCommand - If you see this line, proceed at your own risk")
                 .endsWith("Token updated in launcher database\n");
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings()).containsEntry("token", uuid);
-        }
+        testDb.assertThatToken().isEqualTo(uuid);
     }
 
     @Test
     void shouldLoginAndReturnTokenOnly(SystemOutCaptureExtension out,
-                                   WireMockRuntimeInfo wiremock,
-                                   @TempDir Path tempDir) throws Exception {
+                                       WireMockRuntimeInfo wiremock,
+                                       @TempDir Path tempDir) {
         String uuid = UUID.randomUUID().toString();
         stubAccountLogin(uuid);
 
-        final Path path = copyTestDb(tempDir);
-        final Command command = new LoginCommand(() -> path);
+        final TestDatabase testDb = withSettings(tempDir);
+        final Command command = new LoginCommand(() -> testDb.path());
 
-        assertTokenInDbHasNotBeenModified(path);
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         Arguments arguments = new Arguments(Map.of(
                 "dev-options", "true",
@@ -81,17 +79,16 @@ class LoginCommandTest {
                 .contains("LoginCommand - If you see this line, proceed at your own risk")
                 .endsWith("Skipping token update in launcher database\n");
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings()).containsEntry("token", INITIAL_TOKEN);
-        }
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
 
     @Test
-    void shouldPanicWhenUsernameIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
-        final Path path = copyTestDb(tempDir);
-        final Command command = new LoginCommand(() -> path);
+    void shouldPanicWhenUsernameIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+        final TestDatabase testDb = withSettings(tempDir);
+        final Command command = new LoginCommand(() -> testDb.path());
 
-        assertTokenInDbHasNotBeenModified(path);
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
+
         Arguments arguments = new Arguments(Map.of("password", "password"));
         Throwable t = catchThrowable(() -> command.run(arguments));
 
@@ -99,15 +96,15 @@ class LoginCommandTest {
                 .isInstanceOf(PanicException.class)
                 .hasMessage("Missing parameter: '--username'");
 
-        assertTokenInDbHasNotBeenModified(path);
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
 
     @Test
-    void shouldPanicWhenPasswordIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
-        final Path path = copyTestDb(tempDir);
-        final Command command = new LoginCommand(() -> path);
+    void shouldPanicWhenPasswordIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+        final TestDatabase testDb = withSettings(tempDir);
+        final Command command = new LoginCommand(() -> testDb.path());
 
-        assertTokenInDbHasNotBeenModified(path);
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         Arguments arguments = new Arguments(Map.of("username", "username"));
         Throwable t = catchThrowable(() -> command.run(arguments));
@@ -116,12 +113,6 @@ class LoginCommandTest {
                 .isInstanceOf(PanicException.class)
                 .hasMessage("Missing parameter: '--password'");
 
-        assertTokenInDbHasNotBeenModified(path);
-    }
-
-    private static void assertTokenInDbHasNotBeenModified(Path path) throws Exception {
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings()).containsEntry("token", INITIAL_TOKEN);
-        }
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
 }

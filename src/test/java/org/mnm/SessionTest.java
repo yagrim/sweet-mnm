@@ -12,7 +12,7 @@ import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
 
 @WireMockTest(httpsEnabled = true)
-public class SessionTest {
+class SessionTest {
 
     @Test
     void shouldLoginAndRetrieveSession(WireMockRuntimeInfo wiremock) {

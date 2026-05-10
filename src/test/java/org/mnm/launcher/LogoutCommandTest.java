@@ -3,6 +3,8 @@ package org.mnm.launcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
 
@@ -15,62 +17,53 @@ import static org.mnm.LauncherTestDatabase.*;
 class LogoutCommandTest {
 
     @Test
-    void shouldClearToken(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
-        final Path path = copyTestDb(tempDir);
-        final Command command = new LogoutCommand(() -> path);
+    void shouldClearToken(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+        final TestDatabase testDb = withSettings(tempDir);
+        final Command command = new LogoutCommand(testDb::path);
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings())
-                    .containsEntry("token", INITIAL_TOKEN);
-        }
+        testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         command.run(null);
         assertThat(out.getOutput()).isEqualTo("""
                 Token removed from launcher database
                 """);
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings())
-                    .containsEntry("token", "");
-        }
+        testDb.assertThatToken().isEqualTo("");
     }
 
     @Test
-    void shouldNotFailWhenTokenVariableIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
-        final Path path = initTestDatabase(tempDir);
-        final Command command = new LogoutCommand(() -> path);
+    void shouldNotFailWhenTokenVariableIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+        final TestDatabase testDb = withSchema(tempDir);
+        final Command command = new LogoutCommand(() -> testDb.path());
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            assertThat(launcherDb.getSettings()).isEmpty();
+        testDb.assertThatSettings().isEmpty();
 
-            command.run(null);
+        command.run(null);
 
-            assertThat(out.getOutput()).isEqualTo("""
-                    Token removed from launcher database
-                    """);
+        assertThat(out.getOutput()).isEqualTo("""
+                Token removed from launcher database
+                """);
 
-            assertThat(launcherDb.getSettings()).isEmpty();
-        }
+        testDb.assertThatSettings().isEmpty();
     }
 
-    @Test
-    void shouldNotFailWhenTokenValueIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
-        final Path path = initTestDatabase(tempDir);
-        final Command command = new LogoutCommand(() -> path);
+    @ParameterizedTest
+    @NullAndEmptySource
+    void shouldNotFailWhenTokenValueIsNotSet(String value, SystemOutCaptureExtension out, @TempDir Path tempDir) {
+        final TestDatabase testDb = withSchema(tempDir);
+        final Command command = new LogoutCommand(() -> testDb.path());
 
-        try (LauncherDb launcherDb = new LauncherDb(path)) {
-            launcherDb.insertSetting("command", null);
-            assertThat(launcherDb.getSettings()).containsEntry("command", null);
+        testDb.insertSettingsToken(value);
+        testDb.assertThatToken().isEqualTo(value);
 
-            command.run(null);
+        command.run(null);
 
-            assertThat(out.getOutput()).isEqualTo("""
-                    Token removed from launcher database
-                    """);
+        assertThat(out.getOutput()).isEqualTo("""
+                Token removed from launcher database
+                """);
 
-            assertThat(launcherDb.getSettings())
-                    .containsEntry("command", null);
-        }
+        // we sanitize value since null cause official launcher to fail
+        testDb.assertThatToken().isEqualTo("");
     }
 
 }

@@ -4,13 +4,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mnm.LauncherTestDatabase;
+import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
 
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.LauncherTestDatabase.initTestDatabase;
+import static org.mnm.LauncherTestDatabase.withSchema;
 
 @ExtendWith(SystemOutCaptureExtension.class)
 class TokenCommandTest {
@@ -28,7 +29,8 @@ class TokenCommandTest {
 
     @Test
     void shouldPrintMessageWhenTokenIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
-        Command token = new TokenCommand(() -> initTestDatabase(tempDir));
+        final TestDatabase testDb = withSchema(tempDir);
+        Command token = new TokenCommand(testDb::path);
 
         token.run(null);
 

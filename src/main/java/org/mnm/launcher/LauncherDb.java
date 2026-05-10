@@ -32,8 +32,8 @@ class LauncherDb implements AutoCloseable {
     }
 
     Map<String, String> getSettings() {
-        try (Statement statement = connection.createStatement()) {
-            ResultSet rs = statement.executeQuery(SELECT_FROM_SETTINGS);
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(SELECT_FROM_SETTINGS)) {
 
             Map<String, String> settings = new HashMap<>();
             while (rs.next()) {
@@ -42,16 +42,6 @@ class LauncherDb implements AutoCloseable {
                 settings.put(key, value);
             }
             return settings;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void insertSetting(String key, Object value) {
-        try (PreparedStatement statement = connection.prepareStatement("insert into settings(variable, value) values (?, ?);")) {
-            statement.setString(1, key);
-            statement.setString(2, value != null ? value.toString() : null);
-            logger.debug("Inserted settings rows: {}", statement.executeUpdate());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

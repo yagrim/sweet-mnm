@@ -14,28 +14,28 @@ import static org.mnm.LauncherTestDatabase.*;
 class LauncherDbTest {
 
     @Test
-    void shouldReadSettings() throws FileNotFoundException {
-        final LauncherDb db = new LauncherDb(fromClasspath());
+    void shouldReadSettings() throws Exception {
+        try (LauncherDb db = new LauncherDb(fromClasspath())) {
 
-        Map<String, String> settings = db.getSettings();
+            Map<String, String> settings = db.getSettings();
 
-        assertThat(settings)
-                .containsEntry("current_game", "mnm")
-                .containsEntry("remember", "true")
-                .containsEntry("token", INITIAL_TOKEN)
-                .containsEntry("username", "a-username@some-email.com")
-                .hasSize(4);
+            assertThat(settings)
+                    .containsEntry("current_game", "mnm")
+                    .containsEntry("remember", "true")
+                    .containsEntry("token", INITIAL_TOKEN)
+                    .containsEntry("username", "a-username@some-email.com")
+                    .hasSize(4);
+        }
     }
 
     @Test
     void shouldUpdateSettings(@TempDir Path tempDir) throws Exception {
-        final Path dbCopy = copyTestDb(tempDir);
-        final LauncherDb db = new LauncherDb(dbCopy);
+        final TestDatabase testDb = withSettings(tempDir);
+        try (LauncherDb db = new LauncherDb(testDb.path())) {
+            db.updateSetting("token", "999.999.999");
+        }
 
-        db.updateSetting("token", "999.999.999");
-        db.close();
-
-        try (LauncherDb launcherDb = new LauncherDb(dbCopy)) {
+        try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
                     .containsEntry("current_game", "mnm")
                     .containsEntry("remember", "true")
@@ -47,13 +47,12 @@ class LauncherDbTest {
 
     @Test
     void shouldUpdateSettingsToEmpty(@TempDir Path tempDir) throws Exception {
-        final Path dbCopy = copyTestDb(tempDir);
-        final LauncherDb db = new LauncherDb(dbCopy);
+        final TestDatabase testDb = withSettings(tempDir);
+        try (LauncherDb db = new LauncherDb(testDb.path())) {
+            db.updateSetting("token", "");
+        }
 
-        db.updateSetting("token", "");
-        db.close();
-
-        try (LauncherDb launcherDb = new LauncherDb(dbCopy)) {
+        try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
                     .containsEntry("current_game", "mnm")
                     .containsEntry("remember", "true")
@@ -65,13 +64,12 @@ class LauncherDbTest {
 
     @Test
     void shouldUpdateSettingsToNull(@TempDir Path tempDir) throws Exception {
-        final Path dbCopy = copyTestDb(tempDir);
-        final LauncherDb db = new LauncherDb(dbCopy);
+        final TestDatabase testDb = withSettings(tempDir);
+        try (LauncherDb db = new LauncherDb(testDb.path())) {
+            db.updateSetting("token", null);
+        }
 
-        db.updateSetting("token", null);
-        db.close();
-
-        try (LauncherDb launcherDb = new LauncherDb(dbCopy)) {
+        try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
                     .containsEntry("current_game", "mnm")
                     .containsEntry("remember", "true")
