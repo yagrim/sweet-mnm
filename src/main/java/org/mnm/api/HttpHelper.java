@@ -14,7 +14,7 @@ public class HttpHelper {
             throw exception(response);
         }
         Map<String, Object> body = response.body();
-        Integer status = (Integer) body.get("status");
+        Long status = (Long) body.get("status");
         if (status != 0) {
             throw exception(response);
         }

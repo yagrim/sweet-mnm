@@ -32,4 +32,3 @@ native: test
 
 native-install: install native
 	@cp build/native/nativeCompile/sweet $(PREFIX)
-	@ln -sf $(APPDIR)/sweet $(PREFIX)/sweet-jvm

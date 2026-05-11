@@ -33,7 +33,7 @@ class ApiConnectorTest {
 
         if (mock) {
             Mockito.when(restConnector.post(anyString(), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0, "token", "123.456.789")));
+                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L, "token", "123.456.789")));
         }
 
         ApiConnection connection = apiConnector.login(username, password);

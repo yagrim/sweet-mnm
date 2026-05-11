@@ -1,12 +1,15 @@
 package org.mnm.manifest;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.*;
 
 public record Manifest(List<File> manifest) {
 
-    public record File(String path, @JsonProperty("file_hash") String fileHash, List<Chunk> chunks) {
+    public record File(String path,
+                       @SerializedName("file_hash")
+                       String fileHash,
+                       List<Chunk> chunks) {
 
         /**
          * Size of final file.
@@ -47,13 +50,17 @@ public record Manifest(List<File> manifest) {
 
             return indexedChunks;
         }
-
     }
 
-
-    public record Chunk(Integer offset, Integer length, String crc, @JsonProperty("bundle_offset") Integer bundleOffset,
-                        @JsonProperty("length_in_bundle") Integer lengthInBundle,
-                        @JsonProperty("bundle_crc") String bundleCrc) {
+    public record Chunk(Integer offset,
+                        Integer length,
+                        String crc,
+                        @SerializedName("bundle_offset")
+                        Integer bundleOffset,
+                        @SerializedName("length_in_bundle")
+                        Integer lengthInBundle,
+                        @SerializedName("bundle_crc")
+                        String bundleCrc) {
 
         String normalize() {
             return String.format("%16s", crc).replace(' ', '0');

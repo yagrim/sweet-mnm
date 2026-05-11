@@ -1,17 +1,10 @@
 package org.mnm.tools;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
+import com.google.gson.JsonObject;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-/**
- * WARNING: This does not validate the signature since MnM public keys are not available.
- */
 public class JwtParser {
-
-    private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     private JwtParser() {
     }
@@ -27,10 +20,10 @@ public class JwtParser {
         return new JwtClaims(parseJson(parts[1]));
     }
 
-    private static JsonNode parseJson(String base64Url) {
+    private static JsonObject parseJson(String base64Url) {
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(base64Url);
-            return MAPPER.readTree(new String(decoded, StandardCharsets.UTF_8));
+            return JsonParser.read(decoded, JsonObject.class);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JWT content", e);
         }
@@ -42,7 +35,7 @@ public class JwtParser {
     // - nbf (not before time): is emission time
     // - purpose: (integer 0) ???
     // - type: (string "access") ???
-    public record JwtClaims(JsonNode payload) {
+    public record JwtClaims(JsonObject payload) {
 
         public String audience() {
             return getString("aud");
@@ -87,15 +80,18 @@ public class JwtParser {
         }
 
         private String getString(String key) {
-            return payload.path(key).asString(null);
+            return payload.has(key) && !payload.get(key).isJsonNull()
+                    ? payload.get(key).getAsString() : null;
         }
 
         private long getLong(String key) {
-            return payload.path(key).asLong(0);
+            return payload.has(key) && !payload.get(key).isJsonNull()
+                    ? payload.get(key).getAsLong() : 0;
         }
 
         private int getInt(String key) {
-            return payload.path(key).asInt(0);
+            return payload.has(key) && !payload.get(key).isJsonNull()
+                    ? payload.get(key).getAsInt() : 0;
         }
 
     }
