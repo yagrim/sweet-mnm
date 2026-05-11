@@ -49,7 +49,7 @@ public class TokenInfoCommand implements Command {
 
     @Override
     public String description() {
-        return "User token utilities";
+        return "Displays token information";
     }
 
     @Override
