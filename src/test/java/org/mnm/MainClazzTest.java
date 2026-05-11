@@ -36,7 +36,8 @@ class MainClazzTest {
                   logout       Removes token from the launcher database
                   repair       Checks installation and updates if necessary
                   token        User token utilities
-                  token-info   User token utilities
+                  token-info   Displays token information
+                  version      Displays the version
                   help         Displays available commands
                 """;
     }

@@ -13,7 +13,9 @@ clean:
 	@./gradlew clean
 	@rm -rf build/
 
-test:
+# setVersion will append the gitSha repeatedly.
+# For now, we simply clean.
+test: clean
 	@./gradlew test
 
 install: test

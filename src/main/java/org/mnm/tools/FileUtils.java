@@ -5,7 +5,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -51,6 +53,15 @@ public class FileUtils {
         } else {
             double mb = bytes / (1024.0 * 1024);
             return String.format("%.2f MB", mb);
+        }
+    }
+
+    public static String readFromClasspath(String path) {
+        final InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(path);
+        try {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

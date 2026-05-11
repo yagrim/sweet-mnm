@@ -74,6 +74,23 @@ graalvmNative {
                     '--enable-url-protocols=https',
                     '-R:MaxHeapSize=256m'
             )
+            resources {
+                includedPatterns.addAll('logback.xml', 'version.txt')
+            }
         }
     }
+}
+
+tasks.register("setVersion") {
+    doLast {
+        def gitSha = "git rev-parse --short HEAD".execute().text.trim()
+        def versionFile = layout.buildDirectory.file("resources/main/version.txt").get().asFile
+
+        def current = versionFile.text.trim()
+        versionFile.text = "${current}-${gitSha}\n"
+    }
+}
+
+tasks.named("classes") {
+    dependsOn(tasks.named("setVersion"))
 }

@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HelpCommandTest {
 
     @Test
-    void shouldReturnHelpMessage() {
+    void shouldReturnHelpDescription() {
         HelpCommand command = new HelpCommand(emptyList());
 
         String help = command.help();

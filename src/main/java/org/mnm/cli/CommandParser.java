@@ -26,7 +26,9 @@ public class CommandParser {
                 new LoginCommand(databasePathSupplier),
                 new LogoutCommand(databasePathSupplier),
                 new TokenCommand(databasePathSupplier),
-                new TokenInfoCommand(databasePathSupplier)
+                new TokenInfoCommand(databasePathSupplier),
+
+                new VersionCommand()
         );
         final Command help = new HelpCommand(commands);
 

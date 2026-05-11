@@ -3,11 +3,11 @@ package org.mnm.cli;
 import java.util.Comparator;
 import java.util.List;
 
-public class HelpCommand implements Command {
+class HelpCommand implements Command {
 
     private final List<Command> commands;
 
-    public HelpCommand(List<Command> commands) {
+    HelpCommand(List<Command> commands) {
         this.commands = commands;
     }
 
@@ -24,7 +24,7 @@ public class HelpCommand implements Command {
         commands.stream()
                 .sorted(Comparator.comparing(Command::name))
                 .forEach(c -> {
-                    sb.append(format(c.name(), c.help(), indentation));
+                    sb.append(format(c.name(), c.description(), indentation));
                     sb.append("\n");
                 });
 
@@ -32,7 +32,7 @@ public class HelpCommand implements Command {
         System.out.println(sb);
     }
 
-    public static String format(String first, String second, int distance) {
+    private static String format(String first, String second, int distance) {
         return String.format("  %-" + distance + "s%s", first, second);
     }
 

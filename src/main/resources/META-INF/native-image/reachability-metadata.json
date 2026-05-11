@@ -210,9 +210,6 @@
       "glob": "linux/amd64/libzstd-jni-1.5.7-7.so"
     },
     {
-      "glob": "logback.xml"
-    },
-    {
       "glob": "logging.properties"
     },
     {
