@@ -11,7 +11,7 @@ import static org.mnm.TestUtils.classpathFile;
 
 public class LauncherTestDatabase {
 
-    private static final String LAUNCHER_TEST_DB = "launcher_test_db.db";
+    private static final String LAUNCHER_TEST_DB = "launcher_test.db";
 
     public static final String INITIAL_TOKEN = "123.456.789";
 
