@@ -20,19 +20,23 @@ repositories {
 
 ext {
     junitVersion = '6.0.3'
+    sqliteJdbcVersion = '3.53.0.0'
 }
+
+def os = org.gradle.internal.os.OperatingSystem.current()
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.17'
     implementation 'ch.qos.logback:logback-classic:1.5.32'
-
-    implementation("com.google.code.gson:gson:2.14.0")
-
-    // xxh3
-    implementation("net.openhft:zero-allocation-hashing:2026.0")
+    implementation 'com.google.code.gson:gson:2.14.0'
+    implementation 'net.openhft:zero-allocation-hashing:2026.0'
     // Graal partial support for previous version https://github.com/oracle/graalvm-reachability-metadata/pull/121/changes
-    implementation("com.github.luben:zstd-jni:1.5.7-7")
-    implementation("org.xerial:sqlite-jdbc:3.53.0.0")
+    implementation('com.github.luben:zstd-jni:1.5.7-7')
+
+    implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:without-natives")
+    if (os.isLinux()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-linux")
+    if (os.isWindows()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-windows")
+
 
     testImplementation platform("org.junit:junit-bom:$junitVersion")
     testImplementation 'org.junit.jupiter:junit-jupiter'
