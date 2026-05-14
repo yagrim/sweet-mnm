@@ -9,7 +9,7 @@ public class ArgumentsParser {
     }
 
     public static Arguments parse(String[] args) {
-        Map<String, String> argsMap = new HashMap<>();
+        final Map<String, String> argsMap = new HashMap<>();
 
         for (int i = 0; i < args.length; i++) {
             String key = args[i];

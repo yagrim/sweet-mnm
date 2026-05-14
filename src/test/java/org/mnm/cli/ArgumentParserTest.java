@@ -3,6 +3,7 @@ package org.mnm.cli;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 class ArgumentParserTest {
 
@@ -31,7 +32,19 @@ class ArgumentParserTest {
 
         Arguments parsed = ArgumentsParser.parse(args);
 
-        assertThat(parsed.get("debug")).isEqualTo("true");
+        assertThat(parsed.getBoolean("debug")).isTrue();
+    }
+
+    @Test
+    void shouldFailWhenGettingBooleanAsString() {
+        String[] args = {"--debug"};
+
+        Arguments parsed = ArgumentsParser.parse(args);
+        Throwable t = catchThrowable(() -> parsed.get("debug"));
+
+        assertThat(t)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Boolean flag cannot be read as string");
     }
 
     @Test
@@ -43,6 +56,15 @@ class ArgumentParserTest {
         assertThat(parsed.getOrDefault("missing", "default")).isEqualTo("default");
         assertThat(parsed.getInt("missingInt", 42)).isEqualTo(42);
         assertThat(parsed.getBoolean("missingBool")).isFalse();
+    }
+
+    @Test
+    void returnsDefaultStringWhenValueIsBoolean() {
+        String[] args = {"--debug"};
+
+        Arguments parsed = ArgumentsParser.parse(args);
+
+        assertThat(parsed.getOrDefault("debug", "default")).isEqualTo("default");
     }
 
     @Test

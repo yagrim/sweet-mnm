@@ -1,6 +1,5 @@
 package org.mnm.cli;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,13 +12,23 @@ public class Arguments {
     }
 
     public String get(String key) {
-        return argsMap.get(key);
+        String value = argsMap.get(key);
+        if (isABoolean(value)) {
+            throw new IllegalStateException("Boolean flag cannot be read as string");
+        }
+        return value;
     }
 
     public String getOrDefault(String key, String defaultValue) {
+        if (isABoolean(argsMap.get(key))) {
+            return defaultValue;
+        }
         return argsMap.getOrDefault(key, defaultValue);
     }
 
+    private static boolean isABoolean(String value) {
+        return "true".equals(value) || "false".equals(value);
+    }
 
     public int getInt(String key, int defaultValue) {
         try {
@@ -33,7 +42,4 @@ public class Arguments {
         return Boolean.parseBoolean(argsMap.getOrDefault(key, "false"));
     }
 
-    public Map<String, String> getAll() {
-        return Collections.unmodifiableMap(argsMap);
-    }
 }
