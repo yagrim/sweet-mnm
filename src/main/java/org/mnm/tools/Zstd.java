@@ -11,7 +11,13 @@ import static org.mnm.tools.ByteUtils.readAllBytes;
 
 public class Zstd {
 
+    private Zstd() {
+    }
+
     public class InMemory {
+
+        private InMemory() {
+        }
 
         public static void decompress(Path destination, Section... sections) {
             if (sections.length == 0) {

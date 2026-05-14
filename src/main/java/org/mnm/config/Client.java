@@ -1,4 +1,4 @@
-package org.mnm.client;
+package org.mnm.config;
 
 
 public record Client(
@@ -9,6 +9,6 @@ public record Client(
 ) {
 
     public enum Status {
-        INSTALLING, COMPLETED
+        INSTALLING, REPAIRING, COMPLETED
     }
 }

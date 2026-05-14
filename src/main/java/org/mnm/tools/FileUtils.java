@@ -6,11 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 
 public class FileUtils {
@@ -28,20 +26,6 @@ public class FileUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static void assemble(List<byte[]> fileSections, Path destination) {
-        long start = System.currentTimeMillis();
-        try (OutputStream out = Files.newOutputStream(destination)) {
-            for (byte[] section : fileSections) {
-                if (section != null && section.length > 0) {
-                    out.write(section);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        logger.debug("assembled file: {} {}ms", destination, System.currentTimeMillis() - start);
     }
 
     public static String humanReadableSize(long bytes) {
@@ -65,4 +49,12 @@ public class FileUtils {
         }
     }
 
+    public static byte[] readFromClasspathAsArray(String path) {
+        final InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(path);
+        try {
+            return inputStream.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

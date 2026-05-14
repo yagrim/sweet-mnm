@@ -18,9 +18,11 @@ public class Session {
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
     private final ApiConnection.GameVersion gameVersion;
+    private String token;
 
-    private Session(ApiConnection.GameVersion gameVersion) {
+    private Session(ApiConnection.GameVersion gameVersion, String token) {
         this.gameVersion = gameVersion;
+        this.token = token;
     }
 
     public static Session login(String username, String password, String baseUrl) {
@@ -35,6 +37,22 @@ public class Session {
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
         ApiConnection connection = apiConnector.login(username, password);
 
+        return buildSession(connection);
+    }
+
+    public static Session login(String token, String baseUrl) {
+        System.out.println("Connecting with token ...");
+        if (isEmpty(token)) {
+            panic("Token is empty");
+        }
+
+        ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
+        ApiConnection connection = apiConnector.login(token);
+
+        return buildSession(connection);
+    }
+
+    private static Session buildSession(ApiConnection connection) {
         List<ApiConnection.GameVersion> gamesVersions = connection.getGamesVersions();
         if (gamesVersions.isEmpty()) {
             panic("No game versions found");
@@ -43,7 +61,7 @@ public class Session {
             panic("Too many game versions found");
         }
 
-        return new Session(gamesVersions.get(0));
+        return new Session(gamesVersions.get(0), connection.getToken());
     }
 
     public ManifestHandler getManifestHandler() {
@@ -78,5 +96,13 @@ public class Session {
 
     public String getChunksUrl() {
         return gameVersion.chunksUrl();
+    }
+
+    public String getVersion() {
+        return gameVersion.version();
+    }
+
+    public String getToken() {
+        return token;
     }
 }

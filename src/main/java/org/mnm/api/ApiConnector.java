@@ -28,4 +28,8 @@ public class ApiConnector {
         return new ApiConnection(new ApiSession((String) responseBody.get("token")), restClient);
     }
 
+    public ApiConnection login(String token) {
+        return new ApiConnection(new ApiSession(token), restClient);
+    }
+
 }

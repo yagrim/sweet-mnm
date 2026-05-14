@@ -1,7 +1,5 @@
 package org.mnm.config;
 
-import org.mnm.client.Client;
-import org.mnm.client.Session;
 import org.mnm.tools.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,12 +8,14 @@ import java.nio.file.Path;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+
+import static org.mnm.config.Mappers.mapClient;
+import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ConfigDb implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigDb.class);
-
-    // status: installing, completed
 
     private static String CLIENTS = """
             CREATE TABLE clients (
@@ -42,8 +42,6 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public static final ConfigDb open(Path dbFile) {
-//        String home = System.getProperty("user.home");
-//        var dbFile = Path.of(home, ".local/share/sweetmnm/", "sweet.db");
         boolean dbFileExists = dbFile.toFile().exists();
         logger.debug("Sweet DB found? {}", dbFileExists);
         if (!dbFileExists) {
@@ -125,6 +123,56 @@ public class ConfigDb implements AutoCloseable {
             ps.setString(2, session.token());
 
             ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Client> getClients() {
+        return select("clients", "", Mappers::mapClient);
+    }
+
+    public Client getClient(String slug) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from clients where slug = ?")) {
+            ps.setString(1, slug);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapClient(rs);
+                } else {
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Session> getSessions(String slug) {
+        return select("sessions", "slug = '%s'".formatted(slug), Mappers::mapSession);
+    }
+
+    private <T> List<T> select(String table, String where, Function<ResultSet, T> mapper) {
+        final String query = "select * from %s%s".formatted(table, isEmpty(where) ? "" : " where " + where);
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            final List<T> results = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(mapper.apply(rs));
+                }
+            }
+            return results;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateClient(String slug, String version, Client.Status status, String path) {
+        try (PreparedStatement ps = connection.prepareStatement("update clients set version = ?, status = ?, path = ? where slug = ?")) {
+            ps.setString(1, version);
+            ps.setString(2, status.name());
+            ps.setString(3, path);
+            ps.setString(4, slug);
+            ps.execute();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

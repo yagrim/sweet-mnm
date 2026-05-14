@@ -7,19 +7,20 @@ import java.util.Map;
 
 import static org.mnm.api.HttpHelper.exception;
 import static org.mnm.api.HttpHelper.parseResponse;
+import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ApiConnection {
 
     private final ApiSession session;
     private final RestClient restClient;
 
-    public ApiConnection(ApiSession session, RestClient restClient) {
+    ApiConnection(ApiSession session, RestClient restClient) {
         this.session = session;
         this.restClient = restClient;
     }
 
     public boolean isActive() {
-        return !session.token().isBlank();
+        return !isEmpty(session.token());
     }
 
     void isTokenValid() {

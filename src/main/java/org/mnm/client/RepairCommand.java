@@ -1,19 +1,16 @@
 package org.mnm.client;
 
-import org.mnm.cli.Arguments;
-import org.mnm.cli.Command;
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
-import static org.mnm.client.Validators.validateArguments;
+public class RepairCommand extends InstallCommand {
 
-public class RepairCommand implements Command {
+    public RepairCommand(Supplier<Path> configDbSupplier) {
+        super(configDbSupplier);
+    }
 
     @Override
-    public void run(Arguments args) {
-        validateArguments(args);
-
-        ClientInstaller client = new ClientInstaller();
-        client.install(args.get("username"), args.get("password"));
-
+    protected void shutdownHook() {
         System.out.println("Repair completed");
     }
 
@@ -31,4 +28,5 @@ public class RepairCommand implements Command {
     public String help() {
         return description();
     }
+
 }

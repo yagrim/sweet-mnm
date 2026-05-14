@@ -1,0 +1,86 @@
+{
+  "manifest": [
+    {
+      "path": "/mnm_Data/app.info",
+      "file_hash": "4668c1ab7c3803184f3136c8b96c198b",
+      "chunks": [
+        {
+          "offset": 0,
+          "length": 39,
+          "crc": "4a4992be3add087a",
+          "bundle_offset": 0,
+          "length_in_bundle": 48,
+          "bundle_crc": "a1fd9407db7effaf"
+        }
+      ]
+    },
+    {
+      "path": "/numbers.txt",
+      "file_hash": "0f2aee9898a287d83d13b0e3d7df112e",
+      "chunks": [
+        {
+          "offset": 0,
+          "length": 2772,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "3d8638fbc9718fcb"
+        },
+        {
+          "offset": 2772,
+          "length": 2534,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "3d8638fbc9718fcb"
+        }
+      ]
+    },
+    {
+      "path": "/data/files/all.txt",
+      "file_hash": "340f21a116210520810afccf02be302b",
+      "chunks": [
+        {
+          "offset": 0,
+          "length": 793,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "a5700d088b8922a7"
+        },
+        {
+          "offset": 793,
+          "length": 1631,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "a5700d088b8922a7"
+        },
+        {
+          "offset": 0,
+          "length": 2384,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "31054dae2bb797ad"
+        },
+        {
+          "offset": 2384,
+          "length": 1249,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "31054dae2bb797ad"
+        },
+        {
+          "offset": 3633,
+          "length": 609,
+          "crc": "0000000000000000",
+          "bundle_offset": 0,
+          "length_in_bundle": 0,
+          "bundle_crc": "31054dae2bb797ad"
+        }
+      ]
+    }
+  ]
+}

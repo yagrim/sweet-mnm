@@ -18,15 +18,18 @@ public class CommandParser {
     }
 
     public static Command parse(String[] args) {
-        final Supplier<Path> databasePathSupplier = () -> Environment.launcherDb;
-        final var commands = List.of(
-                new InstallCommand(),
-                new RepairCommand(),
+        final Supplier<Path> launcherDbSupplier = () -> Environment.launcherDb;
+        final Supplier<Path> configDbSupplier = () -> Environment.configDb;
 
-                new LoginCommand(databasePathSupplier),
-                new LogoutCommand(databasePathSupplier),
-                new TokenCommand(databasePathSupplier),
-                new TokenInfoCommand(databasePathSupplier),
+
+        final var commands = List.of(
+                new InstallCommand(configDbSupplier),
+                new RepairCommand(configDbSupplier),
+
+                new LoginCommand(launcherDbSupplier),
+                new LogoutCommand(launcherDbSupplier),
+                new TokenCommand(launcherDbSupplier),
+                new TokenInfoCommand(launcherDbSupplier),
 
                 new VersionCommand()
         );

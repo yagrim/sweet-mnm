@@ -2,18 +2,42 @@ package org.mnm.client;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.config.ConfigDb;
 
-import static org.mnm.client.Validators.validateArguments;
+import java.nio.file.Path;
+import java.util.function.Supplier;
+
+import static org.mnm.config.Environment.API_BASE_URL;
 
 public class InstallCommand implements Command {
 
+    private final Supplier<Path> configFileLocator;
+
+    public InstallCommand(Supplier<Path> configDbSupplier) {
+        this.configFileLocator = configDbSupplier;
+    }
+
     @Override
     public void run(Arguments args) {
-        validateArguments(args);
 
-        ClientInstaller client = new ClientInstaller();
-        client.install(args.get("username"), args.get("password"));
+        InstallOptions options = new InstallOptions(
+                args.get("username"),
+                args.get("password"),
+                args.getOrDefault("slug", null)
+        );
+        options.validate();
 
+        try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
+            configDb.initialize();
+
+            ClientInstaller client = new ClientInstaller(configDb);
+            client.install(options, API_BASE_URL);
+        }
+
+        shutdownHook();
+    }
+
+    protected void shutdownHook() {
         System.out.println("Installation completed");
     }
 

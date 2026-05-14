@@ -1,0 +1,29 @@
+= How to create test files
+
+Guide to create test files to be included in tests manifest like test-manifest.json.
+
+== Steps
+
+* For each entry in manifest:
+    * Value of `path`
+    * Number of bundles (files to download)
+
+* For each bundle:
+    * How many chunks to assign
+    * Generate bundle with content
+    * Generate compressed file with `zstd --no-check < {input_file} > {output_file}
+    * Calculate `bundle_crc` for compressed file with `HashFunctions.InMemory.crc64`
+    * Calculate `file_hash` with `xxh3sum -H2 {input_file}`
+        * If the file uses only one chunk, use the uncompressed file.
+        * If the file more than one. Concatenate files in the right order with `cat {file1} {file2} ... > {output_file}`
+
+* Create or update manifest JSON:
+    * Inform `path` and `file_hash`
+    * Inform `chunks` based on previous steps.
+    * For each chunk:
+        * Calculate `offset` and `length`.
+            - offset = sum(previous_lengths_for_uncompressed_bundle)
+            - length = size of current section
+        * Inform `bundle_crc` with value calculated above
+        * NOTE: `crc`, `bundle_offset` and `length_in_bundle` are not currently used.
+

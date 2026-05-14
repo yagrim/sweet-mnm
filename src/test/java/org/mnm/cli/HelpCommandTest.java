@@ -25,7 +25,7 @@ class HelpCommandTest {
 
     @Test
     void shouldReturnListOfCommands(SystemOutCaptureExtension out) {
-        HelpCommand command = new HelpCommand(List.of(new InstallCommand(), new RepairCommand()));
+        HelpCommand command = new HelpCommand(List.of(new InstallCommand(null), new RepairCommand(null)));
 
         command.run(null);
 

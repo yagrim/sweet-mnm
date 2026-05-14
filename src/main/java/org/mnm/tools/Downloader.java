@@ -41,6 +41,10 @@ public class Downloader {
 
     // TODO this is a workaround, we should handle http redirect
     private static String sanitize(String manifestUrl) {
+        // TODO test
+        if (manifestUrl.startsWith("http://localhost"))
+            return manifestUrl;
+
         if (manifestUrl.startsWith("http:")) {
             return "https:" + manifestUrl.substring(5);
         }

@@ -1,8 +1,8 @@
 package org.mnm;
 
 import org.assertj.core.api.Assertions;
-import org.mnm.client.Client;
-import org.mnm.client.Session;
+import org.mnm.config.Client;
+import org.mnm.config.Session;
 
 import java.nio.file.Path;
 import java.sql.*;
@@ -22,7 +22,7 @@ public class ConfigTestDatabase {
         }
     }
 
-    public record TestDatabase(Connection connection) {
+    public record TestDatabase(Connection connection) implements AutoCloseable {
 
         public List<String> getTables() throws SQLException {
             final List<String> tableNames = new ArrayList<>();
@@ -35,6 +35,7 @@ public class ConfigTestDatabase {
             return tableNames;
         }
 
+        @Override
         public void close() {
             try {
                 connection.close();
@@ -71,13 +72,13 @@ public class ConfigTestDatabase {
             public TableAsserter containsClient(Client expected) {
                 try (PreparedStatement st = connection.prepareStatement("select * from %s where slug = ?;".formatted(tableName));) {
                     st.setString(1, expected.slug());
-                    try (ResultSet resultSet = st.executeQuery()) {
-                        while (resultSet.next()) {
+                    try (ResultSet rs = st.executeQuery()) {
+                        while (rs.next()) {
                             Client actual = new Client(
-                                    resultSet.getString("slug"),
-                                    resultSet.getString("version"),
-                                    Client.Status.valueOf(resultSet.getString("status")),
-                                    resultSet.getString("path"));
+                                    rs.getString("slug"),
+                                    rs.getString("version"),
+                                    Client.Status.valueOf(rs.getString("status")),
+                                    rs.getString("path"));
                             assertThat(actual).isEqualTo(expected);
                         }
                     }
@@ -111,7 +112,7 @@ public class ConfigTestDatabase {
                 return this;
             }
 
-            public TableAsserter containsRows(int expected) {
+            public TableAsserter hasRows(int expected) {
                 assertThat(count()).isEqualTo(expected);
                 return this;
             }

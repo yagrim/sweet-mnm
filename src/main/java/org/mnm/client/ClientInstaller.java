@@ -1,47 +1,77 @@
 package org.mnm.client;
 
 import org.mnm.api.Session;
+import org.mnm.config.Client;
+import org.mnm.config.ConfigDb;
 import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
-import org.mnm.tools.Downloader;
-import org.mnm.tools.FileUtils;
-import org.mnm.tools.HashFunctions;
-import org.mnm.tools.Zstd;
+import org.mnm.tools.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
-import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Client.Status.*;
+import static org.mnm.config.Environment.getInstallPath;
 import static org.mnm.tools.FileUtils.fileExists;
+import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.UrlBuilder.buildUrl;
 
 /**
  * Installs or repairs the installation.
  */
-// TODO test
 public class ClientInstaller {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientInstaller.class);
 
-    public void install(String username, String password) {
-        Session session = Session.login(username, password, API_BASE_URL);
-        ManifestHandler manifestHandler = session.getManifestHandler();
-        List<Manifest.File> files = manifestHandler.getFiles();
+    private final ConfigDb configDb;
 
-        Set<Integer> sizes = new TreeSet<>();
-        files.stream().forEach(f -> sizes.add(f.chunks().size()));
+    public ClientInstaller(ConfigDb configDb) {
+        this.configDb = configDb;
+    }
+
+    public InstallationResult install(InstallOptions options, String apiBaseUrl) {
+
+        Client currentClient;
+        Session session;
+
+        if (!StringUtils.isEmpty(options.slug())) {
+            final String slug = options.slug();
+            currentClient = configDb.getClient(slug);
+            if (currentClient == null) {
+                panic("No client found: run 'install' command first.");
+            }
+            var sessions = configDb.getSessions(slug);
+            if (sessions.isEmpty()) {
+                panic("No session found: run 'install' command first.");
+            }
+            logger.debug("Found {} sessions for '{}'", sessions.size(), slug);
+            session = Session.login(sessions.get(0).token(), apiBaseUrl);
+        } else {
+            session = Session.login(options.username(), options.password(), apiBaseUrl);
+            currentClient = configDb.getClient(session.getSlug());
+        }
+
+        final String slug = session.getSlug();
+        final String installPath = getInstallPath(slug).toAbsolutePath().toString();
+        if (currentClient == null) {
+            Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
+            configDb.addClient(client);
+            configDb.addSession(new org.mnm.config.Session(session.getSlug(), session.getToken()));
+        } else {
+            configDb.updateClient(slug, session.getVersion(), REPAIRING, installPath);
+        }
+
+        final ManifestHandler manifestHandler = session.getManifestHandler();
 
         // Validate files
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();
-        for (Manifest.File file : files) {
-            final Path location = FileHelper.getLocation(file, session.getSlug());
+        for (Manifest.File file : manifestHandler.getFiles()) {
+            final Path location = FileHelper.getLocation(file, slug);
             if (!location.toFile().exists()) {
                 missing.add(file);
             } else {
@@ -69,14 +99,23 @@ public class ClientInstaller {
         // download only invalid files
         if (!invalid.isEmpty()) {
             logger.info("Installing modified files");
+            logger.debug("Files to repair: {}", invalid.size());
             installFiles(invalid, session);
         }
 
         // download only invalid files
         if (!missing.isEmpty()) {
             logger.info("Installing new files");
+            logger.debug("Files to install: {}", missing.size());
             installFiles(missing, session);
         }
+
+        configDb.updateClient(slug, session.getVersion(), COMPLETED, installPath);
+
+        return new InstallationResult(missing.size(), invalid.size());
+    }
+
+    record InstallationResult(int missing, int invalid) {
 
     }
 
@@ -101,6 +140,11 @@ public class ClientInstaller {
                 if (!fileExists(downloadPath)) {
                     Downloader.downloadFile(buildUrl(chunksUrl, bundleName).toString(), downloadPath);
                 }
+
+                String crc = HashFunctions.InMemory.crc64(downloadPath);
+                if (!crc.equals(bundle.bundleCrc())) {
+                    panic("CRC validation failed for: " + bundleName);
+                }
             }
         }
 
@@ -116,7 +160,7 @@ public class ClientInstaller {
         }
 
         private static Path getLocation(Manifest.File file, String slug) {
-            return Environment.client.resolve(slug).resolve(file.path().substring(1));
+            return getInstallPath(slug).resolve(file.path().substring(1));
         }
     }
 

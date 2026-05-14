@@ -1,4 +1,4 @@
-package org.mnm.client;
+package org.mnm.config;
 
 public record Session(
         String slug,

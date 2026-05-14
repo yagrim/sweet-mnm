@@ -5,5 +5,4 @@
 * Max chunks count per bundle is 600.
 * Files that re-use bundles are 100% the same file but with different name.
 * Max bundle size is 45MB
-
-<
+* Chunks don't contain size and checksum in header. Created via stdin/out (`zstd --no-check -c < file.in > file.out`).
