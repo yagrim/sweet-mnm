@@ -8,7 +8,6 @@ public class Environment {
     private static final Path client = Path.of(".");
 
     public static final Path downloads = client.resolve("downloads");
-    public static final Path chunks = downloads.resolve("chunks");
 
     public static final String API_BASE_URL = "https://account.monstersandmemories.com/api/";
 
@@ -22,7 +21,4 @@ public class Environment {
             .resolve("com.monstersandmemories.launcher")
             .resolve("launcher.db");
 
-    public static Path getInstallPath(String slug) {
-        return Environment.client.resolve(slug);
-    }
 }

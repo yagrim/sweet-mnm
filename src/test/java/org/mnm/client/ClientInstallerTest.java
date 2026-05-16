@@ -14,15 +14,16 @@ import org.mnm.config.Session;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.ApiServerStubs.*;
 import static org.mnm.TestUtils.appendToFile;
 import static org.mnm.TestUtils.deletePath;
 import static org.mnm.config.Client.Status.COMPLETED;
-import static org.mnm.config.Environment.getInstallPath;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -36,7 +37,7 @@ class ClientInstallerTest {
     static void beforeEach() throws IOException {
         try {
             FileUtils.forceDelete(Environment.downloads.toFile());
-            FileUtils.forceDelete(Environment.getInstallPath(TEST_SLUG).toFile());
+            FileUtils.forceDelete(testInstallationPath().toFile());
         } catch (FileNotFoundException e) {
         }
     }
@@ -54,11 +55,19 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
+            assertThat(tempDir.resolve("mnm")).doesNotExist();
+            assertThat(tempDir.resolve("downloads")).doesNotExist();
+
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions("username", "password", null);
-            InstallationResult result = installer.install(options, mockApiBaseUrl(wiremock));
+            InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndSession(dbFile);
+
+            assertThat(listDirs(tempDir)).containsExactlyInAnyOrder("mnm", "downloads");
+            assertThat(tempDir.resolve("mnm")).isNotEmptyDirectory();
+            assertThat(tempDir.resolve("downloads")).isNotEmptyDirectory();
+            assertThat(tempDir.resolve("downloads").resolve("bundles")).isNotEmptyDirectory();
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(3);
@@ -75,7 +84,7 @@ class ClientInstallerTest {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
-            InstallationResult result = installer.install(options, mockApiBaseUrl(wiremock));
+            InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndSession(dbFile);
 
@@ -88,14 +97,14 @@ class ClientInstallerTest {
     @Order(3)
     void shouldRepairAndReInstallMissingFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         final Path dbFile = testConfigDatabase(tempDir);
-        deletePath(getInstallPath(TEST_SLUG).resolve("data"));
+        deletePath(testInstallationPath().resolve("data"));
         stubAuthenticationFlow(wiremock);
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
-            InstallationResult result = installer.install(options, mockApiBaseUrl(wiremock));
+            InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndSession(dbFile);
 
@@ -108,14 +117,14 @@ class ClientInstallerTest {
     @Order(4)
     void shouldRepairAndFixCorruptedFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         final Path dbFile = testConfigDatabase(tempDir);
-        appendToFile(getInstallPath(TEST_SLUG).resolve("numbers.txt"), "corrupted");
+        appendToFile(testInstallationPath().resolve("numbers.txt"), "corrupted");
         stubAuthenticationFlow(wiremock);
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
-            InstallationResult result = installer.install(options, mockApiBaseUrl(wiremock));
+            InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndSession(dbFile);
 
@@ -130,7 +139,7 @@ class ClientInstallerTest {
                     .containsExactlyInAnyOrder("clients", "sessions");
 
             testDatabase.assertThatTable("clients")
-                    .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath().toAbsolutePath().toString()))
+                    .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath().toAbsolutePath().toString()))
                     .hasRows(1);
             testDatabase.assertThatTable("sessions")
                     .containsSession(1, new Session(TEST_SLUG, "my-token"))
@@ -152,8 +161,19 @@ class ClientInstallerTest {
         return tempDir.resolve("sweet-test.db");
     }
 
-    private static Path installationPath() {
-        return Environment.downloads.getParent().resolve(TEST_SLUG);
+    private static Path testInstallationPath() {
+        return tempDir.resolve(TEST_SLUG);
     }
 
+    private static List<String> listDirs(Path base) {
+        try {
+            return Files.list(base).toList().stream()
+                    .filter(Files::isDirectory)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

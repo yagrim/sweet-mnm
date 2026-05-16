@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mnm.config.Client.Status.*;
-import static org.mnm.config.Environment.getInstallPath;
 import static org.mnm.tools.FileUtils.fileExists;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.UrlBuilder.buildUrl;
@@ -33,7 +32,8 @@ public class ClientInstaller {
         this.configDb = configDb;
     }
 
-    public InstallationResult install(InstallOptions options, String apiBaseUrl) {
+    public InstallationResult install(InstallOptions options,
+                                      Path workDir, String apiBaseUrl) {
 
         Client currentClient;
         Session session;
@@ -56,7 +56,8 @@ public class ClientInstaller {
         }
 
         final String slug = session.getSlug();
-        final String installPath = getInstallPath(slug).toAbsolutePath().toString();
+        final Installation installation = new Installation(workDir, slug);
+        final String installPath = installation.getInstallPath().toString();
         if (currentClient == null) {
             Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
             configDb.addClient(client);
@@ -71,7 +72,7 @@ public class ClientInstaller {
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();
         for (Manifest.File file : manifestHandler.getFiles()) {
-            final Path location = FileHelper.getLocation(file, slug);
+            final Path location = installation.getInstallPath(file.path());
             if (!location.toFile().exists()) {
                 missing.add(file);
             } else {
@@ -100,14 +101,14 @@ public class ClientInstaller {
         if (!invalid.isEmpty()) {
             logger.info("Installing modified files");
             logger.debug("Files to repair: {}", invalid.size());
-            installFiles(invalid, session);
+            installFiles(invalid, session, installation);
         }
 
         // download only invalid files
         if (!missing.isEmpty()) {
             logger.info("Installing new files");
             logger.debug("Files to install: {}", missing.size());
-            installFiles(missing, session);
+            installFiles(missing, session, installation);
         }
 
         configDb.updateClient(slug, session.getVersion(), COMPLETED, installPath);
@@ -120,21 +121,21 @@ public class ClientInstaller {
     }
 
     // We could have async workers to download and extract in parallel
-    private static void installFiles(List<Manifest.File> files, Session session) {
+    private static void installFiles(List<Manifest.File> files, Session session, Installation installation) {
         for (Manifest.File file : files) {
-            FileHelper.downloadChunks(file, session.getChunksUrl());
+            FileHelper.downloadChunks(file, session.getChunksUrl(), installation);
         }
         for (Manifest.File file : files) {
-            FileHelper.extract(file, session.getSlug());
+            FileHelper.extract(file, installation);
         }
     }
 
     static class FileHelper {
 
-        private static void downloadChunks(Manifest.File file, String chunksUrl) {
+        private static void downloadChunks(Manifest.File file, String chunksUrl, Installation installation) {
             for (Manifest.Bundle bundle : file.getBundlesList()) {
                 final String bundleName = bundle.bundleCrc() + ".bin";
-                final Path downloadPath = Environment.chunks.resolve(bundleName);
+                final Path downloadPath = installation.getBundlePath(bundleName);
                 System.out.println("Downloading chunks for bundle: " + downloadPath.toAbsolutePath());
 
                 if (!fileExists(downloadPath)) {
@@ -148,19 +149,15 @@ public class ClientInstaller {
             }
         }
 
-        private static void extract(Manifest.File file, String slug) {
-            final Path destination = getLocation(file, slug);
+        private static void extract(Manifest.File file, Installation installation) {
+            final Path destination = installation.getInstallPath(file.path());
             FileUtils.createDirectories(destination);
 
             Zstd.Section[] sections = file.getBundlesList()
                     .stream()
-                    .map(bundle -> new Zstd.Section(Environment.chunks.resolve(bundle.resolveName()), bundle.fileSectionLength()))
+                    .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))
                     .toArray(Zstd.Section[]::new);
             Zstd.InMemory.decompress(destination, sections);
-        }
-
-        private static Path getLocation(Manifest.File file, String slug) {
-            return getInstallPath(slug).resolve(file.path().substring(1));
         }
     }
 

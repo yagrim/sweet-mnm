@@ -31,7 +31,7 @@ public class InstallCommand implements Command {
             configDb.initialize();
 
             ClientInstaller client = new ClientInstaller(configDb);
-            client.install(options, API_BASE_URL);
+            client.install(options, getWorkingDirectory(), API_BASE_URL);
         }
 
         shutdownHook();
@@ -54,6 +54,10 @@ public class InstallCommand implements Command {
     @Override
     public String help() {
         return description();
+    }
+
+    private static Path getWorkingDirectory() {
+        return Path.of(System.getProperty("user.dir"));
     }
 
 }
