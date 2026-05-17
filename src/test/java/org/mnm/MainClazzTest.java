@@ -17,7 +17,7 @@ class MainClazzTest {
                 .isEqualTo("""
                         Unrecognized command: 'unknown'
                         
-                        %s""".formatted(expectedAvailableCommands()));
+                        %s""".formatted(expectedHelp()));
     }
 
     @Test
@@ -25,11 +25,16 @@ class MainClazzTest {
         MainClazz mainClazz = new MainClazz();
         mainClazz.main(new String[]{"help"});
 
-        assertThat(out.getOutput()).isEqualTo(expectedAvailableCommands());
+        assertThat(out.getOutput()).isEqualTo(expectedHelp());
     }
 
-    private static String expectedAvailableCommands() {
+    private static String expectedHelp() {
         return """
+                (The unofficial and...) Sweet tool to manage Monsters & Memories clients
+                
+                Usage:
+                  sweet <command> [--option [value]] ...
+
                 Available commands:
                   install      Installs MnM client in the current location
                   login        Login with your username and password (can update launcher database)

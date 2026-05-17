@@ -3,6 +3,7 @@ package org.mnm.cli;
 import java.util.Comparator;
 import java.util.List;
 
+
 class HelpCommand implements Command {
 
     private final List<Command> commands;
@@ -19,6 +20,16 @@ class HelpCommand implements Command {
                 .getAsInt() + 3;
 
         final StringBuilder sb = new StringBuilder();
+
+        sb.append("(The unofficial and...) Sweet tool to manage Monsters & Memories clients\n\n");
+        usage(sb);
+        commands(sb, indentation);
+
+        sb.append(format(this.name(), this.help(), indentation));
+        System.out.println(sb);
+    }
+
+    private void commands(StringBuilder sb, int indentation) {
         sb.append("Available commands:\n");
 
         commands.stream()
@@ -27,9 +38,11 @@ class HelpCommand implements Command {
                     sb.append(format(c.name(), c.description(), indentation));
                     sb.append("\n");
                 });
+    }
 
-        sb.append(format(this.name(), this.help(), indentation));
-        System.out.println(sb);
+    private void usage(StringBuilder sb) {
+        sb.append("Usage:\n");
+        sb.append("  sweet <command> [--option [value]] ...\n\n");
     }
 
     private static String format(String first, String second, int distance) {

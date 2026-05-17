@@ -30,6 +30,11 @@ class HelpCommandTest {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
+                (The unofficial and...) Sweet tool to manage Monsters & Memories clients
+                
+                Usage:
+                  sweet <command> [--option [value]] ...
+                
                 Available commands:
                   install   Installs MnM client in the current location
                   repair    Checks installation and updates if necessary
