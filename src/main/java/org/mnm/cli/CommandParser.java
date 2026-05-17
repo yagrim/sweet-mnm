@@ -18,21 +18,7 @@ public class CommandParser {
     }
 
     public static Command parse(String[] args) {
-        final Supplier<Path> launcherDbSupplier = () -> Environment.launcherDb;
-        final Supplier<Path> configDbSupplier = () -> Environment.configDb;
-
-
-        final var commands = List.of(
-                new InstallCommand(configDbSupplier),
-                new RepairCommand(configDbSupplier),
-
-                new LoginCommand(launcherDbSupplier),
-                new LogoutCommand(launcherDbSupplier),
-                new TokenCommand(launcherDbSupplier),
-                new TokenInfoCommand(launcherDbSupplier),
-
-                new VersionCommand()
-        );
+        final var commands = buildCommands();
         final Command help = new HelpCommand(commands);
 
         if (args == null || args.length == 0) {
@@ -50,6 +36,25 @@ public class CommandParser {
         }
 
         return new UnknownCommand(args[0], help);
+    }
+
+    private static List<Command> buildCommands() {
+        final Supplier<Path> launcherDbSupplier = () -> Environment.launcherDb;
+        final Supplier<Path> configDbSupplier = () -> Environment.configDb;
+
+
+        final var commands = List.of(
+                new InstallCommand(configDbSupplier),
+                new RepairCommand(configDbSupplier),
+
+                new LoginCommand(launcherDbSupplier),
+                new LogoutCommand(launcherDbSupplier),
+                new TokenCommand(launcherDbSupplier),
+                new TokenInfoCommand(launcherDbSupplier),
+
+                new VersionCommand()
+        );
+        return commands;
     }
 
 }
