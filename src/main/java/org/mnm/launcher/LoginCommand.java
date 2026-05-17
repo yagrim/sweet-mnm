@@ -59,8 +59,6 @@ public class LoginCommand implements Command {
                   --username       MnM account username (required)
                   --password       MnM account password (required)
                   --ignore-update  Prints the token without updating the launcher database
-                  --dev-options    Enables developer options (requires --api-endpoint)
-                  --api-endpoint   API endpoint used when --dev-options is set
                   --help           Shows this help
                 """.formatted(description(), name());
     }
