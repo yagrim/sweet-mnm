@@ -84,8 +84,6 @@ public class ClientInstaller {
                     invalid.add(file);
                 } else {
                     final String calculatedCrc = HashFunctions.OS.xxh3(location);
-                    // InMemory works in CI
-//                    final String calculatedCrc = HashFunctions.InMemory.xxh3(location);
                     if (!calculatedCrc.equals(file.fileHash())) {
                         invalid.add(file);
                     }

@@ -31,10 +31,6 @@ jobs:
           java --version
           native-image --version
           xxhsum --version
-      - name: temp
-        run: |
-          xxhsum --help
-          xxhsum -H2 build.gradle
       - name: Run tests
         run: make test
       - name: Native build

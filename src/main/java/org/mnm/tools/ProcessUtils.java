@@ -36,7 +36,7 @@ public class ProcessUtils {
                             + ", stdout=" + stdout
                             + ", stderr=" + stderr);
                 }
-                return firstToken(stdout);
+                return stdout;
             }
         } catch (IOException e) {
             throw new RuntimeException("Process failed for: " + workingDirectory, e);
@@ -75,16 +75,6 @@ public class ProcessUtils {
             }
             throw new RuntimeException(cause);
         }
-    }
-
-    private static String firstToken(String output) {
-        int newlineIndex = output.indexOf(System.lineSeparator());
-        String firstLine = newlineIndex >= 0 ? output.substring(0, newlineIndex) : output;
-        int separatorIndex = firstLine.indexOf(" ");
-        if (separatorIndex < 0) {
-            return firstLine;
-        }
-        return firstLine.substring(0, separatorIndex);
     }
 
 }

@@ -4,13 +4,10 @@ import net.openhft.hashing.LongTupleHashFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.List;
 
 import static org.mnm.tools.ByteUtils.readAllBytes;
-import static org.mnm.tools.FileUtils.getAllFiles;
 
 public class HashFunctions {
 
@@ -27,8 +24,7 @@ public class HashFunctions {
         }
 
         public static String xxh3(Path path) {
-            byte[] bytes = readAllBytes(path);
-            return xxh3(bytes);
+            return xxh3(readAllBytes(path));
         }
 
         /**
@@ -53,20 +49,21 @@ public class HashFunctions {
          */
         public static String xxh3(Path path) {
             long init = System.currentTimeMillis();
-
-            final List<Path> currentFiles = getAllFiles(path.getParent());
-            currentFiles.forEach(file -> logger.info("File: {} ", file));
-
-//            String output = ProcessUtils.run(path.getParent(), {"xxhsum", "-H2", path.getFileName().toString()});
             final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
-            File file = path.toAbsolutePath().toFile();
-            logger.info("File size: {} {}", file.exists(), file.length());
-            logger.info("Executing: {}, {}", command.length, String.join(", ", command));
-            String output = ProcessUtils.run(null, command);
-            logger.info("Executing {} -> {}", command, output);
+            String output = firstToken(ProcessUtils.run(null, command));
             logTime(init);
             return output;
         }
+    }
+
+    private static String firstToken(String output) {
+        int newlineIndex = output.indexOf(System.lineSeparator());
+        String firstLine = newlineIndex >= 0 ? output.substring(0, newlineIndex) : output;
+        int separatorIndex = firstLine.indexOf(" ");
+        if (separatorIndex < 0) {
+            return firstLine;
+        }
+        return firstLine.substring(0, separatorIndex);
     }
 
     private static void logTime(long init) {
@@ -74,4 +71,5 @@ public class HashFunctions {
             logger.debug("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
         }
     }
+
 }
