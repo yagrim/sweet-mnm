@@ -1,19 +1,29 @@
 package org.mnm.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class FileUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+    public static List<Path> getAllFiles(Path base) {
+        if (!base.toFile().exists()) {
+            return new ArrayList<>();
+        }
+        try (var stream = Files.walk(base)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static boolean fileExists(Path downloadPath) {
         File file = downloadPath.toFile();

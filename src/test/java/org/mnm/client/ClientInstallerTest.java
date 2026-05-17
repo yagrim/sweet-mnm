@@ -71,6 +71,7 @@ class ClientInstallerTest {
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(3);
+            assertThat(result.orphan()).isEqualTo(0);
         }
     }
 
@@ -90,6 +91,7 @@ class ClientInstallerTest {
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(0);
+            assertThat(result.orphan()).isEqualTo(0);
         }
     }
 
@@ -110,6 +112,7 @@ class ClientInstallerTest {
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(1);
+            assertThat(result.orphan()).isEqualTo(0);
         }
     }
 
@@ -130,6 +133,38 @@ class ClientInstallerTest {
 
             assertThat(result.invalid()).isEqualTo(1);
             assertThat(result.missing()).isEqualTo(0);
+            assertThat(result.orphan()).isEqualTo(0);
+        }
+    }
+
+    @Test
+    @Order(5)
+    void shouldRemoveOrphanFiles(WireMockRuntimeInfo wiremock) throws SQLException {
+        final Path dbFile = testConfigDatabase(tempDir);
+        final Path additionalFile1 = testInstallationPath().resolve("unnecessary-1.txt");
+        final Path additionalFile2 = testInstallationPath().resolve("unnecessary-2.bin");
+        appendToFile(additionalFile1, "some-text");
+        appendToFile(additionalFile2, "some-text");
+
+        assertThat(additionalFile1).isNotEmptyFile();
+        assertThat(additionalFile2).isNotEmptyFile();
+
+        stubAuthenticationFlow(wiremock);
+
+        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+
+            final ClientInstaller installer = new ClientInstaller(configDb);
+            InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
+            InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
+
+            assertThat(additionalFile1).doesNotExist();
+            assertThat(additionalFile2).doesNotExist();
+
+            assertDatabaseContainsClientAndSession(dbFile);
+
+            assertThat(result.invalid()).isEqualTo(0);
+            assertThat(result.missing()).isEqualTo(0);
+            assertThat(result.orphan()).isEqualTo(2);
         }
     }
 

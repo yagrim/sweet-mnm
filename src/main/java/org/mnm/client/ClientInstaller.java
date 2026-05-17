@@ -3,9 +3,7 @@ package org.mnm.client;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
-import org.mnm.manifest.ManifestHandler;
 import org.mnm.tools.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +14,7 @@ import java.util.List;
 
 import static org.mnm.config.Client.Status.*;
 import static org.mnm.tools.FileUtils.fileExists;
+import static org.mnm.tools.FileUtils.getAllFiles;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.UrlBuilder.buildUrl;
 
@@ -66,13 +65,16 @@ public class ClientInstaller {
             configDb.updateClient(slug, session.getVersion(), REPAIRING, installPath);
         }
 
-        final ManifestHandler manifestHandler = session.getManifestHandler();
-
-        // Validate files
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();
-        for (Manifest.File file : manifestHandler.getFiles()) {
+        // We list files, so empty directories will still remain
+        final List<Path> currentFiles = getAllFiles(installation.getInstallPath());
+
+        for (Manifest.File file : session.getManifestHandler().getFiles()) {
             final Path location = installation.getInstallPath(file.path());
+            if (currentFiles.contains(location)) {
+                currentFiles.remove(location);
+            }
             if (!location.toFile().exists()) {
                 missing.add(file);
             } else {
@@ -99,24 +101,28 @@ public class ClientInstaller {
 
         // download only invalid files
         if (!invalid.isEmpty()) {
-            logger.info("Installing modified files");
-            logger.debug("Files to repair: {}", invalid.size());
+            logger.info("Fixing updated files: {}", invalid.size());
             installFiles(invalid, session, installation);
         }
 
         // download only invalid files
         if (!missing.isEmpty()) {
-            logger.info("Installing new files");
-            logger.debug("Files to install: {}", missing.size());
+            logger.info("Installing new files: {}", missing.size());
             installFiles(missing, session, installation);
+        }
+
+        if (!currentFiles.isEmpty()) {
+            logger.info("Deleting orphan files: {}", currentFiles.size());
+            currentFiles.forEach(path -> path.toFile().delete());
         }
 
         configDb.updateClient(slug, session.getVersion(), COMPLETED, installPath);
 
-        return new InstallationResult(missing.size(), invalid.size());
+        return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 
-    record InstallationResult(int missing, int invalid) {
+
+    record InstallationResult(int invalid, int missing, int orphan) {
 
     }
 
