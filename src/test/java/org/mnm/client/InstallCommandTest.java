@@ -76,7 +76,7 @@ class InstallCommandTest {
 
         assertThat(t)
                 .isInstanceOf(PanicException.class)
-                .hasMessage("No client found: run 'install' command first.");
+                .hasMessage("No client found: run 'install --username ...' first");
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())

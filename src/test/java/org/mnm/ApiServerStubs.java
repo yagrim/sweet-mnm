@@ -1,6 +1,5 @@
 package org.mnm;
 
-import com.github.luben.zstd.Zstd;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -76,13 +75,6 @@ public class ApiServerStubs {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(chunk)));
-    }
-
-    public static byte[] compress(byte[] data, int compressionLevel) {
-        if (data == null || data.length == 0) {
-            return data;
-        }
-        return Zstd.compress(data, compressionLevel);
     }
 
 }

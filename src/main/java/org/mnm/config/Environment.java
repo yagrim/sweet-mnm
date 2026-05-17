@@ -14,7 +14,7 @@ public class Environment {
     public static Path configDb = Paths.get(System.getProperty("user.home"))
             .resolve(".local/share")
             .resolve("com.monstersandmemories.sweet")
-            .resolve("config.db");
+            .resolve("sweet-config.db");
 
     public static Path launcherDb = Paths.get(System.getProperty("user.home"))
             .resolve(".local/share")

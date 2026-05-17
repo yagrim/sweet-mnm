@@ -18,19 +18,23 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.ApiServerStubs.*;
-import static org.mnm.TestUtils.appendToFile;
-import static org.mnm.TestUtils.deletePath;
+import static org.mnm.TestUtils.*;
 import static org.mnm.config.Client.Status.COMPLETED;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @WireMockTest(extensionScanningEnabled = true)
 class ClientInstallerTest {
+
+    private static final String VALID_TEST_TOKEN = testToken(Instant.now().plus(1, ChronoUnit.MINUTES));
+    private static final String EXPIRED_TEST_TOKEN = testToken(Instant.ofEpochSecond(1000));
 
     @TempDir
     private static Path tempDir;
@@ -118,6 +122,23 @@ class ClientInstallerTest {
     }
 
     @Test
+    void shouldFailWhenStoredSessionTokenIsExpired(WireMockRuntimeInfo wiremock) {
+        final Path dbFile = tempDir.resolve("expired-token.db");
+
+        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath().toAbsolutePath().toString()));
+            configDb.addSession(new Session(TEST_SLUG, EXPIRED_TEST_TOKEN));
+
+            final ClientInstaller installer = new ClientInstaller(configDb);
+            InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
+
+            assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
+                    .isInstanceOf(PanicException.class)
+                    .hasMessage("Session token has expired: run 'install --username ...' to create a new one");
+        }
+    }
+
+    @Test
     @Order(3)
     void shouldRepairAndReInstallMissingFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         final Path dbFile = testConfigDatabase(tempDir);
@@ -199,13 +220,13 @@ class ClientInstallerTest {
                     .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath().toAbsolutePath().toString()))
                     .hasRows(1);
             testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new Session(TEST_SLUG, "my-token"))
+                    .containsSession(1, new Session(TEST_SLUG, VALID_TEST_TOKEN))
                     .hasRows(1);
         }
     }
 
     private static void stubAuthenticationFlow(WireMockRuntimeInfo wiremock) {
-        stubAccountLogin("my-token");
+        stubAccountLogin(VALID_TEST_TOKEN);
         stubGameVersions(wiremock.getHttpBaseUrl());
         stubManifestDownload();
     }

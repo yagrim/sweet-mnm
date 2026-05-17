@@ -41,14 +41,16 @@ public class ClientInstaller {
             final String slug = options.slug();
             currentClient = configDb.getClient(slug);
             if (currentClient == null) {
-                panic("No client found: run 'install' command first.");
+                panic("No client found: run 'install --username ...' first");
             }
             var sessions = configDb.getSessions(slug);
             if (sessions.isEmpty()) {
-                panic("No session found: run 'install' command first.");
+                panic("No client found: run 'install --username ...' first");
             }
             logger.debug("Found {} sessions for '{}'", sessions.size(), slug);
-            session = Session.login(sessions.get(0).token(), apiBaseUrl);
+            final String token = sessions.get(0).token();
+            validateToken(token);
+            session = Session.login(token, apiBaseUrl);
         } else {
             session = Session.login(options.username(), options.password(), apiBaseUrl);
             currentClient = configDb.getClient(session.getSlug());
@@ -124,6 +126,12 @@ public class ClientInstaller {
 
     record InstallationResult(int invalid, int missing, int orphan) {
 
+    }
+
+    private static void validateToken(String token) {
+        if (JwtParser.parse(token).isExpired()) {
+            panic("Session token has expired: run 'install --username ...' to create a new one");
+        }
     }
 
     // We could have async workers to download and extract in parallel
