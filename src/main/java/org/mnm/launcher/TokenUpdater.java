@@ -3,13 +3,10 @@ package org.mnm.launcher;
 import org.mnm.api.ApiConnection;
 import org.mnm.api.ApiConnector;
 import org.mnm.api.RestClient;
-import org.mnm.launcher.LoginCommand.DevFlags;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.function.Supplier;
-
-import static org.mnm.config.Environment.API_BASE_URL;
 
 public class TokenUpdater {
 
@@ -19,13 +16,10 @@ public class TokenUpdater {
         this.databaseFileLocator = databaseFileLocator;
     }
 
-    public void update(String username, String password, LoginCommand.Options options) {
-
-        final DevFlags devFlags = options.devFlags();
-        final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
+    public void update(String apiEndpoint, Options options) {
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(apiEndpoint));
-        ApiConnection apiConnection = apiConnector.login(username, password);
+        ApiConnection apiConnection = apiConnector.login(options.username(), options.password());
 
         final String newToken = apiConnection.getToken();
         if (!options.ignoreUpdate()) {
@@ -42,5 +36,9 @@ public class TokenUpdater {
             System.out.println("Skipping token update in launcher database");
         }
     }
+
+    record Options(String username, String password, boolean ignoreUpdate) {
+    }
+
 
 }

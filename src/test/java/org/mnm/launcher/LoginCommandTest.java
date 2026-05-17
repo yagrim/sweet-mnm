@@ -46,8 +46,8 @@ class LoginCommandTest {
         command.run(arguments);
 
         assertThat(out.getOutput())
-                .contains("LoginCommand - DEVELOPER OPTIONS ENABLED!")
-                .contains("LoginCommand - If you see this line, proceed at your own risk")
+                .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
+                .contains("DevFlags - If you see this line, proceed at your own risk")
                 .endsWith("Token updated in launcher database\n");
 
         testDb.assertThatToken().isEqualTo(uuid);
@@ -75,8 +75,8 @@ class LoginCommandTest {
         command.run(arguments);
 
         assertThat(out.getOutput())
-                .contains("LoginCommand - DEVELOPER OPTIONS ENABLED!")
-                .contains("LoginCommand - If you see this line, proceed at your own risk")
+                .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
+                .contains("DevFlags - If you see this line, proceed at your own risk")
                 .endsWith("Skipping token update in launcher database\n");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
