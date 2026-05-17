@@ -25,11 +25,11 @@ public class LoginCommand implements Command {
     public void run(Arguments args) {
         final String username = args.get("username");
         if (isEmpty(username)) {
-            panic("Missing parameter: '--username'");
+            panic("Missing or empty parameter: '--username'");
         }
         final String password = args.get("password");
         if (isEmpty(password)) {
-            panic("Missing parameter: '--password'");
+            panic("Missing or empty parameter: '--password'");
         }
 
         Options options = new Options(args.getBoolean("ignore-update"), processDevFlags(args));

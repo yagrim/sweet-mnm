@@ -6,14 +6,13 @@ import static org.mnm.tools.ProcessUtils.panic;
 
 record InstallOptions(String username, String password, String slug) {
 
-    // TODO test
     public void validate() {
         if (StringUtils.isEmpty(slug)) {
             if (StringUtils.isEmpty(username)) {
-                panic("Missing parameter: '--username' or '--slug'");
+                panic("Missing or empty parameter: '--username' or '--slug'");
             }
             if (!StringUtils.isEmpty(username) && StringUtils.isEmpty(password)) {
-                panic("Missing parameter: '--password'");
+                panic("Missing or empty parameter: '--password'");
             }
         }
     }

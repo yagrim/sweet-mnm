@@ -94,7 +94,7 @@ class LoginCommandTest {
 
         assertThat(t)
                 .isInstanceOf(PanicException.class)
-                .hasMessage("Missing parameter: '--username'");
+                .hasMessage("Missing or empty parameter: '--username'");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
@@ -111,7 +111,7 @@ class LoginCommandTest {
 
         assertThat(t)
                 .isInstanceOf(PanicException.class)
-                .hasMessage("Missing parameter: '--password'");
+                .hasMessage("Missing or empty parameter: '--password'");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }

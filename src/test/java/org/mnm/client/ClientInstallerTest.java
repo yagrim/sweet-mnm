@@ -11,6 +11,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Environment;
 import org.mnm.config.Session;
+import org.mnm.tools.PanicException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.ApiServerStubs.*;
 import static org.mnm.TestUtils.appendToFile;
 import static org.mnm.TestUtils.deletePath;
@@ -40,6 +42,26 @@ class ClientInstallerTest {
             FileUtils.forceDelete(testInstallationPath().toFile());
         } catch (FileNotFoundException e) {
         }
+    }
+
+    @Test
+    void shouldFailWithoutCredentials(WireMockRuntimeInfo wiremock) {
+        final ClientInstaller installer = new ClientInstaller(null);
+        InstallOptions options = new InstallOptions("", "", null);
+
+        assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
+                .isInstanceOf(PanicException.class)
+                .hasMessage("Username or password is empty");
+    }
+
+    @Test
+    void shouldFailWithOnlyUsername(WireMockRuntimeInfo wiremock) {
+        final ClientInstaller installer = new ClientInstaller(null);
+        InstallOptions options = new InstallOptions("username", null, null);
+
+        assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
+                .isInstanceOf(PanicException.class)
+                .hasMessage("Username or password is empty");
     }
 
     @Test
