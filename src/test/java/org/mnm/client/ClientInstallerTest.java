@@ -39,6 +39,8 @@ class ClientInstallerTest {
     @TempDir
     private static Path tempDir;
 
+    private static Path dbFile;
+
     @BeforeAll
     static void beforeEach() throws IOException {
         try {
@@ -46,6 +48,7 @@ class ClientInstallerTest {
             FileUtils.forceDelete(testInstallationPath().toFile());
         } catch (FileNotFoundException e) {
         }
+        dbFile = testConfigDatabase(tempDir);
     }
 
     @Test
@@ -69,10 +72,25 @@ class ClientInstallerTest {
     }
 
     @Test
+    void shouldFailWhenStoredSessionTokenIsExpired(WireMockRuntimeInfo wiremock) {
+        final Path dbFile = tempDir.resolve("expired-token.db");
+
+        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath().toAbsolutePath().toString()));
+            configDb.addSession(new Session(TEST_SLUG, EXPIRED_TEST_TOKEN));
+
+            final ClientInstaller installer = new ClientInstaller(configDb);
+            InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
+
+            assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
+                    .isInstanceOf(PanicException.class)
+                    .hasMessage("Session token has expired: run 'install --username ...' to create a new one");
+        }
+    }
+
+    @Test
     @Order(1)
     void shouldInstallClientFromScratch(WireMockRuntimeInfo wiremock) throws SQLException {
-        final Path dbFile = testConfigDatabase(tempDir);
-
         stubAuthenticationFlow(wiremock);
         stubChunkDownload("a1fd9407db7effaf");
         stubChunkDownload("3d8638fbc9718fcb");
@@ -104,7 +122,6 @@ class ClientInstallerTest {
     @Test
     @Order(2)
     void shouldValidateClientAfterInstallation(WireMockRuntimeInfo wiremock) throws SQLException {
-        final Path dbFile = testConfigDatabase(tempDir);
         stubAuthenticationFlow(wiremock);
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
@@ -122,26 +139,8 @@ class ClientInstallerTest {
     }
 
     @Test
-    void shouldFailWhenStoredSessionTokenIsExpired(WireMockRuntimeInfo wiremock) {
-        final Path dbFile = tempDir.resolve("expired-token.db");
-
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath().toAbsolutePath().toString()));
-            configDb.addSession(new Session(TEST_SLUG, EXPIRED_TEST_TOKEN));
-
-            final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG);
-
-            assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
-                    .isInstanceOf(PanicException.class)
-                    .hasMessage("Session token has expired: run 'install --username ...' to create a new one");
-        }
-    }
-
-    @Test
     @Order(3)
     void shouldRepairAndReInstallMissingFiles(WireMockRuntimeInfo wiremock) throws SQLException {
-        final Path dbFile = testConfigDatabase(tempDir);
         deletePath(testInstallationPath().resolve("data"));
         stubAuthenticationFlow(wiremock);
 
@@ -162,7 +161,6 @@ class ClientInstallerTest {
     @Test
     @Order(4)
     void shouldRepairAndFixCorruptedFiles(WireMockRuntimeInfo wiremock) throws SQLException {
-        final Path dbFile = testConfigDatabase(tempDir);
         appendToFile(testInstallationPath().resolve("numbers.txt"), "corrupted");
         stubAuthenticationFlow(wiremock);
 
@@ -183,7 +181,6 @@ class ClientInstallerTest {
     @Test
     @Order(5)
     void shouldRemoveOrphanFiles(WireMockRuntimeInfo wiremock) throws SQLException {
-        final Path dbFile = testConfigDatabase(tempDir);
         final Path additionalFile1 = testInstallationPath().resolve("unnecessary-1.txt");
         final Path additionalFile2 = testInstallationPath().resolve("unnecessary-2.bin");
         appendToFile(additionalFile1, "some-text");
@@ -235,7 +232,7 @@ class ClientInstallerTest {
         return wiremock.getHttpBaseUrl();
     }
 
-    private Path testConfigDatabase(Path tempDir) {
+    private static Path testConfigDatabase(Path tempDir) {
         return tempDir.resolve("sweet-test.db");
     }
 

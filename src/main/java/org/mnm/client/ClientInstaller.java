@@ -83,7 +83,8 @@ public class ClientInstaller {
                 if (location.toFile().length() != file.totalSize()) {
                     invalid.add(file);
                 } else {
-                    final String calculatedCrc = HashFunctions.OS.xxh3(location);
+//                    final String calculatedCrc = HashFunctions.OS.xxh3(location);
+                    final String calculatedCrc = HashFunctions.InMemory.xxh3(location);
                     if (!calculatedCrc.equals(file.fileHash())) {
                         invalid.add(file);
                     }

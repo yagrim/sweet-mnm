@@ -23,6 +23,10 @@ public class HashFunctions {
             return Crc64Redis.calculateHex(bytes);
         }
 
+        public static String xxh3(Path path) {
+            byte[] bytes = readAllBytes(path);
+            return xxh3(bytes);
+        }
         /**
          * Note: the alternative hashByteBuffer does nto work:
          * - Fails with illegal access to sun.nio.ch.DirectBuffer.
