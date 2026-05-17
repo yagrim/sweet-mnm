@@ -21,6 +21,21 @@ class TokenInfoCommandTest {
     private static String TEST_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJtbm0iLCJlbWFpbCI6ImEtdXNlcm5hbWVAc29tZS1lbWFpbC5jb20iLCJleHAiOjE3ODA3OTAyNTcsImlhdCI6MTc3ODM3MTA1NywiaXNzIjoibW5tIiwianRpIjoiYzg2MThkMmEtYTExNy00YmQ4LWJiZmUtZDQwMjJkNWI4MThjIiwibmJmIjoxNzc4MzcxMDU2LCJwdXJwb3NlIjowLCJzdWIiOiI0MjQyNDIiLCJ0eXAiOiJhY2Nlc3MiLCJ2ZXJzaW9uIjoyMX0.8_TEQWuqz4abx3YoXawWRGlnPBVFgm9MigBA4nHt9eA";
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new TokenInfoCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Shows official launcher token information
+                
+                Usage:
+                  sweet token-info
+                
+                Options:
+                  --help   Shows this help
+                """);
+    }
+
+    @Test
     void shouldPrintTokenInformation(SystemOutCaptureExtension out, @TempDir Path tempDir) {
 
         final TestDatabase testDb = withSettings(tempDir);

@@ -26,6 +26,26 @@ import static org.mnm.LauncherTestDatabase.withSettings;
 class LoginCommandTest {
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new LoginCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Login with your username and password (updates launcher database)
+                
+                Usage:
+                  sweet login --username <username> --password <password>
+                
+                Options:
+                  --username       MnM account username (required)
+                  --password       MnM account password (required)
+                  --ignore-update  Prints the token without updating the launcher database
+                  --dev-options    Enables developer options (requires --api-endpoint)
+                  --api-endpoint   API endpoint used when --dev-options is set
+                  --help           Shows this help
+                """);
+    }
+
+    @Test
     void shouldLoginAndUpdateToken(SystemOutCaptureExtension out,
                                    WireMockRuntimeInfo wiremock,
                                    @TempDir Path tempDir) {

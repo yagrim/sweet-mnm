@@ -42,4 +42,8 @@ public class Arguments {
         return Boolean.parseBoolean(argsMap.getOrDefault(key, "false"));
     }
 
+    public boolean isHelp() {
+        return getBoolean("help");
+    }
+
 }

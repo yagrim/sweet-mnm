@@ -24,9 +24,4 @@ public class RepairCommand extends InstallCommand {
         return "Checks installation and updates if necessary";
     }
 
-    @Override
-    public String help() {
-        return description();
-    }
-
 }

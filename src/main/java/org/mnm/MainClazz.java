@@ -25,7 +25,12 @@ public class MainClazz {
             return;
         }
         try {
-            command.run(argumentsParser.apply(args));
+            Arguments arguments = argumentsParser.apply(args);
+            if (arguments.isHelp() && command.help() != null) {
+                System.out.println(command.help());
+                return;
+            }
+            command.run(arguments);
         } catch (PanicException e) {
             System.err.println("[Error] " + e.getMessage());
             exit.accept(1);

@@ -44,11 +44,24 @@ public class LoginCommand implements Command {
 
     @Override
     public String description() {
-        return "Login with your username and password (can update launcher database)";
+        return "Login with your username and password (updates launcher database)";
     }
 
     @Override
     public String help() {
-        return description();
+        return """
+                %s
+                
+                Usage:
+                  sweet %s --username <username> --password <password>
+                
+                Options:
+                  --username       MnM account username (required)
+                  --password       MnM account password (required)
+                  --ignore-update  Prints the token without updating the launcher database
+                  --dev-options    Enables developer options (requires --api-endpoint)
+                  --api-endpoint   API endpoint used when --dev-options is set
+                  --help           Shows this help
+                """.formatted(description(), name());
     }
 }

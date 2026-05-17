@@ -17,6 +17,21 @@ import static org.mnm.LauncherTestDatabase.withSchema;
 class TokenCommandTest {
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new TokenCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Shows official launcher current token
+                
+                Usage:
+                  sweet token
+                
+                Options:
+                  --help   Shows this help
+                """);
+    }
+
+    @Test
     void shouldReturnToken(SystemOutCaptureExtension out) {
         Command token = new TokenCommand(LauncherTestDatabase::fromClasspath);
 

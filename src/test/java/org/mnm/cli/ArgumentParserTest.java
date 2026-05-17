@@ -27,6 +27,15 @@ class ArgumentParserTest {
     }
 
     @Test
+    void detectsHelpFlag() {
+        String[] args = {"--help"};
+
+        Arguments parsed = ArgumentsParser.parse(args);
+
+        assertThat(parsed.isHelp()).isTrue();
+    }
+
+    @Test
     void missingValueDefaultsToTrueFlag() {
         String[] args = {"--debug"};
 

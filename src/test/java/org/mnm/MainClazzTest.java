@@ -35,8 +35,26 @@ class MainClazzTest {
     }
 
     @Test
+    void shouldPrintCommandHelpAndSkipRunWhenHelpFlagIsSet(SystemOutCaptureExtension out) {
+        AtomicInteger runCount = new AtomicInteger();
+        Command command = new TestCommand(runCount);
+
+        MainClazz.main(
+                new String[]{"test", "--help"},
+                ArgumentsParser::parse,
+                _ -> command,
+                _ -> {
+                });
+
+        assertThat(runCount).hasValue(0);
+        assertThat(out.getOutput()).isEqualTo("""
+                Test command help
+                """);
+    }
+
+    @Test
     void shouldPrintUnexpectedErrorAndExitWhenCommandFails(SystemOutCaptureExtension out) {
-        Command failingCommand = new TestCommand(new IllegalStateException("broken command"));
+        Command failingCommand = new FailingCommand(new IllegalStateException("broken command"));
         AtomicInteger exitStatus = new AtomicInteger();
 
         MainClazz.main(
@@ -55,7 +73,7 @@ class MainClazzTest {
 
     @Test
     void shouldPrintErrorAndExitWhenCommandPanics(SystemOutCaptureExtension out) {
-        Command failingCommand = new TestCommand(new PanicException("broken command"));
+        Command failingCommand = new FailingCommand(new PanicException("broken command"));
         AtomicInteger exitStatus = new AtomicInteger();
 
         MainClazz.main(
@@ -70,7 +88,30 @@ class MainClazzTest {
                 """);
     }
 
-    private record TestCommand(RuntimeException exception) implements Command {
+    private record TestCommand(AtomicInteger runCount) implements Command {
+
+        @Override
+        public void run(Arguments args) {
+            runCount.incrementAndGet();
+        }
+
+        @Override
+        public String name() {
+            return "test";
+        }
+
+        @Override
+        public String description() {
+            return "Test command";
+        }
+
+        @Override
+        public String help() {
+            return "Test command help";
+        }
+    }
+
+    private record FailingCommand(RuntimeException exception) implements Command {
 
         @Override
         public void run(Arguments args) {
@@ -102,7 +143,7 @@ class MainClazzTest {
                 
                 Available commands:
                   install      Installs MnM client in the current location
-                  login        Login with your username and password (can update launcher database)
+                  login        Login with your username and password (updates launcher database)
                   logout       Removes token from the launcher database
                   repair       Checks installation and updates if necessary
                   token        Shows official launcher current token

@@ -20,7 +20,15 @@ class HelpCommandTest {
 
         String help = command.help();
 
-        assertThat(help).isEqualTo("Shows available commands");
+        assertThat(help).isEqualTo("""
+                Shows available commands
+                
+                Usage:
+                  sweet help
+                
+                Options:
+                  --help   Shows this help
+                """);
     }
 
     @Test

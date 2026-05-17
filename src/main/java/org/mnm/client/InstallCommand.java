@@ -53,7 +53,19 @@ public class InstallCommand implements Command {
 
     @Override
     public String help() {
-        return description();
+        return """
+                %s
+                
+                Usage:
+                  sweet %2$s --username <username> --password <password>
+                  sweet %2$s --slug <slug>
+                
+                Options:
+                  --username   MnM account username (required when --slug is not set)
+                  --password   MnM account password (required when --username is set)
+                  --slug       Existing configured client slug, can be used instead of credentials
+                  --help       Shows this help
+                """.formatted(description(), name());
     }
 
     private static Path getWorkingDirectory() {

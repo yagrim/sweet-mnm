@@ -40,7 +40,15 @@ public class TokenCommand implements Command {
 
     @Override
     public String help() {
-        return description();
+        return """
+                %s
+                
+                Usage:
+                  sweet %s
+                
+                Options:
+                  --help   Shows this help
+                """.formatted(description(), name());
     }
 
 }

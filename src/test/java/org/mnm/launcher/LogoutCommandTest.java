@@ -17,6 +17,21 @@ import static org.mnm.LauncherTestDatabase.*;
 class LogoutCommandTest {
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new LogoutCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Removes token from the launcher database
+                
+                Usage:
+                  sweet logout
+                
+                Options:
+                  --help   Shows this help
+                """);
+    }
+
+    @Test
     void shouldClearToken(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
         final Command command = new LogoutCommand(testDb::path);

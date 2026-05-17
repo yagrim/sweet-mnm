@@ -26,6 +26,21 @@ class VersionCommandTest {
     }
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new VersionCommand();
+
+        assertThat(command.help()).isEqualTo("""
+                Shows the version
+                
+                Usage:
+                  sweet version
+                
+                Options:
+                  --help   Shows this help
+                """);
+    }
+
+    @Test
     void shouldRun(SystemOutCaptureExtension out) throws IOException {
         final Command command = new VersionCommand();
 

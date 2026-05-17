@@ -25,7 +25,7 @@ class HelpCommand implements Command {
         usage(sb);
         commands(sb, indentation);
 
-        sb.append(format(this.name(), this.help(), indentation));
+        sb.append(format(this.name(), this.description(), indentation));
         System.out.println(sb);
     }
 
@@ -61,7 +61,15 @@ class HelpCommand implements Command {
 
     @Override
     public String help() {
-        return description();
+        return """
+                %s
+                
+                Usage:
+                  sweet %s
+                
+                Options:
+                  --help   Shows this help
+                """.formatted(description(), name());
     }
 
 }

@@ -32,6 +32,44 @@ class InstallCommandTest {
     }
 
     @Test
+    void shouldReturnHelp() {
+        final Command command = new InstallCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Installs MnM client in the current location
+                
+                Usage:
+                  sweet install --username <username> --password <password>
+                  sweet install --slug <slug>
+                
+                Options:
+                  --username   MnM account username (required when --slug is not set)
+                  --password   MnM account password (required when --username is set)
+                  --slug       Existing configured client slug, can be used instead of credentials
+                  --help       Shows this help
+                """);
+    }
+
+    @Test
+    void shouldReturnRepairHelp() {
+        final Command command = new RepairCommand(null);
+
+        assertThat(command.help()).isEqualTo("""
+                Checks installation and updates if necessary
+                
+                Usage:
+                  sweet repair --username <username> --password <password>
+                  sweet repair --slug <slug>
+                
+                Options:
+                  --username   MnM account username (required when --slug is not set)
+                  --password   MnM account password (required when --username is set)
+                  --slug       Existing configured client slug, can be used instead of credentials
+                  --help       Shows this help
+                """);
+    }
+
+    @Test
     void shouldValidateOptionsBeforeOpeningConfigDatabase() {
         AtomicBoolean configFileLocated = new AtomicBoolean(false);
         Command command = new InstallCommand(() -> {
