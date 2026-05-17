@@ -14,7 +14,7 @@ public class ProcessUtils {
     static String run(Path workingDirectory, String[] command) {
         try {
             Process process = new ProcessBuilder(command)
-                    .directory(workingDirectory.toFile())
+//                    .directory(workingDirectory.toFile())
                     .redirectErrorStream(true)
                     .start();
 

@@ -45,8 +45,11 @@ public class HashFunctions {
          */
         public static String xxh3(Path path) {
             long init = System.currentTimeMillis();
-            final String[] command = {"xxhsum", "-H2", path.getFileName().toString()};
-            String output = ProcessUtils.run(path.getParent(), command);
+
+//            String output = ProcessUtils.run(path.getParent(), {"xxhsum", "-H2", path.getFileName().toString()});
+            final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
+            String output = ProcessUtils.run(null, command);
+            System.out.println("Executing " + command + " -> " + output);
             logTime(init);
             return output;
         }
