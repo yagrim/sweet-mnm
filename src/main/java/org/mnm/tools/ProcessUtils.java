@@ -4,18 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ProcessUtils {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProcessUtils.class);
 
     public static void panic(String message) {
         throw new PanicException(message);
@@ -30,8 +24,8 @@ public class ProcessUtils {
             Process process = processBuilder.start();
 
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                Future<String> standardOutput = executor.submit(() -> readAndLog(process.getInputStream(), "stdout"));
-                Future<String> standardError = executor.submit(() -> readAndLog(process.getErrorStream(), "stderr"));
+                Future<String> standardOutput = executor.submit(() -> read(process.getInputStream()));
+                Future<String> standardError = executor.submit(() -> read(process.getErrorStream()));
 
                 int exitCode = process.waitFor();
                 String stdout = getFuture(standardOutput);
@@ -52,25 +46,19 @@ public class ProcessUtils {
         }
     }
 
-    private static String readAndLog(InputStream inputStream, String streamName) {
+    private static String read(InputStream inputStream) {
         StringBuilder output = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             String line;
-            boolean sawAnyLine = false;
             while ((line = reader.readLine()) != null) {
-                sawAnyLine = true;
                 if (output.length() > 0) {
                     output.append(System.lineSeparator());
                 }
                 output.append(line);
-                logger.info("{}: {}", streamName, line);
-            }
-            if (!sawAnyLine) {
-                logger.info("{}: <empty>", streamName);
             }
             return output.toString();
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read " + streamName, e);
+            throw new RuntimeException("Failed to read process stream", e);
         }
     }
 
