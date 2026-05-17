@@ -24,9 +24,14 @@ class HelpCommand implements Command {
         sb.append("(The unofficial and...) Sweet tool to manage Monsters & Memories clients\n\n");
         usage(sb);
         commands(sb, indentation);
+        options(sb);
 
-        sb.append(format(this.name(), this.description(), indentation));
         System.out.println(sb);
+    }
+
+    private void usage(StringBuilder sb) {
+        sb.append("Usage:\n");
+        sb.append("  sweet <command> [--option [value]] ...\n\n");
     }
 
     private void commands(StringBuilder sb, int indentation) {
@@ -40,9 +45,11 @@ class HelpCommand implements Command {
                 });
     }
 
-    private void usage(StringBuilder sb) {
-        sb.append("Usage:\n");
-        sb.append("  sweet <command> [--option [value]] ...\n\n");
+    private static StringBuilder options(StringBuilder sb) {
+        return sb.append("""
+                
+                Options:
+                  --help   Shows this help""");
     }
 
     private static String format(String first, String second, int distance) {

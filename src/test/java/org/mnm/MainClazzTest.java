@@ -150,7 +150,9 @@ class MainClazzTest {
                   token        Shows official launcher current token
                   token-info   Shows official launcher token information
                   version      Shows the version
-                  help         Shows available commands
+                
+                Options:
+                  --help   Shows this help
                 """;
     }
 

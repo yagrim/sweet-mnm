@@ -48,7 +48,9 @@ class HelpCommandTest {
                   clients   Lists configured clients
                   install   Installs MnM client in the current location
                   repair    Checks installation and updates if necessary
-                  help      Shows available commands
+                
+                Options:
+                  --help   Shows this help
                 """);
     }
 
