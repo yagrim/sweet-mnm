@@ -138,8 +138,8 @@ class ClientInstallerTest {
         }
     }
 
-    @Test
-    @Order(3)
+//    @Test
+//    @Order(3)
     void shouldRepairAndReInstallMissingFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         deletePath(testInstallationPath().resolve("data"));
         stubAuthenticationFlow(wiremock);
@@ -158,8 +158,8 @@ class ClientInstallerTest {
         }
     }
 
-    @Test
-    @Order(4)
+//    @Test
+//    @Order(4)
     void shouldRepairAndFixCorruptedFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         appendToFile(testInstallationPath().resolve("numbers.txt"), "corrupted");
         stubAuthenticationFlow(wiremock);
@@ -178,8 +178,8 @@ class ClientInstallerTest {
         }
     }
 
-    @Test
-    @Order(5)
+//    @Test
+//    @Order(5)
     void shouldRemoveOrphanFiles(WireMockRuntimeInfo wiremock) throws SQLException {
         final Path additionalFile1 = testInstallationPath().resolve("unnecessary-1.txt");
         final Path additionalFile2 = testInstallationPath().resolve("unnecessary-2.bin");

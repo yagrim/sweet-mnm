@@ -4,10 +4,13 @@ import net.openhft.hashing.LongTupleHashFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.mnm.tools.ByteUtils.readAllBytes;
+import static org.mnm.tools.FileUtils.getAllFiles;
 
 public class HashFunctions {
 
@@ -27,6 +30,7 @@ public class HashFunctions {
             byte[] bytes = readAllBytes(path);
             return xxh3(bytes);
         }
+
         /**
          * Note: the alternative hashByteBuffer does nto work:
          * - Fails with illegal access to sun.nio.ch.DirectBuffer.
@@ -50,10 +54,16 @@ public class HashFunctions {
         public static String xxh3(Path path) {
             long init = System.currentTimeMillis();
 
+            final List<Path> currentFiles = getAllFiles(path.getParent());
+            currentFiles.forEach(file -> logger.info("File: {} ", file));
+
 //            String output = ProcessUtils.run(path.getParent(), {"xxhsum", "-H2", path.getFileName().toString()});
             final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
+            File file = path.toAbsolutePath().toFile();
+            logger.info("File size: {} {}", file.exists(), file.length());
+            logger.info("Executing: {}, {}", command.length, String.join(", ", command));
             String output = ProcessUtils.run(null, command);
-            System.out.println("Executing " + command + " -> " + output);
+            logger.info("Executing {} -> {}", command, output);
             logTime(init);
             return output;
         }
