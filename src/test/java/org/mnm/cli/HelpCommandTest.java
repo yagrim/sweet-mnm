@@ -3,6 +3,7 @@ package org.mnm.cli;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mnm.SystemOutCaptureExtension;
+import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
 
@@ -33,7 +34,7 @@ class HelpCommandTest {
 
     @Test
     void shouldReturnListOfCommands(SystemOutCaptureExtension out) {
-        HelpCommand command = new HelpCommand(List.of(new InstallCommand(null), new RepairCommand(null)));
+        HelpCommand command = new HelpCommand(List.of(new ClientsCommand(null), new InstallCommand(null), new RepairCommand(null)));
 
         command.run(null);
 
@@ -44,6 +45,7 @@ class HelpCommandTest {
                   sweet <command> [--option [value]] ...
                 
                 Available commands:
+                  clients   Lists configured clients
                   install   Installs MnM client in the current location
                   repair    Checks installation and updates if necessary
                   help      Shows available commands

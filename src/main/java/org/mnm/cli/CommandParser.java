@@ -1,6 +1,7 @@
 package org.mnm.cli;
 
 import org.mnm.client.InstallCommand;
+import org.mnm.client.ClientsCommand;
 import org.mnm.client.RepairCommand;
 import org.mnm.config.Environment;
 import org.mnm.launcher.LoginCommand;
@@ -44,6 +45,7 @@ public class CommandParser {
 
 
         final var commands = List.of(
+                new ClientsCommand(configDbSupplier),
                 new InstallCommand(configDbSupplier),
                 new RepairCommand(configDbSupplier),
 

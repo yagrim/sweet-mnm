@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mnm.client.InstallCommand;
+import org.mnm.client.ClientsCommand;
 import org.mnm.client.RepairCommand;
 
 import java.util.stream.Stream;
@@ -24,6 +25,7 @@ class CommandParserTest {
 
     static Stream<Arguments> supportedCommands() {
         return Stream.of(
+                Arguments.of("clients", ClientsCommand.class),
                 Arguments.of("install", InstallCommand.class),
                 Arguments.of("repair", RepairCommand.class),
                 Arguments.of("help", HelpCommand.class)

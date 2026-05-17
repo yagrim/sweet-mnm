@@ -142,6 +142,7 @@ class MainClazzTest {
                   sweet <command> [--option [value]] ...
                 
                 Available commands:
+                  clients      Lists configured clients
                   install      Installs MnM client in the current location
                   login        Login with your username and password (updates launcher database)
                   logout       Removes token from the launcher database
