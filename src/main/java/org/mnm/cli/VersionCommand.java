@@ -17,7 +17,7 @@ class VersionCommand implements Command {
 
     @Override
     public String description() {
-        return "Displays the version";
+        return "Shows the version";
     }
 
     @Override

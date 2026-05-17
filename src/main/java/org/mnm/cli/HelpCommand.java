@@ -43,7 +43,7 @@ class HelpCommand implements Command {
 
     @Override
     public String description() {
-        return "Displays available commands";
+        return "Shows available commands";
     }
 
     @Override

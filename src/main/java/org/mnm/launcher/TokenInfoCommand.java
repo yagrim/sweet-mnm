@@ -49,7 +49,7 @@ public class TokenInfoCommand implements Command {
 
     @Override
     public String description() {
-        return "Displays token information";
+        return "Shows official launcher token information";
     }
 
     @Override

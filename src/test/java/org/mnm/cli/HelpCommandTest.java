@@ -20,7 +20,7 @@ class HelpCommandTest {
 
         String help = command.help();
 
-        assertThat(help).isEqualTo("Displays available commands");
+        assertThat(help).isEqualTo("Shows available commands");
     }
 
     @Test
@@ -33,7 +33,7 @@ class HelpCommandTest {
                 Available commands:
                   install   Installs MnM client in the current location
                   repair    Checks installation and updates if necessary
-                  help      Displays available commands
+                  help      Shows available commands
                 """);
     }
 

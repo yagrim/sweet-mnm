@@ -35,7 +35,7 @@ public class TokenCommand implements Command {
 
     @Override
     public String description() {
-        return "User token utilities";
+        return "Shows official launcher current token";
     }
 
     @Override

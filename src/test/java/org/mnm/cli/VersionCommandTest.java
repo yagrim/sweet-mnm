@@ -22,7 +22,7 @@ class VersionCommandTest {
     @Test
     void shouldReturnDescription() {
         final Command command = new VersionCommand();
-        assertThat(command.description()).isEqualTo("Displays the version");
+        assertThat(command.description()).isEqualTo("Shows the version");
     }
 
     @Test

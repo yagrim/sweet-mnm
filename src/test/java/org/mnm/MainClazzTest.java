@@ -35,10 +35,10 @@ class MainClazzTest {
                   login        Login with your username and password (can update launcher database)
                   logout       Removes token from the launcher database
                   repair       Checks installation and updates if necessary
-                  token        User token utilities
-                  token-info   Displays token information
-                  version      Displays the version
-                  help         Displays available commands
+                  token        Shows official launcher current token
+                  token-info   Shows official launcher token information
+                  version      Shows the version
+                  help         Shows available commands
                 """;
     }
 
