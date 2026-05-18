@@ -1,7 +1,14 @@
-.PHONY: help install test clean
+.PHONY: help install test clean uninstall native native-install
 
 PREFIX := $(HOME)/.local/bin
 APPDIR := $(PREFIX)/sweet-mnm
+
+# Detect OS and choose correct Gradle wrapper
+ifeq ($(OS),Windows_NT)
+	GRADLEW := gradlew.bat
+else
+	GRADLEW := ./gradlew
+endif
 
 help:
 	@echo "Available targets:"
@@ -10,16 +17,16 @@ help:
 	@echo "  clean    - Clean build artifacts"
 
 clean:
-	@./gradlew clean
+	@$(GRADLEW) clean
 	@rm -rf build/
 
 # setVersion will append the gitSha repeatedly.
 # For now, we simply clean.
 test: clean
-	@./gradlew test
+	@$(GRADLEW) test
 
 install: test
-	@./gradlew installDist
+	@$(GRADLEW) installDist
 	@mkdir -p $(PREFIX)
 	@rm -rf $(APPDIR)
 	@cp -r build/install/sweet $(APPDIR)
@@ -27,10 +34,10 @@ install: test
 
 uninstall:
 	@rm -rf $(APPDIR)
-	@rm $(PREFIX)/sweet
+	@rm -f $(PREFIX)/sweet
 
 native: test
-	@./gradlew nativeCompile
+	@$(GRADLEW) nativeCompile
 
 native-install: install native
 	@cp build/native/nativeCompile/sweet $(PREFIX)
