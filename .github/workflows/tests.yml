@@ -27,20 +27,39 @@ jobs:
           distribution: graalvm-community
           java-version: "25"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install xxhsum
+      - name: Install xxhsum (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y xxhash
+      - name: Install xxhsum (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/Cyan4973/xxHash/releases/latest"
+          $asset = $release.assets | Where-Object {
+            $_.name -match "win64" -and $_.name -match "\.zip$"
+          } | Select-Object -First 1
+
+          $downloadPath = "$env:RUNNER_TEMP\xxhash.zip"
+          $extractPath = "$env:RUNNER_TEMP\xxhash"
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $downloadPath
+          Expand-Archive -Path $downloadPath -DestinationPath $extractPath -Force
+          
+          $exe = Get-ChildItem -Path $extractPath -Filter "xxhsum.exe" -Recurse | Select-Object -First 1        
+          $exe.Directory.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Display versions
         shell: bash
+        continue-on-error: true
         run: |
           java --version
-          native-image --version         
+          native-image --version
           xxhsum --version
       - name: Run tests
+        shell: bash
         run: make test
       - name: Native build
+        shell: bash
         run: make native
       - name: Upload test reports
         if: always()
