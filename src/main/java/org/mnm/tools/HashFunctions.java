@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 import static org.mnm.tools.ByteUtils.readAllBytes;
 
@@ -33,12 +34,11 @@ public class HashFunctions {
          * - Still loads file into memory, outside the process, but still does.
          */
         public static String xxh3(byte[] bytes) {
-            long init = System.currentTimeMillis();
-            final var hashFunction = LongTupleHashFunction.xx128();
-            long[] values = hashFunction.hashBytes(ByteBuffer.wrap(bytes));
-            String format = String.format("%016x%016x", values[1], values[0]);
-            logTime(init);
-            return format;
+            return timed(() -> {
+                final var hashFunction = LongTupleHashFunction.xx128();
+                long[] values = hashFunction.hashBytes(ByteBuffer.wrap(bytes));
+                return String.format("%016x%016x", values[1], values[0]);
+            }, "XXH3 hash calculated");
         }
     }
 
@@ -48,11 +48,10 @@ public class HashFunctions {
          * Slightly slower but far more memory efficient than {@link #xxh3(Path)}.
          */
         public static String xxh3(Path path) {
-            long init = System.currentTimeMillis();
-            final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
-            String output = firstToken(ProcessUtils.run(null, command));
-            logTime(init);
-            return output;
+            return timed(() -> {
+                final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
+                return firstToken(ProcessUtils.run(null, command));
+            }, "XXH3 hash calculated");
         }
     }
 
@@ -66,10 +65,11 @@ public class HashFunctions {
         return firstLine.substring(0, separatorIndex);
     }
 
-    private static void logTime(long init) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
-        }
+    private static <T> T timed(Supplier<T> task, String message) {
+        long init = System.currentTimeMillis();
+        T result = task.get();
+        logger.debug("{} ({} ms)", message, System.currentTimeMillis() - init);
+        return result;
     }
 
 }
