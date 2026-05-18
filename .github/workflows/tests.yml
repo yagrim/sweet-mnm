@@ -11,8 +11,13 @@ permissions:
 
 jobs:
   test:
-    name: Gradle tests
-    runs-on: ubuntu-latest
+    name: Gradle tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -23,13 +28,15 @@ jobs:
           java-version: "25"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install xxhsum
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y xxhash
       - name: Display versions
+        shell: bash
         run: |
           java --version
-          native-image --version
+          native-image --version         
           xxhsum --version
       - name: Run tests
         run: make test
@@ -39,6 +46,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: build-reports
+          name: build-reports-${{ matrix.os }}
           path: build/reports/**
           if-no-files-found: warn
