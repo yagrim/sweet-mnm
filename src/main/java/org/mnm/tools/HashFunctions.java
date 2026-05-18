@@ -23,6 +23,10 @@ public class HashFunctions {
             return Crc64Redis.calculateHex(bytes);
         }
 
+        public static String xxh3(Path path) {
+            return xxh3(readAllBytes(path));
+        }
+
         /**
          * Note: the alternative hashByteBuffer does nto work:
          * - Fails with illegal access to sun.nio.ch.DirectBuffer.
@@ -45,14 +49,27 @@ public class HashFunctions {
          */
         public static String xxh3(Path path) {
             long init = System.currentTimeMillis();
-            final String[] command = {"xxhsum", "-H2", path.getFileName().toString()};
-            String output = ProcessUtils.run(path.getParent(), command);
+            final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
+            String output = firstToken(ProcessUtils.run(null, command));
             logTime(init);
             return output;
         }
     }
 
-    private static void logTime(long init) {
-//        logger.debug("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
+    private static String firstToken(String output) {
+        int newlineIndex = output.indexOf(System.lineSeparator());
+        String firstLine = newlineIndex >= 0 ? output.substring(0, newlineIndex) : output;
+        int separatorIndex = firstLine.indexOf(" ");
+        if (separatorIndex < 0) {
+            return firstLine;
+        }
+        return firstLine.substring(0, separatorIndex);
     }
+
+    private static void logTime(long init) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("XXH3 hash calculated ({} ms)", System.currentTimeMillis() - init);
+        }
+    }
+
 }
