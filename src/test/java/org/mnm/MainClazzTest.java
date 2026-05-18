@@ -7,6 +7,7 @@ import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.tools.PanicException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,7 +84,9 @@ class MainClazzTest {
                 exitStatus::set);
 
         assertThat(exitStatus).hasValue(1);
-        assertThat(out.getErrorOutput()).isEqualTo("""
+        String errorOutput = out.getErrorOutput();
+        assertThat(errorOutput).hasSize(23);
+        assertThat(errorOutput).isEqualTo("""
                 [Error] broken command
                 """);
     }

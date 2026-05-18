@@ -1,6 +1,7 @@
 package org.mnm;
 
 import org.junit.jupiter.api.extension.*;
+import org.mnm.config.OS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -30,11 +31,15 @@ public class SystemOutCaptureExtension implements BeforeEachCallback, AfterEachC
     }
 
     public String getOutput() {
-        return outputStream.toString(StandardCharsets.UTF_8);
+        return format(outputStream.toString(StandardCharsets.UTF_8));
     }
 
     public String getErrorOutput() {
-        return errorStream.toString(StandardCharsets.UTF_8);
+        return format(errorStream.toString(StandardCharsets.UTF_8));
+    }
+
+    private static String format(String value) {
+        return OS.isWindows() ? value.replaceAll("\r\n", "\n") : value;
     }
 
     @Override

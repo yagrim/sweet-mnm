@@ -78,7 +78,7 @@ class ClientsCommandTest {
         Command command = new ClientsCommand(() -> dbFile);
         command.run(new Arguments(Map.of()));
 
-        assertThat(capture.getOutput()).isEqualTo("No clients found%n".formatted());
+        assertThat(capture.getOutput()).isEqualTo("No clients found\n".formatted());
     }
 
     private static Client testClient(String slug) {
