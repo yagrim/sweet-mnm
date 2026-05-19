@@ -10,4 +10,7 @@ public interface Command {
 
     String help();
 
+    default boolean isAvailable() {
+        return true;
+    }
 }

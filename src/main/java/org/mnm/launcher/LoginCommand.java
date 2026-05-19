@@ -2,6 +2,7 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.config.OS;
 import org.mnm.launcher.TokenUpdater.Options;
 
 import java.nio.file.Path;
@@ -62,4 +63,10 @@ public class LoginCommand implements Command {
                   --help           Shows this help
                 """.formatted(description(), name());
     }
+
+    @Override
+    public boolean isAvailable() {
+        return !OS.isWindows();
+    }
+
 }

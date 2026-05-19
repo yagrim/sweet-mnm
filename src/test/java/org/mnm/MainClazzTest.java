@@ -7,7 +7,6 @@ import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.tools.PanicException;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +37,7 @@ class MainClazzTest {
     @Test
     void shouldPrintCommandHelpAndSkipRunWhenHelpFlagIsSet(SystemOutCaptureExtension out) {
         AtomicInteger runCount = new AtomicInteger();
-        Command command = new TestCommand(runCount);
+        Command command = new TestCommand(runCount, true);
 
         MainClazz.main(
                 new String[]{"test", "--help"},
@@ -91,7 +90,42 @@ class MainClazzTest {
                 """);
     }
 
-    private record TestCommand(AtomicInteger runCount) implements Command {
+    @Test
+    void shouldRunWhenCommandIsAvailable(SystemOutCaptureExtension out) {
+        AtomicInteger runCount = new AtomicInteger();
+        Command command = new TestCommand(runCount, true);
+
+        MainClazz.main(
+                new String[]{"test"},
+                ArgumentsParser::parse,
+                _ -> command,
+                _ -> {
+                });
+
+        assertThat(runCount).hasValue(1);
+        assertThat(out.getOutput()).isEmpty();
+        assertThat(out.getErrorOutput()).isEmpty();
+    }
+
+    @Test
+    void shouldRunWhenCommandIsNotAvailable(SystemOutCaptureExtension out) {
+        AtomicInteger runCount = new AtomicInteger();
+        Command command = new TestCommand(runCount, false);
+
+        MainClazz.main(
+                new String[]{"test"},
+                ArgumentsParser::parse,
+                _ -> command,
+                _ -> {
+                });
+
+        assertThat(runCount).hasValue(0);
+        assertThat(out.getOutput()).isEmpty();
+        assertThat(out.getErrorOutput())
+                .startsWith("Command 'test' not supported for your platform");
+    }
+
+    private record TestCommand(AtomicInteger runCount, boolean isAvailable) implements Command {
 
         @Override
         public void run(Arguments args) {
@@ -111,6 +145,11 @@ class MainClazzTest {
         @Override
         public String help() {
             return "Test command help";
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return isAvailable;
         }
     }
 
