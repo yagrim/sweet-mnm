@@ -81,12 +81,12 @@ public class ClientInstaller {
                 missing.add(file);
             } else {
                 if (location.toFile().length() != file.totalSize()) {
-                    logger.info("Invalid: expected size {}, found {}", file.totalSize(), location.toFile().length());
+                    logger.debug("Invalid: expected size {}, found {}", file.totalSize(), location.toFile().length());
                     invalid.add(file);
                 } else {
                     final String calculatedCrc = HashFunctions.OS.xxh3(location);
                     if (!calculatedCrc.equals(file.fileHash())) {
-                        logger.info("Invalid: expected hash {}, found {}", file.fileHash(), calculatedCrc);
+                        logger.debug("Invalid: expected hash {}, found {}", file.fileHash(), calculatedCrc);
                         invalid.add(file);
                     }
                 }

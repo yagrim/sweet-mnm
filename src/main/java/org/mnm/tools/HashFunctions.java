@@ -56,7 +56,6 @@ public class HashFunctions {
     }
 
     private static String firstToken(String output) {
-        logger.info("Output: {}", output);
         // Windows workaround
         int start = output.startsWith("\\") ? 1 : 0;
 
