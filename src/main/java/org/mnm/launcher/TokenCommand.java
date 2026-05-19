@@ -2,6 +2,7 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.config.OS;
 
 import java.nio.file.Path;
 import java.util.function.Supplier;
@@ -49,6 +50,11 @@ public class TokenCommand implements Command {
                 Options:
                   --help   Shows this help
                 """.formatted(description(), name());
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return !OS.isWindows();
     }
 
 }

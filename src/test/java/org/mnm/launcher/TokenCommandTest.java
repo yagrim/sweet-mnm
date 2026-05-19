@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mnm.LauncherTestDatabase;
 import org.mnm.LauncherTestDatabase.TestDatabase;
+import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
 
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.LauncherTestDatabase.withSchema;
 
 @ExtendWith(SystemOutCaptureExtension.class)
-class TokenCommandTest {
+class TokenCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
@@ -54,4 +55,8 @@ class TokenCommandTest {
                 """);
     }
 
+    @Override
+    protected Command buildCommand() {
+        return new TokenCommand(null);
+    }
 }

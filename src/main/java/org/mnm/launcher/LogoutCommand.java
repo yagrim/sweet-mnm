@@ -2,6 +2,7 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.config.OS;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -48,6 +49,11 @@ public class LogoutCommand implements Command {
                 Options:
                   --help   Shows this help
                 """.formatted(description(), name());
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return !OS.isWindows();
     }
 
 }

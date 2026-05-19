@@ -2,6 +2,7 @@ package org.mnm.launcher;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.config.OS;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.JwtParser.JwtClaims;
 
@@ -63,6 +64,11 @@ public class TokenInfoCommand implements Command {
                 Options:
                   --help   Shows this help
                 """.formatted(description(), name());
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return !OS.isWindows();
     }
 
 }

@@ -30,7 +30,11 @@ public class MainClazz {
                 System.out.println(command.help());
                 return;
             }
-            command.run(arguments);
+            if (command.isAvailable()) {
+                command.run(arguments);
+            } else {
+                System.err.println("Command '%s' not supported for your platform".formatted(command.name()));
+            }
         } catch (PanicException e) {
             System.err.println("[Error] " + e.getMessage());
             exit.accept(1);

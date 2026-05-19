@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mnm.LauncherTestDatabase.TestDatabase;
+import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -23,7 +24,7 @@ import static org.mnm.LauncherTestDatabase.withSettings;
 
 @ExtendWith(SystemOutCaptureExtension.class)
 @WireMockTest(httpsEnabled = true)
-class LoginCommandTest {
+class LoginCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
@@ -132,5 +133,10 @@ class LoginCommandTest {
                 .hasMessage("Missing or empty parameter: '--password'");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
+    }
+
+    @Override
+    protected Command buildCommand() {
+        return new LoginCommand(null);
     }
 }

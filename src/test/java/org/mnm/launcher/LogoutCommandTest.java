@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
 
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.LauncherTestDatabase.*;
 
 @ExtendWith(SystemOutCaptureExtension.class)
-class LogoutCommandTest {
+class LogoutCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
@@ -81,4 +82,8 @@ class LogoutCommandTest {
         testDb.assertThatToken().isEqualTo("");
     }
 
+    @Override
+    protected Command buildCommand() {
+        return new LogoutCommand(null);
+    }
 }
