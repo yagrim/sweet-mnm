@@ -1,8 +1,9 @@
 package org.mnm.cli;
 
-import org.mnm.client.InstallCommand;
 import org.mnm.client.ClientsCommand;
+import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
+import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.Environment;
 import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;
@@ -41,7 +42,7 @@ public class CommandParser {
 
     private static List<Command> buildCommands() {
         final Supplier<Path> launcherDbSupplier = () -> Environment.launcherDb;
-        final Supplier<Path> configDbSupplier = () -> Environment.configDb;
+        final Supplier<Path> configDbSupplier = new ConfigDbLocator();
 
 
         final var commands = List.of(

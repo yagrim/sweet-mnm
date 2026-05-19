@@ -11,11 +11,6 @@ public class Environment {
 
     public static final String API_BASE_URL = "https://account.monstersandmemories.com/api/";
 
-    public static Path configDb = Paths.get(System.getProperty("user.home"))
-            .resolve(".local/share")
-            .resolve("com.monstersandmemories.sweet")
-            .resolve("sweet-config.db");
-
     public static Path launcherDb = Paths.get(System.getProperty("user.home"))
             .resolve(".local/share")
             .resolve("com.monstersandmemories.launcher")
