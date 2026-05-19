@@ -56,13 +56,14 @@ public class HashFunctions {
     }
 
     private static String firstToken(String output) {
-        int newlineIndex = output.indexOf(System.lineSeparator());
-        String firstLine = newlineIndex >= 0 ? output.substring(0, newlineIndex) : output;
-        int separatorIndex = firstLine.indexOf(" ");
+        // Windows workaround
+        int start = output.startsWith("\\") ? 1 : 0;
+
+        int separatorIndex = output.indexOf(" ");
         if (separatorIndex < 0) {
-            return firstLine;
+            return output.substring(start);
         }
-        return firstLine.substring(0, separatorIndex);
+        return output.substring(start, separatorIndex);
     }
 
     private static <T> T timed(Supplier<T> task, String message) {

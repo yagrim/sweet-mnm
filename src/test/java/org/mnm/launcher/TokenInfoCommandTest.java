@@ -7,6 +7,7 @@ import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
 import org.sqlite.SQLiteException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 
@@ -71,7 +72,7 @@ class TokenInfoCommandTest {
     }
 
     @Test
-    void shouldFailWhenDatabaseFileNotPresent(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
+    void shouldFailWhenDatabaseFileNotPresent(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final Path path = tempDir.resolve("not-a-db.db");
 
         final Command command = new TokenInfoCommand(() -> path);
@@ -82,7 +83,7 @@ class TokenInfoCommandTest {
                 .isInstanceOf(RuntimeException.class)
                 .cause()
                 .isInstanceOf(FileNotFoundException.class)
-                .hasMessageEndingWith("/not-a-db.db");
+                .hasMessageEndingWith(File.separator + "not-a-db.db");
     }
 
     @Test

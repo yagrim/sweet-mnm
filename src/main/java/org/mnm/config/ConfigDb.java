@@ -43,7 +43,7 @@ public class ConfigDb implements AutoCloseable {
 
     public static final ConfigDb open(Path dbFile) {
         boolean dbFileExists = dbFile.toFile().exists();
-        logger.debug("Sweet DB found? {}", dbFileExists);
+        logger.debug("Opening ConfigDB: {}", dbFile.toAbsolutePath());
         if (!dbFileExists) {
             FileUtils.createDirectories(dbFile);
         }
@@ -51,9 +51,8 @@ public class ConfigDb implements AutoCloseable {
             var connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath());
             return new ConfigDb(connection);
         } catch (SQLException e) {
-            System.out.println("Can't connect to database");
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     @Override
