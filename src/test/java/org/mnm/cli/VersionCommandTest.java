@@ -47,7 +47,8 @@ class VersionCommandTest {
         command.run(null);
 
         assertThat(out.getOutput())
-                .startsWith("Version: %s".formatted(readVersion()));
+                .startsWith("Version: %s".formatted(readVersion()))
+                .endsWith(System.lineSeparator());
     }
 
     private static String readVersion() throws IOException {

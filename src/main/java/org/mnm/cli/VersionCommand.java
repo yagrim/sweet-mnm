@@ -7,7 +7,7 @@ class VersionCommand implements Command {
     @Override
     public void run(Arguments args) {
         String version = FileUtils.readFromClasspath("version.txt");
-        System.out.printf("Version: %s%n", version);
+        System.out.printf("Version: %s", version);
     }
 
     @Override
