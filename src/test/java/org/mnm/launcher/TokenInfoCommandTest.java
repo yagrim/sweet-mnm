@@ -1,17 +1,16 @@
 package org.mnm.launcher;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
-import org.mnm.config.OS;
 import org.sqlite.SQLiteException;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -28,14 +27,14 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
         final Command command = new TokenInfoCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-                Shows official launcher token information
-                
-                Usage:
-                  sweet token-info
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Shows official launcher token information
+            
+            Usage:
+              sweet token-info
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -49,12 +48,12 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
         command.run(null);
 
         assertThat(out.getOutput())
-                .isEqualTo("""
-                        issuer  : mnm
-                        created : 2026-05-09T23:57:37Z
-                        expires : 2026-06-06T23:57:37Z
-                        email   : a-username@some-email.com
-                        """);
+            .isEqualTo("""
+                issuer  : mnm
+                created : 2026-05-09T23:57:37Z
+                expires : 2026-06-06T23:57:37Z
+                email   : a-username@some-email.com
+                """);
     }
 
 
@@ -68,9 +67,9 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
         command.run(null);
 
         assertThat(out.getOutput())
-                .isEqualTo("""
-                        No token found
-                        """);
+            .isEqualTo("""
+                No token found
+                """);
     }
 
     @Test
@@ -82,10 +81,10 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
         Throwable t = catchThrowable(() -> command.run(null));
 
         assertThat(t)
-                .isInstanceOf(RuntimeException.class)
-                .cause()
-                .isInstanceOf(FileNotFoundException.class)
-                .hasMessageEndingWith(File.separator + "not-a-db.db");
+            .isInstanceOf(RuntimeException.class)
+            .cause()
+            .isInstanceOf(FileNotFoundException.class)
+            .hasMessageEndingWith(File.separator + "not-a-db.db");
     }
 
     @Test
@@ -97,10 +96,10 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
         Throwable t = catchThrowable(() -> command.run(null));
 
         assertThat(t)
-                .isInstanceOf(RuntimeException.class)
-                .cause()
-                .isInstanceOf(SQLiteException.class)
-                .hasMessage("[SQLITE_ERROR] SQL error or missing database (no such table: settings)");
+            .isInstanceOf(RuntimeException.class)
+            .cause()
+            .isInstanceOf(SQLiteException.class)
+            .hasMessage("[SQLITE_ERROR] SQL error or missing database (no such table: settings)");
     }
 
     @Override

@@ -1,13 +1,13 @@
 package org.mnm;
 
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+
 import org.mnm.cli.Arguments;
 import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.cli.CommandParser;
 import org.mnm.tools.PanicException;
-
-import java.util.function.Function;
-import java.util.function.IntConsumer;
 
 public class MainClazz {
 

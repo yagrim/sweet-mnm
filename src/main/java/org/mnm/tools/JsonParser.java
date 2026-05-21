@@ -1,10 +1,5 @@
 package org.mnm.tools;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.ToNumberPolicy;
-import com.google.gson.reflect.TypeToken;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -12,15 +7,20 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
+import com.google.gson.reflect.TypeToken;
+
 public class JsonParser {
 
     private static final Gson GSON = new GsonBuilder()
-            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-            .create();
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .create();
 
     private static final Type MAP_TYPE =
-            new TypeToken<Map<String, Object>>() {
-            }.getType();
+        new TypeToken<Map<String, Object>>() {
+        }.getType();
 
 
     public static Map<String, Object> read(byte[] json) {

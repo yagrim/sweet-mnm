@@ -1,13 +1,18 @@
 package org.mnm;
 
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.assertj.core.api.Assertions;
 import org.mnm.config.Client;
 import org.mnm.config.Session;
-
-import java.nio.file.Path;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,10 +80,10 @@ public class ConfigTestDatabase {
                     try (ResultSet rs = st.executeQuery()) {
                         while (rs.next()) {
                             Client actual = new Client(
-                                    rs.getString("slug"),
-                                    rs.getString("version"),
-                                    Client.Status.valueOf(rs.getString("status")),
-                                    rs.getString("path"));
+                                rs.getString("slug"),
+                                rs.getString("version"),
+                                Client.Status.valueOf(rs.getString("status")),
+                                rs.getString("path"));
                             assertThat(actual).isEqualTo(expected);
                         }
                     }
@@ -97,8 +102,8 @@ public class ConfigTestDatabase {
                         boolean found = false;
                         while (resultSet.next()) {
                             Session actual = new Session(
-                                    resultSet.getString("slug"),
-                                    resultSet.getString("token"));
+                                resultSet.getString("slug"),
+                                resultSet.getString("token"));
                             assertThat(actual).isEqualTo(expected);
                             found = true;
                         }

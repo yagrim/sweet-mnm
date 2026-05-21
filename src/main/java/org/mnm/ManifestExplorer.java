@@ -1,11 +1,15 @@
 package org.mnm;
 
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
-
-import java.nio.file.Path;
-import java.util.*;
 
 
 public class ManifestExplorer {
@@ -41,25 +45,25 @@ public class ManifestExplorer {
         System.out.println("Files with more than 1 bundle:");
 
         files.stream()
-                .forEach(file -> {
-                    List<String> crcs = file.bundleCrcs();
-                    if (crcs.size() > 1) {
-                        System.out.println("File: " + file.path() + ", bundles: " + crcs.size());
-                    }
-                });
+            .forEach(file -> {
+                List<String> crcs = file.bundleCrcs();
+                if (crcs.size() > 1) {
+                    System.out.println("File: " + file.path() + ", bundles: " + crcs.size());
+                }
+            });
 
         System.out.println();
         System.out.println("Bundles that belong to more than one file:");
 
         Map<String, Set<String>> bundleIndex = manifestHandler.buildBundleIndex();
         bundleIndex.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().size() > 1)
-                .forEach(e -> {
-                    System.out.println(e.getKey() + " " + e.getValue());
-                    List<Manifest.File> list = e.getValue().stream().map(path -> manifestHandler.findByFilePath(path)).toList();
-                    System.out.println("");
-                });
+            .stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .forEach(e -> {
+                System.out.println(e.getKey() + " " + e.getValue());
+                List<Manifest.File> list = e.getValue().stream().map(path -> manifestHandler.findByFilePath(path)).toList();
+                System.out.println("");
+            });
 
     }
 }

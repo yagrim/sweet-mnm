@@ -1,9 +1,9 @@
 package org.mnm.api;
 
-import org.mnm.api.RestClient.HttpJsonResponse;
-
 import java.util.List;
 import java.util.Map;
+
+import org.mnm.api.RestClient.HttpJsonResponse;
 
 import static org.mnm.api.HttpHelper.exception;
 import static org.mnm.api.HttpHelper.parseResponse;
@@ -37,18 +37,18 @@ public class ApiConnection {
         Map<String, Object> games = (Map<String, Object>) responseMap.get("games");
 
         return games.entrySet().stream()
-                .map(entry -> {
-                    String id = entry.getKey();
-                    Map<String, Object> value = (Map<String, Object>) entry.getValue();
+            .map(entry -> {
+                String id = entry.getKey();
+                Map<String, Object> value = (Map<String, Object>) entry.getValue();
 
-                    String dir = (String) value.get("dir");
-                    String name = (String) value.get("name");
-                    String uriBase = (String) value.get("uri_base");
-                    String uriKey = (String) value.get("uri_key");
+                String dir = (String) value.get("dir");
+                String name = (String) value.get("name");
+                String uriBase = (String) value.get("uri_base");
+                String uriKey = (String) value.get("uri_key");
 
-                    return new GameInfo(id, name, dir, uriBase, uriKey);
-                })
-                .toList();
+                return new GameInfo(id, name, dir, uriBase, uriKey);
+            })
+            .toList();
     }
 
     public List<GameVersion> getGamesVersions() {
@@ -60,15 +60,15 @@ public class ApiConnection {
         List<Map> versions = (List<Map>) response.body().get("versions");
 
         return versions.stream()
-                .map(value -> {
-                    String slug = (String) value.get("slug");
-                    String version = (String) value.get("version");
-                    String chunksUrl = (String) value.get("chunks_url");
-                    String manifestUrl = (String) value.get("manifest_url");
+            .map(value -> {
+                String slug = (String) value.get("slug");
+                String version = (String) value.get("version");
+                String chunksUrl = (String) value.get("chunks_url");
+                String manifestUrl = (String) value.get("manifest_url");
 
-                    return new GameVersion(slug, version, chunksUrl, manifestUrl);
-                })
-                .toList();
+                return new GameVersion(slug, version, chunksUrl, manifestUrl);
+            })
+            .toList();
     }
 
     public String getToken() {

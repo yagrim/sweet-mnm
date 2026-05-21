@@ -1,11 +1,15 @@
 package org.mnm;
 
-import org.junit.jupiter.api.extension.*;
-import org.mnm.config.OS;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.mnm.config.OS;
 
 public class SystemOutCaptureExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 

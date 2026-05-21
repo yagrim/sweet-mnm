@@ -1,14 +1,14 @@
 package org.mnm.launcher;
 
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.function.Supplier;
+
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.OS;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.JwtParser.JwtClaims;
-
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.function.Supplier;
 
 public class TokenInfoCommand implements Command {
 
@@ -56,14 +56,14 @@ public class TokenInfoCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s
-                
-                Options:
-                  --help   Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s
+            
+            Options:
+              --help   Shows this help
+            """.formatted(description(), name());
     }
 
     @Override

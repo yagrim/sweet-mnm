@@ -1,14 +1,14 @@
 package org.mnm.cli;
 
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mnm.client.InstallCommand;
 import org.mnm.client.ClientsCommand;
+import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
-
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,15 +20,15 @@ class CommandParserTest {
         String[] args = {command};
 
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(expected);
+            .isInstanceOf(expected);
     }
 
     static Stream<Arguments> supportedCommands() {
         return Stream.of(
-                Arguments.of("clients", ClientsCommand.class),
-                Arguments.of("install", InstallCommand.class),
-                Arguments.of("repair", RepairCommand.class),
-                Arguments.of("help", HelpCommand.class)
+            Arguments.of("clients", ClientsCommand.class),
+            Arguments.of("install", InstallCommand.class),
+            Arguments.of("repair", RepairCommand.class),
+            Arguments.of("help", HelpCommand.class)
         );
     }
 
@@ -36,15 +36,15 @@ class CommandParserTest {
     @MethodSource("unknownArguments")
     void shouldReturnNullWhenEmptyInput(String[] args) {
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(UnknownCommand.class);
+            .isInstanceOf(UnknownCommand.class);
     }
 
     static Stream<Arguments> unknownArguments() {
         return Stream.of(
-                Arguments.of((Object) null),
-                Arguments.of((Object) new String[]{}),
-                Arguments.of((Object) new String[]{""}),
-                Arguments.of((Object) new String[]{"unknown-command"})
+            Arguments.of((Object) null),
+            Arguments.of((Object) new String[]{}),
+            Arguments.of((Object) new String[]{""}),
+            Arguments.of((Object) new String[]{"unknown-command"})
         );
     }
 
@@ -53,7 +53,7 @@ class CommandParserTest {
         String[] args = {"something", "else", "here"};
 
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(UnknownCommand.class);
+            .isInstanceOf(UnknownCommand.class);
     }
 
     @Test
@@ -61,7 +61,7 @@ class CommandParserTest {
         String[] args = {"help", "something", "else"};
 
         assertThat(CommandParser.parse(args))
-                .isInstanceOf(HelpCommand.class);
+            .isInstanceOf(HelpCommand.class);
     }
 
 }

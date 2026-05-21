@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.mnm.cli.Command;
-import org.mnm.launcher.LogoutCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

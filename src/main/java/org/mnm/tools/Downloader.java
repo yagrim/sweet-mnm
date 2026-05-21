@@ -1,14 +1,14 @@
 package org.mnm.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.mnm.tools.FileUtils.humanReadableSize;
 
@@ -26,7 +26,7 @@ public class Downloader {
             FileUtils.createDirectories(destination);
             Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
 
-            if (destination.toFile().exists() &&  destination.toFile().length() > 0) {
+            if (destination.toFile().exists() && destination.toFile().length() > 0) {
                 logger.info("Downloaded {} to {} ({})", url, destination, humanReadableSize(destination.toFile().length()));
             } else {
                 logger.info("Could not download {}", url);

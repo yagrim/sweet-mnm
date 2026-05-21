@@ -1,5 +1,8 @@
 package org.mnm.client;
 
+import java.nio.file.Path;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,9 +12,6 @@ import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Session;
-
-import java.nio.file.Path;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,14 +37,14 @@ class ClientsCommandTest {
         final Command command = new ClientsCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-                Lists configured clients
-                
-                Usage:
-                  sweet clients
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Lists configured clients
+            
+            Usage:
+              sweet clients
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -65,10 +65,10 @@ class ClientsCommandTest {
         command.run(new Arguments(Map.of()));
 
         assertThat(capture.getOutput()).isEqualTo("""
-                Slug  Version  Tokens
-                mnm   v1.0.0        2
-                ptr   v1.0.0        1
-                """);
+            Slug  Version  Tokens
+            mnm   v1.0.0        2
+            ptr   v1.0.0        1
+            """);
     }
 
     @Test

@@ -1,14 +1,20 @@
 package org.mnm.config;
 
-import org.mnm.tools.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import org.mnm.tools.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.mnm.config.Mappers.mapClient;
 import static org.mnm.tools.StringUtils.isEmpty;
@@ -18,22 +24,22 @@ public class ConfigDb implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(ConfigDb.class);
 
     private static String CLIENTS = """
-            CREATE TABLE clients (
-                slug text NOT NULL PRIMARY KEY,
-                version text NOT NULL,
-                status text NOT NULL,
-                path text NOT NULL
-            );
-            """;
+        CREATE TABLE clients (
+            slug text NOT NULL PRIMARY KEY,
+            version text NOT NULL,
+            status text NOT NULL,
+            path text NOT NULL
+        );
+        """;
 
     private static String SESSIONS = """
-            CREATE TABLE sessions (
-                id INTEGER PRIMARY KEY,
-                slug text NOT NULL,
-                token text,
-                FOREIGN KEY (slug) REFERENCES clients(slug)
-            );
-            """;
+        CREATE TABLE sessions (
+            id INTEGER PRIMARY KEY,
+            slug text NOT NULL,
+            token text,
+            FOREIGN KEY (slug) REFERENCES clients(slug)
+        );
+        """;
 
     private final Connection connection;
 

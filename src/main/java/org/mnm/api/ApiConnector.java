@@ -1,8 +1,8 @@
 package org.mnm.api;
 
-import org.mnm.api.RestClient.HttpJsonResponse;
-
 import java.util.Map;
+
+import org.mnm.api.RestClient.HttpJsonResponse;
 
 import static org.mnm.api.HttpHelper.parseResponse;
 
@@ -19,9 +19,9 @@ public class ApiConnector {
     public ApiConnection login(String username, String password) {
 
         HttpJsonResponse response = restClient.post("account/login", Map.of(
-                "email", username,
-                "password", password,
-                "version", API_VERSION
+            "email", username,
+            "password", password,
+            "version", API_VERSION
         ));
         Map<String, Object> responseBody = parseResponse(response);
 

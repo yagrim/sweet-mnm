@@ -1,13 +1,13 @@
 package org.mnm.api;
 
+import java.nio.file.Path;
+import java.util.List;
+
 import org.mnm.config.Environment;
 import org.mnm.manifest.ManifestHandler;
 import org.mnm.tools.Downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Path;
-import java.util.List;
 
 import static org.mnm.tools.FileUtils.fileExists;
 import static org.mnm.tools.ProcessUtils.panic;

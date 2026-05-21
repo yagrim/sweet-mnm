@@ -1,11 +1,11 @@
 package org.mnm.api;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.config.Environment.API_BASE_URL;
@@ -39,7 +39,7 @@ class ApiConnectionTest {
     void should_validateToken() {
         if (mock) {
             Mockito.when(restConnector.get(anyString(), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L)));
+                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L)));
         }
 
         connection.isTokenValid();
@@ -51,53 +51,53 @@ class ApiConnectionTest {
     void should_getGamesInfo() {
         if (mock) {
             Mockito.when(restConnector.get(anyString(), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L,
-                            "games", Map.of(
-                                    "mnm", Map.of(
-                                            "dir", "mnm",
-                                            "name", "Monsters & Memories",
-                                            "uri_base", "https://client-r3.monstersandmemories.com",
-                                            "uri_key", "release"
-                                    )
-                            )
-                    )));
+                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L,
+                    "games", Map.of(
+                        "mnm", Map.of(
+                            "dir", "mnm",
+                            "name", "Monsters & Memories",
+                            "uri_base", "https://client-r3.monstersandmemories.com",
+                            "uri_key", "release"
+                        )
+                    )
+                )));
         }
 
         List<ApiConnection.GameInfo> games = connection.getGamesInfo();
 
         assertThat(games)
-                .containsExactly(new ApiConnection.GameInfo(
-                        "mnm",
-                        "Monsters & Memories",
-                        "mnm",
-                        "https://client-r3.monstersandmemories.com",
-                        "release"
-                ));
+            .containsExactly(new ApiConnection.GameInfo(
+                "mnm",
+                "Monsters & Memories",
+                "mnm",
+                "https://client-r3.monstersandmemories.com",
+                "release"
+            ));
     }
 
     @Test
     void should_getGamesVersions() {
         if (mock) {
             Mockito.when(restConnector.get(anyString()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
-                            "versions", List.of(Map.of(
-                                    "slug", "mnm",
-                                    "version", "publish-0.21.2.0-95f37c2aba9b89a27bd3ac54ddb52b58970beb54",
-                                    "chunks_url", "http://clients.monstersandmemories.com/chunks",
-                                    "manifest_url", "http://clients.monstersandmemories.com/manifests/95f37c2aba9b89a27bd3ac54ddb52b58970beb54.manifest"
-                            ))
-                    )));
+                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
+                    "versions", List.of(Map.of(
+                        "slug", "mnm",
+                        "version", "publish-0.21.2.0-95f37c2aba9b89a27bd3ac54ddb52b58970beb54",
+                        "chunks_url", "http://clients.monstersandmemories.com/chunks",
+                        "manifest_url", "http://clients.monstersandmemories.com/manifests/95f37c2aba9b89a27bd3ac54ddb52b58970beb54.manifest"
+                    ))
+                )));
         }
 
         List<ApiConnection.GameVersion> games = connection.getGamesVersions();
 
         assertThat(games)
-                .containsExactly(new ApiConnection.GameVersion(
-                        "mnm",
-                        "publish-0.21.2.0-95f37c2aba9b89a27bd3ac54ddb52b58970beb54",
-                        "http://clients.monstersandmemories.com/chunks",
-                        "http://clients.monstersandmemories.com/manifests/95f37c2aba9b89a27bd3ac54ddb52b58970beb54.manifest"
-                ));
+            .containsExactly(new ApiConnection.GameVersion(
+                "mnm",
+                "publish-0.21.2.0-95f37c2aba9b89a27bd3ac54ddb52b58970beb54",
+                "http://clients.monstersandmemories.com/chunks",
+                "http://clients.monstersandmemories.com/manifests/95f37c2aba9b89a27bd3ac54ddb52b58970beb54.manifest"
+            ));
     }
 
 }

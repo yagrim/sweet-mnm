@@ -6,7 +6,7 @@ public class UrlBuilder {
 
     public static URI buildUrl(String base, String path) {
         return URI.create(ensureTrailingSlash(base))
-                .resolve(cleanPath(path));
+            .resolve(cleanPath(path));
     }
 
     public static String ensureTrailingSlash(String url) {

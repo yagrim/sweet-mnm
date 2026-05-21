@@ -1,12 +1,12 @@
 package org.mnm.cli;
 
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.TestUtils;
-
-import java.io.IOException;
-import java.nio.file.Files;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,14 +30,14 @@ class VersionCommandTest {
         final Command command = new VersionCommand();
 
         assertThat(command.help()).isEqualTo("""
-                Shows the version
-                
-                Usage:
-                  sweet version
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Shows the version
+            
+            Usage:
+              sweet version
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -47,7 +47,7 @@ class VersionCommandTest {
         command.run(null);
 
         assertThat(out.getOutput())
-                .startsWith("Version: %s".formatted(readVersion()));
+            .startsWith("Version: %s".formatted(readVersion()));
     }
 
     private static String readVersion() throws IOException {

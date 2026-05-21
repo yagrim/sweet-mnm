@@ -1,8 +1,12 @@
 package org.mnm.manifest;
 
-import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import java.util.*;
+import com.google.gson.annotations.SerializedName;
 
 public record Manifest(List<File> manifest) {
 
@@ -42,8 +46,8 @@ public record Manifest(List<File> manifest) {
             List<Bundle> indexedChunks = new ArrayList<>();
             for (String crc : bundleCrcs()) {
                 List<Manifest.Chunk> list = chunks().stream()
-                        .filter(c -> c.bundleCrc().equals(crc))
-                        .toList();
+                    .filter(c -> c.bundleCrc().equals(crc))
+                    .toList();
 
                 indexedChunks.add(new Bundle(list));
             }

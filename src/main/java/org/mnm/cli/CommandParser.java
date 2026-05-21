@@ -1,5 +1,9 @@
 package org.mnm.cli;
 
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
@@ -9,10 +13,6 @@ import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;
 import org.mnm.launcher.TokenCommand;
 import org.mnm.launcher.TokenInfoCommand;
-
-import java.nio.file.Path;
-import java.util.List;
-import java.util.function.Supplier;
 
 public class CommandParser {
 
@@ -46,16 +46,16 @@ public class CommandParser {
 
 
         final var commands = List.of(
-                new ClientsCommand(configDbSupplier),
-                new InstallCommand(configDbSupplier),
-                new RepairCommand(configDbSupplier),
+            new ClientsCommand(configDbSupplier),
+            new InstallCommand(configDbSupplier),
+            new RepairCommand(configDbSupplier),
 
-                new LoginCommand(launcherDbSupplier),
-                new LogoutCommand(launcherDbSupplier),
-                new TokenCommand(launcherDbSupplier),
-                new TokenInfoCommand(launcherDbSupplier),
+            new LoginCommand(launcherDbSupplier),
+            new LogoutCommand(launcherDbSupplier),
+            new TokenCommand(launcherDbSupplier),
+            new TokenInfoCommand(launcherDbSupplier),
 
-                new VersionCommand()
+            new VersionCommand()
         );
         return commands;
     }

@@ -1,11 +1,11 @@
 package org.mnm.tools;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mnm.tools.JwtParser.JwtClaims;
-
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -43,21 +43,21 @@ class JwtParserTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "",
-            "  ",
-            "invalid-token",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0.",
-            ".eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0.",
-            "eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0"
+        "",
+        "  ",
+        "invalid-token",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0.",
+        ".eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0.",
+        "eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0"
     })
     void shouldFailWhenTokenIsNotValid(String token) {
         Throwable t = catchThrowable(() -> JwtParser.parse("invalid-token"));
 
         assertThat(t)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid JWT");
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Invalid JWT");
     }
 
     @Test

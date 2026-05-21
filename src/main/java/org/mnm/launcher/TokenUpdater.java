@@ -1,12 +1,12 @@
 package org.mnm.launcher;
 
-import org.mnm.api.ApiConnection;
-import org.mnm.api.ApiConnector;
-import org.mnm.api.RestClient;
-
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.function.Supplier;
+
+import org.mnm.api.ApiConnection;
+import org.mnm.api.ApiConnector;
+import org.mnm.api.RestClient;
 
 public class TokenUpdater {
 

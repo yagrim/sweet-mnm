@@ -1,8 +1,8 @@
 package org.mnm.tools;
 
-import org.junit.jupiter.api.Test;
-
 import java.net.URI;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

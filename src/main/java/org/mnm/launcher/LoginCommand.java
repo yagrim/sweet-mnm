@@ -1,12 +1,12 @@
 package org.mnm.launcher;
 
+import java.nio.file.Path;
+import java.util.function.Supplier;
+
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.OS;
 import org.mnm.launcher.TokenUpdater.Options;
-
-import java.nio.file.Path;
-import java.util.function.Supplier;
 
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.tools.ProcessUtils.panic;
@@ -34,8 +34,8 @@ public class LoginCommand implements Command {
         final DevFlags devFlags = DevFlags.parse(args);
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
         new TokenUpdater(databaseFileLocator)
-                .update(apiEndpoint,
-                        new Options(username, password, args.getBoolean("ignore-update")));
+            .update(apiEndpoint,
+                new Options(username, password, args.getBoolean("ignore-update")));
     }
 
     @Override
@@ -51,17 +51,17 @@ public class LoginCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s --username <username> --password <password>
-                
-                Options:
-                  --username       MnM account username (required)
-                  --password       MnM account password (required)
-                  --ignore-update  Prints the token without updating the launcher database
-                  --help           Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s --username <username> --password <password>
+            
+            Options:
+              --username       MnM account username (required)
+              --password       MnM account password (required)
+              --ignore-update  Prints the token without updating the launcher database
+              --help           Shows this help
+            """.formatted(description(), name());
     }
 
     @Override
