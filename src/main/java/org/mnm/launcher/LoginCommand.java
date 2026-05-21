@@ -40,7 +40,7 @@ public class LoginCommand implements Command {
 
     @Override
     public String name() {
-        return "login";
+        return "launcher-login";
     }
 
     @Override

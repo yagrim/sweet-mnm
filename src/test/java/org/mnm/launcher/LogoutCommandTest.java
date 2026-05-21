@@ -25,7 +25,7 @@ class LogoutCommandTest extends LinuxOnlyCommand {
             Removes token from the launcher database
             
             Usage:
-              sweet logout
+              sweet launcher-logout
             
             Options:
               --debug  Enables debug messages

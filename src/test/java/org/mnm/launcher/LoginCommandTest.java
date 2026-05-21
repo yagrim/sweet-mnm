@@ -34,7 +34,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
             Login with your username and password (updates launcher database)
             
             Usage:
-              sweet login --username <username> --password <password>
+              sweet launcher-login --username <username> --password <password>
             
             Options:
               --username       MnM account username (required)

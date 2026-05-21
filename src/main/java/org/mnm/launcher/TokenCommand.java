@@ -31,7 +31,7 @@ public class TokenCommand implements Command {
 
     @Override
     public String name() {
-        return "token";
+        return "launcher-token";
     }
 
     @Override

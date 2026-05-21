@@ -25,7 +25,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
             Shows official launcher current token
             
             Usage:
-              sweet token
+              sweet launcher-token
             
             Options:
               --debug  Enables debug messages

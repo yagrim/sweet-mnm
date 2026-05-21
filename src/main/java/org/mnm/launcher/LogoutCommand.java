@@ -30,7 +30,7 @@ public class LogoutCommand implements Command {
 
     @Override
     public String name() {
-        return "logout";
+        return "launcher-logout";
     }
 
     @Override
