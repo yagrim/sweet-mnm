@@ -73,6 +73,7 @@ public class ClientsCommand implements Command {
               sweet %s
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """.formatted(description(), name());
     }

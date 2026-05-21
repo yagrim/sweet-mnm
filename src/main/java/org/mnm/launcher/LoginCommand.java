@@ -60,6 +60,7 @@ public class LoginCommand implements Command {
               --username       MnM account username (required)
               --password       MnM account password (required)
               --ignore-update  Prints the token without updating the launcher database
+              --debug          Enables debug messages
               --help           Shows this help
             """.formatted(description(), name());
     }

@@ -28,6 +28,7 @@ class HelpCommandTest {
               sweet help
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }
@@ -50,6 +51,7 @@ class HelpCommandTest {
               repair    Checks installation and updates if necessary
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }

@@ -58,6 +58,7 @@ class InstallCommandTest {
               --password      MnM account password (required when --username is set)
               --slug          Existing configured client slug, can be used instead of credentials
               --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
+              --debug         Enables debug messages
               --help          Shows this help
             """.formatted(header, command);
     }

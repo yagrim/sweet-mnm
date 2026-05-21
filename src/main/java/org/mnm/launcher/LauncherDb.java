@@ -26,6 +26,7 @@ class LauncherDb implements AutoCloseable {
     final Connection connection;
 
     LauncherDb(Path dbFile) throws FileNotFoundException {
+        logger.debug("Opening Launcher DB: {}", dbFile.toAbsolutePath());
         if (!dbFile.toFile().exists()) {
             throw new FileNotFoundException(dbFile.toString());
         }
@@ -63,8 +64,13 @@ class LauncherDb implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+            logger.debug("Launcher DB closed");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

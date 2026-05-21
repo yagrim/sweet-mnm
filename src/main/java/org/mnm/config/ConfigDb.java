@@ -49,7 +49,7 @@ public class ConfigDb implements AutoCloseable {
 
     public static final ConfigDb open(Path dbFile) {
         boolean dbFileExists = dbFile.toFile().exists();
-        logger.debug("Opening ConfigDB: {}", dbFile.toAbsolutePath());
+        logger.debug("Opening Config DB: {}", dbFile.toAbsolutePath());
         if (!dbFileExists) {
             FileUtils.createDirectories(dbFile);
         }
@@ -65,6 +65,7 @@ public class ConfigDb implements AutoCloseable {
     public void close() {
         try {
             connection.close();
+            logger.debug("Config DB closed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -36,6 +36,7 @@ class VersionCommandTest {
               sweet version
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }
