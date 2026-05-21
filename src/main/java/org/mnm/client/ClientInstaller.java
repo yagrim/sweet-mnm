@@ -84,7 +84,10 @@ public class ClientInstaller {
                     logger.debug("Invalid: expected size {}, found {}", file.totalSize(), location.toFile().length());
                     invalid.add(file);
                 } else {
-                    final String calculatedCrc = HashFunctions.OS.xxh3(location);
+                    final String calculatedCrc = switch (options.fileCheck()) {
+                        case inmemory -> HashFunctions.InMemory.xxh3(location);
+                        default -> HashFunctions.OS.xxh3(location);
+                    };
                     if (!calculatedCrc.equals(file.fileHash())) {
                         logger.debug("Invalid: expected hash {}, found {}", file.fileHash(), calculatedCrc);
                         invalid.add(file);
@@ -158,11 +161,20 @@ public class ClientInstaller {
                     Downloader.downloadFile(buildUrl(chunksUrl, bundleName).toString(), downloadPath);
                 }
 
-                String crc = HashFunctions.InMemory.crc64(downloadPath);
+                String crc = compact(HashFunctions.InMemory.crc64(downloadPath));
                 if (!crc.equals(bundle.bundleCrc())) {
                     panic("CRC validation failed for: " + bundleName);
                 }
             }
+        }
+
+        // manifest JSON returns crc's with missing 0's on the left side
+        public static String compact(String input) {
+            int i = 0;
+            while (i < input.length() - 1 && input.charAt(i) == '0') {
+                i++;
+            }
+            return input.substring(i);
         }
 
         private static void extract(Manifest.File file, Installation installation) {

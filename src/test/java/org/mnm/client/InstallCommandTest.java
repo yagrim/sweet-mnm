@@ -35,38 +35,31 @@ class InstallCommandTest {
     void shouldReturnHelp() {
         final Command command = new InstallCommand(null);
 
-        assertThat(command.help()).isEqualTo("""
-                Installs MnM client in the current location
-                
-                Usage:
-                  sweet install --username <username> --password <password>
-                  sweet install --slug <slug>
-                
-                Options:
-                  --username   MnM account username (required when --slug is not set)
-                  --password   MnM account password (required when --username is set)
-                  --slug       Existing configured client slug, can be used instead of credentials
-                  --help       Shows this help
-                """);
+        assertThat(command.help()).isEqualTo(expectedHelp("Installs MnM client in the current location", "install"));
     }
 
     @Test
     void shouldReturnRepairHelp() {
         final Command command = new RepairCommand(null);
 
-        assertThat(command.help()).isEqualTo("""
-                Checks installation and updates if necessary
+        assertThat(command.help()).isEqualTo(expectedHelp("Checks installation and updates if necessary", "repair"));
+    }
+
+    private static String expectedHelp(String header, String command) {
+        return """
+                %s
                 
                 Usage:
-                  sweet repair --username <username> --password <password>
-                  sweet repair --slug <slug>
+                  sweet %2$s --username <username> --password <password>
+                  sweet %2$s --slug <slug>
                 
                 Options:
-                  --username   MnM account username (required when --slug is not set)
-                  --password   MnM account password (required when --username is set)
-                  --slug       Existing configured client slug, can be used instead of credentials
-                  --help       Shows this help
-                """);
+                  --username      MnM account username (required when --slug is not set)
+                  --password      MnM account password (required when --username is set)
+                  --slug          Existing configured client slug, can be used instead of credentials
+                  --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
+                  --help          Shows this help
+                """.formatted(header, command);
     }
 
     @Test
@@ -123,4 +116,5 @@ class InstallCommandTest {
             testDatabase.assertThatTable("sessions").isEmpty();
         }
     }
+
 }

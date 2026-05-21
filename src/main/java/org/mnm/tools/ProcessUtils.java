@@ -15,7 +15,7 @@ public class ProcessUtils {
         throw new PanicException(message);
     }
 
-    static String run(Path workingDirectory, String[] command) {
+    public static String run(Path workingDirectory, String[] command) {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             if (workingDirectory != null) {
