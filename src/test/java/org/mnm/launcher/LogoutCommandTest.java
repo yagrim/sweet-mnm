@@ -28,6 +28,7 @@ class LogoutCommandTest extends LinuxOnlyCommand {
               sweet logout
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }

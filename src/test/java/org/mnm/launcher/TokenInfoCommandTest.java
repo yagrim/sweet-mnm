@@ -33,6 +33,7 @@ class TokenInfoCommandTest extends LinuxOnlyCommand {
               sweet token-info
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }

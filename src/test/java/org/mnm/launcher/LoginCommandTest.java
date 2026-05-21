@@ -40,6 +40,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
               --username       MnM account username (required)
               --password       MnM account password (required)
               --ignore-update  Prints the token without updating the launcher database
+              --debug          Enables debug messages
               --help           Shows this help
             """);
     }

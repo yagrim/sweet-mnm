@@ -43,6 +43,7 @@ class ClientsCommandTest {
               sweet clients
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }

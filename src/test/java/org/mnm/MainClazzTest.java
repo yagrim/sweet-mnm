@@ -194,6 +194,7 @@ class MainClazzTest {
               version      Shows the version
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """;
     }

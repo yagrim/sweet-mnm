@@ -49,6 +49,7 @@ class HelpCommand implements Command {
         return sb.append("""
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help""");
     }
 
@@ -75,6 +76,7 @@ class HelpCommand implements Command {
               sweet %s
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """.formatted(description(), name());
     }

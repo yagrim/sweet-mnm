@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.mnm.tools.ByteUtils.readAllBytes;
+import static org.mnm.tools.FileUtils.humanReadableSize;
 
 public class HashFunctions {
 
@@ -38,7 +39,7 @@ public class HashFunctions {
                 final var hashFunction = LongTupleHashFunction.xx128();
                 long[] values = hashFunction.hashBytes(ByteBuffer.wrap(bytes));
                 return String.format("%016x%016x", values[1], values[0]);
-            }, "XXH3 hash calculated");
+            }, () -> "byte[] XXH3 hash calculated: %s".formatted(humanReadableSize(bytes.length)));
         }
     }
 
@@ -51,7 +52,7 @@ public class HashFunctions {
             return timed(() -> {
                 final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
                 return firstToken(ProcessUtils.run(null, command));
-            }, "XXH3 hash calculated");
+            }, () -> "File XXH3 hash calculated: %s, %s".formatted(path.getFileName(), humanReadableSize(path.toFile().length())));
         }
     }
 
@@ -66,10 +67,12 @@ public class HashFunctions {
         return output.substring(start, separatorIndex);
     }
 
-    private static <T> T timed(Supplier<T> task, String message) {
+    private static <T> T timed(Supplier<T> task, Supplier<String> message) {
         long init = System.currentTimeMillis();
         T result = task.get();
-        logger.debug("{} ({} ms)", message, System.currentTimeMillis() - init);
+        if (logger.isDebugEnabled()) {
+            logger.debug("{} ({} ms)", message.get(), System.currentTimeMillis() - init);
+        }
         return result;
     }
 

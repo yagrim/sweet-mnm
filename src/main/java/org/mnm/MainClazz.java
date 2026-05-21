@@ -3,6 +3,11 @@ package org.mnm;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.cli.Arguments;
 import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
@@ -26,6 +31,11 @@ public class MainClazz {
         }
         try {
             Arguments arguments = argumentsParser.apply(args);
+
+            if (arguments.getBoolean("debug")) {
+                enableDebug();
+            }
+
             if (arguments.isHelp() && command.help() != null) {
                 System.out.println(command.help());
                 return;
@@ -43,5 +53,12 @@ public class MainClazz {
             e.printStackTrace();
             exit.accept(1);
         }
+    }
+
+    private static void enableDebug() {
+        final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+        final Logger myLogger = context.getLogger("org.mnm");
+        myLogger.setLevel(Level.DEBUG);
     }
 }

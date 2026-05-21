@@ -28,6 +28,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
               sweet token
             
             Options:
+              --debug  Enables debug messages
               --help   Shows this help
             """);
     }

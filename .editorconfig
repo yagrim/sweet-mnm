@@ -11,4 +11,4 @@ indent_size = 2
 
 [*.java]
 ij_java_class_count_to_use_import_on_demand = 99
-ij_java_imports_layout = javax.**, java.**, |, *, |, $*
+ij_java_imports_layout = javax.**, java.**, |, *, |, org.mnm.**, |, $*
