@@ -1,11 +1,12 @@
 package org.mnm.config;
 
+import java.nio.file.Path;
 
 public record Client(
     String slug,
     String version,
     Status status,
-    String path
+    Path path
 ) {
 
     public enum Status {

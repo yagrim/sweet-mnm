@@ -83,7 +83,7 @@ public class ConfigTestDatabase {
                                 rs.getString("slug"),
                                 rs.getString("version"),
                                 Client.Status.valueOf(rs.getString("status")),
-                                rs.getString("path"));
+                                Path.of(rs.getString("path")));
                             assertThat(actual).isEqualTo(expected);
                         }
                     }

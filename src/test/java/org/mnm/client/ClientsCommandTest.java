@@ -83,6 +83,6 @@ class ClientsCommandTest {
     }
 
     private static Client testClient(String slug) {
-        return new Client(slug, "v1.0.0", Client.Status.COMPLETED, "");
+        return new Client(slug, "v1.0.0", Client.Status.COMPLETED, Path.of(""));
     }
 }
