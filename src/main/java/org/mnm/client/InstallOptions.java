@@ -14,10 +14,10 @@ record InstallOptions(String username,
 
     public static InstallOptions parse(Arguments args) {
         return new InstallOptions(
-                args.get("username"),
-                args.get("password"),
-                args.getOrDefault("slug", null),
-                FileCheck.from(args.get("file-check")));
+            args.get("username"),
+            args.get("password"),
+            args.getOrDefault("slug", null),
+            FileCheck.from(args.get("file-check")));
     }
 
     public void validate() {

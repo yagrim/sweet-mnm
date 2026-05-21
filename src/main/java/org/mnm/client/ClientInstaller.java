@@ -1,16 +1,21 @@
 package org.mnm.client;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.manifest.Manifest;
-import org.mnm.tools.*;
+import org.mnm.tools.Downloader;
+import org.mnm.tools.FileUtils;
+import org.mnm.tools.HashFunctions;
+import org.mnm.tools.JwtParser;
+import org.mnm.tools.StringUtils;
+import org.mnm.tools.Zstd;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.mnm.config.Client.Status.*;
 import static org.mnm.tools.FileUtils.fileExists;
@@ -182,9 +187,9 @@ public class ClientInstaller {
             FileUtils.createDirectories(destination);
 
             Zstd.Section[] sections = file.getBundlesList()
-                    .stream()
-                    .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))
-                    .toArray(Zstd.Section[]::new);
+                .stream()
+                .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))
+                .toArray(Zstd.Section[]::new);
             Zstd.InMemory.decompress(destination, sections);
         }
     }

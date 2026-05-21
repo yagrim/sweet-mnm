@@ -14,8 +14,8 @@ class ManifestTest {
         String normalizedCrc = chunk.normalize();
 
         assertThat(normalizedCrc)
-                .isEqualTo("56b2a21c1dc0b793")
-                .hasSize(16);
+            .isEqualTo("56b2a21c1dc0b793")
+            .hasSize(16);
     }
 
     @Test
@@ -25,7 +25,7 @@ class ManifestTest {
         String normalizedCrc = chunk.normalize();
 
         assertThat(normalizedCrc)
-                .isEqualTo("00adb0b1594f912a")
-                .hasSize(16);
+            .isEqualTo("00adb0b1594f912a")
+            .hasSize(16);
     }
 }

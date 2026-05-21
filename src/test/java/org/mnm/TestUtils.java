@@ -1,7 +1,5 @@
 package org.mnm;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +10,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Base64;
+
+import org.apache.commons.io.FileUtils;
 
 public class TestUtils {
 
@@ -43,13 +43,13 @@ public class TestUtils {
 
     public static String testToken(Instant expiration) {
         return "%s.%s.123".formatted(
-                base64Url("{\"alg\":\"none\"}"),
-                base64Url("{\"exp\":%s}".formatted(expiration.getEpochSecond())));
+            base64Url("{\"alg\":\"none\"}"),
+            base64Url("{\"exp\":%s}".formatted(expiration.getEpochSecond())));
     }
 
     private static String base64Url(String content) {
         return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(content.getBytes(StandardCharsets.UTF_8));
+            .withoutPadding()
+            .encodeToString(content.getBytes(StandardCharsets.UTF_8));
     }
 }

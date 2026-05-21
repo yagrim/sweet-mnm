@@ -1,8 +1,8 @@
 package org.mnm.tools;
 
-import com.google.gson.JsonObject;
-
 import java.util.Base64;
+
+import com.google.gson.JsonObject;
 
 public class JwtParser {
 
@@ -81,17 +81,17 @@ public class JwtParser {
 
         private String getString(String key) {
             return payload.has(key) && !payload.get(key).isJsonNull()
-                    ? payload.get(key).getAsString() : null;
+                ? payload.get(key).getAsString() : null;
         }
 
         private long getLong(String key) {
             return payload.has(key) && !payload.get(key).isJsonNull()
-                    ? payload.get(key).getAsLong() : 0;
+                ? payload.get(key).getAsLong() : 0;
         }
 
         private int getInt(String key) {
             return payload.has(key) && !payload.get(key).isJsonNull()
-                    ? payload.get(key).getAsInt() : 0;
+                ? payload.get(key).getAsInt() : 0;
         }
 
     }

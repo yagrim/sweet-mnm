@@ -1,14 +1,14 @@
 package org.mnm.config;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mnm.ConfigTestDatabase;
-
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mnm.ConfigTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -28,7 +28,7 @@ class ConfigDbTest {
 
         var testDatabase = ConfigTestDatabase.open(dbFile);
         assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "sessions");
+            .containsExactlyInAnyOrder("clients", "sessions");
         testDatabase.assertThatTable("clients").isEmpty();
         testDatabase.assertThatTable("sessions").isEmpty();
 
@@ -47,7 +47,7 @@ class ConfigDbTest {
 
         var testDatabase = ConfigTestDatabase.open(dbFile);
         assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "sessions");
+            .containsExactlyInAnyOrder("clients", "sessions");
         testDatabase.assertThatTable("clients").isEmpty();
         testDatabase.assertThatTable("sessions").isEmpty();
 
@@ -69,8 +69,8 @@ class ConfigDbTest {
 
             var testDatabase = ConfigTestDatabase.open(dbFile);
             testDatabase.assertThatTable("clients")
-                    .containsClient(testClient("mnm"))
-                    .hasRows(1);
+                .containsClient(testClient("mnm"))
+                .hasRows(1);
 
             testDatabase.close();
         }
@@ -91,10 +91,10 @@ class ConfigDbTest {
 
             var testDatabase = ConfigTestDatabase.open(dbFile);
             testDatabase.assertThatTable("clients")
-                    .containsClient(client1)
-                    .containsClient(client2)
-                    .containsClient(client3)
-                    .hasRows(3);
+                .containsClient(client1)
+                .containsClient(client2)
+                .containsClient(client3)
+                .hasRows(3);
 
             testDatabase.close();
         }
@@ -124,8 +124,8 @@ class ConfigDbTest {
 
                 List<Client> clients = config.getClients();
                 assertThat(clients)
-                        .containsExactlyInAnyOrder(testClient("slug_1"), testClient("slug_2"), testClient("slug_3"))
-                        .hasSize(3);
+                    .containsExactlyInAnyOrder(testClient("slug_1"), testClient("slug_2"), testClient("slug_3"))
+                    .hasSize(3);
             }
         }
 
@@ -170,10 +170,10 @@ class ConfigDbTest {
             }
 
             assertThat(t)
-                    .isInstanceOf(RuntimeException.class)
-                    .cause()
-                    .isInstanceOf(SQLException.class)
-                    .hasMessage("[SQLITE_CONSTRAINT_PRIMARYKEY] A PRIMARY KEY constraint failed (UNIQUE constraint failed: clients.slug)");
+                .isInstanceOf(RuntimeException.class)
+                .cause()
+                .isInstanceOf(SQLException.class)
+                .hasMessage("[SQLITE_CONSTRAINT_PRIMARYKEY] A PRIMARY KEY constraint failed (UNIQUE constraint failed: clients.slug)");
         }
 
         static Path testConfigDatabase(Path tempDir) {
@@ -198,8 +198,8 @@ class ConfigDbTest {
 
             var testDatabase = ConfigTestDatabase.open(dbFile);
             testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new Session(session.slug(), session.token()))
-                    .hasRows(1);
+                .containsSession(1, new Session(session.slug(), session.token()))
+                .hasRows(1);
 
             testDatabase.close();
         }
@@ -220,10 +220,10 @@ class ConfigDbTest {
 
             var testDatabase = ConfigTestDatabase.open(dbFile);
             testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new Session(session.slug(), session.token()))
-                    .containsSession(2, new Session(session.slug(), session.token()))
-                    .containsSession(3, new Session(session.slug(), session.token()))
-                    .hasRows(3);
+                .containsSession(1, new Session(session.slug(), session.token()))
+                .containsSession(2, new Session(session.slug(), session.token()))
+                .containsSession(3, new Session(session.slug(), session.token()))
+                .hasRows(3);
 
             testDatabase.close();
         }
@@ -234,7 +234,7 @@ class ConfigDbTest {
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
-                        .forEach(slug -> config.addClient(testClient(slug)));
+                    .forEach(slug -> config.addClient(testClient(slug)));
 
                 Session session1 = new Session("mnm-1", "1");
                 Session session2 = new Session("mnm-2", "2");
@@ -249,11 +249,11 @@ class ConfigDbTest {
                 config.addSession(session5);
 
                 assertThat(config.getSessions("mnm-1"))
-                        .containsExactlyInAnyOrder(session1, session4);
+                    .containsExactlyInAnyOrder(session1, session4);
                 assertThat(config.getSessions("mnm-2"))
-                        .containsExactlyInAnyOrder(session2, session5);
+                    .containsExactlyInAnyOrder(session2, session5);
                 assertThat(config.getSessions("mnm-3"))
-                        .containsExactlyInAnyOrder(session3);
+                    .containsExactlyInAnyOrder(session3);
             }
         }
     }

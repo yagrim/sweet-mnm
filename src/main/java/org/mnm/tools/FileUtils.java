@@ -18,8 +18,8 @@ public class FileUtils {
         }
         try (var stream = Files.walk(base)) {
             return stream
-                    .filter(Files::isRegularFile)
-                    .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+                .filter(Files::isRegularFile)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

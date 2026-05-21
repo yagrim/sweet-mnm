@@ -15,9 +15,9 @@ class HelpCommand implements Command {
     @Override
     public void run(Arguments args) {
         int indentation = commands.stream()
-                .mapToInt(command -> command.name().length())
-                .max()
-                .getAsInt() + 3;
+            .mapToInt(command -> command.name().length())
+            .max()
+            .getAsInt() + 3;
 
         final StringBuilder sb = new StringBuilder();
 
@@ -38,18 +38,18 @@ class HelpCommand implements Command {
         sb.append("Available commands:\n");
 
         commands.stream()
-                .sorted(Comparator.comparing(Command::name))
-                .forEach(c -> {
-                    sb.append(format(c.name(), c.description(), indentation));
-                    sb.append("\n");
-                });
+            .sorted(Comparator.comparing(Command::name))
+            .forEach(c -> {
+                sb.append(format(c.name(), c.description(), indentation));
+                sb.append("\n");
+            });
     }
 
     private static StringBuilder options(StringBuilder sb) {
         return sb.append("""
-                
-                Options:
-                  --help   Shows this help""");
+            
+            Options:
+              --help   Shows this help""");
     }
 
     private static String format(String first, String second, int distance) {
@@ -69,14 +69,14 @@ class HelpCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s
-                
-                Options:
-                  --help   Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s
+            
+            Options:
+              --help   Shows this help
+            """.formatted(description(), name());
     }
 
 }

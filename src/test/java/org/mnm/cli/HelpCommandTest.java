@@ -1,13 +1,13 @@
 package org.mnm.cli;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
-
-import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,14 +22,14 @@ class HelpCommandTest {
         String help = command.help();
 
         assertThat(help).isEqualTo("""
-                Shows available commands
-                
-                Usage:
-                  sweet help
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Shows available commands
+            
+            Usage:
+              sweet help
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -39,19 +39,19 @@ class HelpCommandTest {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                (The unofficial and...) Sweet tool to manage Monsters & Memories clients
-                
-                Usage:
-                  sweet <command> [--option [value]] ...
-                
-                Available commands:
-                  clients   Lists configured clients
-                  install   Installs MnM client in the current location
-                  repair    Checks installation and updates if necessary
-                
-                Options:
-                  --help   Shows this help
-                """);
+            (The unofficial and...) Sweet tool to manage Monsters & Memories clients
+            
+            Usage:
+              sweet <command> [--option [value]] ...
+            
+            Available commands:
+              clients   Lists configured clients
+              install   Installs MnM client in the current location
+              repair    Checks installation and updates if necessary
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
 }

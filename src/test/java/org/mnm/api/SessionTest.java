@@ -29,16 +29,16 @@ class SessionTest {
     @Test
     void shouldFailWhenCredentialsAreNotValid(WireMockRuntimeInfo wiremock) {
         stubFor(post(urlEqualTo("/account/login"))
-                .willReturn(ResponseDefinitionBuilder.responseDefinition()
-                        .withStatus(200)
-                        .withBody("""
-                                {"status":4, "error": "Incorrect Email/Password"}
-                                """)));
+            .willReturn(ResponseDefinitionBuilder.responseDefinition()
+                .withStatus(200)
+                .withBody("""
+                    {"status":4, "error": "Incorrect Email/Password"}
+                    """)));
 
         Throwable t = catchThrowable(() -> Session.login("username", "password", wiremock.getHttpBaseUrl()));
 
         assertThat(t)
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Response error: 200, {status=4, error=Incorrect Email/Password}");
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Response error: 200, {status=4, error=Incorrect Email/Password}");
     }
 }

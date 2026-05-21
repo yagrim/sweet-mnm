@@ -1,13 +1,13 @@
 package org.mnm.api;
 
-import org.mnm.tools.JsonParser;
-
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Map;
+
+import org.mnm.tools.JsonParser;
 
 import static org.mnm.tools.UrlBuilder.buildUrl;
 
@@ -21,10 +21,10 @@ public class RestClient {
 
     public HttpJsonResponse post(String url, Map<String, Object> body) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(buildUrl(baseUrl, url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(JsonParser.toJson(body)))
-                .build();
+            .uri(buildUrl(baseUrl, url))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(JsonParser.toJson(body)))
+            .build();
 
         return send(request);
     }
@@ -35,8 +35,8 @@ public class RestClient {
 
     public HttpJsonResponse get(String url, Map<String, Object> headers) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(buildUrl(baseUrl, url))
-                .GET();
+            .uri(buildUrl(baseUrl, url))
+            .GET();
         for (Map.Entry<String, Object> stringObjectEntry : headers.entrySet()) {
             builder.header(stringObjectEntry.getKey(), stringObjectEntry.getValue().toString());
         }
@@ -47,7 +47,7 @@ public class RestClient {
     private static HttpJsonResponse send(HttpRequest request) {
         try {
             HttpResponse<byte[]> response = HttpClient.newHttpClient()
-                    .send(request, BodyHandlers.ofByteArray());
+                .send(request, BodyHandlers.ofByteArray());
             return new HttpJsonResponse(response.statusCode(), toMap(response));
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();

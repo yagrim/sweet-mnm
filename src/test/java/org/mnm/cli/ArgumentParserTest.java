@@ -52,8 +52,8 @@ class ArgumentParserTest {
         Throwable t = catchThrowable(() -> parsed.get("debug"));
 
         assertThat(t)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Boolean flag cannot be read as string");
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Boolean flag cannot be read as string");
     }
 
     @Test
@@ -89,9 +89,9 @@ class ArgumentParserTest {
     @Test
     void handlesMixedArguments() {
         String[] args = {
-                "--name", "Bob",
-                "--verbose",
-                "--count", "5"
+            "--name", "Bob",
+            "--verbose",
+            "--count", "5"
         };
 
         Arguments parsed = ArgumentsParser.parse(args);

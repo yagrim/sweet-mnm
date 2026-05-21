@@ -23,13 +23,13 @@ class VersionCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s
-                
-                Options:
-                  --help   Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s
+            
+            Options:
+              --help   Shows this help
+            """.formatted(description(), name());
     }
 }

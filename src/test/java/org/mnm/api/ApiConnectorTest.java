@@ -1,10 +1,10 @@
 package org.mnm.api;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -33,7 +33,7 @@ class ApiConnectorTest {
 
         if (mock) {
             Mockito.when(restConnector.post(anyString(), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L, "token", "123.456.789")));
+                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L, "token", "123.456.789")));
         }
 
         ApiConnection connection = apiConnector.login(username, password);
@@ -48,14 +48,14 @@ class ApiConnectorTest {
 
         if (mock) {
             Mockito.when(restConnector.post(anyString(), anyMap()))
-                    .thenThrow(new RuntimeException("Response error: 200, {error=Incorrect Email/Password, status=4}"));
+                .thenThrow(new RuntimeException("Response error: 200, {error=Incorrect Email/Password, status=4}"));
         }
 
         Throwable t = catchThrowable(() -> apiConnector.login(username, password));
 
         assertThat(t)
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Response error: 200, {error=Incorrect Email/Password, status=4}");
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Response error: 200, {error=Incorrect Email/Password, status=4}");
     }
 
 }

@@ -1,5 +1,9 @@
 package org.mnm.launcher;
 
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.UUID;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
@@ -11,10 +15,6 @@ import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.tools.PanicException;
-
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -31,17 +31,17 @@ class LoginCommandTest extends LinuxOnlyCommand {
         final Command command = new LoginCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-                Login with your username and password (updates launcher database)
-                
-                Usage:
-                  sweet login --username <username> --password <password>
-                
-                Options:
-                  --username       MnM account username (required)
-                  --password       MnM account password (required)
-                  --ignore-update  Prints the token without updating the launcher database
-                  --help           Shows this help
-                """);
+            Login with your username and password (updates launcher database)
+            
+            Usage:
+              sweet login --username <username> --password <password>
+            
+            Options:
+              --username       MnM account username (required)
+              --password       MnM account password (required)
+              --ignore-update  Prints the token without updating the launcher database
+              --help           Shows this help
+            """);
     }
 
     @Test
@@ -57,17 +57,17 @@ class LoginCommandTest extends LinuxOnlyCommand {
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         Arguments arguments = new Arguments(Map.of(
-                "username", "username",
-                "password", "password",
-                "dev-options", "true",
-                "api-endpoint", wiremock.getHttpBaseUrl()
+            "username", "username",
+            "password", "password",
+            "dev-options", "true",
+            "api-endpoint", wiremock.getHttpBaseUrl()
         ));
         command.run(arguments);
 
         assertThat(out.getOutput())
-                .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
-                .contains("DevFlags - If you see this line, proceed at your own risk")
-                .endsWith("Token updated in launcher database\n");
+            .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
+            .contains("DevFlags - If you see this line, proceed at your own risk")
+            .endsWith("Token updated in launcher database\n");
 
         testDb.assertThatToken().isEqualTo(uuid);
     }
@@ -85,18 +85,18 @@ class LoginCommandTest extends LinuxOnlyCommand {
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
         Arguments arguments = new Arguments(Map.of(
-                "dev-options", "true",
-                "api-endpoint", wiremock.getHttpBaseUrl(),
-                "username", "username",
-                "password", "password",
-                "ignore-update", "true"
+            "dev-options", "true",
+            "api-endpoint", wiremock.getHttpBaseUrl(),
+            "username", "username",
+            "password", "password",
+            "ignore-update", "true"
         ));
         command.run(arguments);
 
         assertThat(out.getOutput())
-                .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
-                .contains("DevFlags - If you see this line, proceed at your own risk")
-                .endsWith("Skipping token update in launcher database\n");
+            .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
+            .contains("DevFlags - If you see this line, proceed at your own risk")
+            .endsWith("Skipping token update in launcher database\n");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
@@ -112,8 +112,8 @@ class LoginCommandTest extends LinuxOnlyCommand {
         Throwable t = catchThrowable(() -> command.run(arguments));
 
         assertThat(t)
-                .isInstanceOf(PanicException.class)
-                .hasMessage("Missing or empty parameter: '--username'");
+            .isInstanceOf(PanicException.class)
+            .hasMessage("Missing or empty parameter: '--username'");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }
@@ -129,8 +129,8 @@ class LoginCommandTest extends LinuxOnlyCommand {
         Throwable t = catchThrowable(() -> command.run(arguments));
 
         assertThat(t)
-                .isInstanceOf(PanicException.class)
-                .hasMessage("Missing or empty parameter: '--password'");
+            .isInstanceOf(PanicException.class)
+            .hasMessage("Missing or empty parameter: '--password'");
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
     }

@@ -1,7 +1,7 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'org.graalvm.buildtools.native' version '1.1.0'
+  id 'java'
+  id 'application'
+  id 'org.graalvm.buildtools.native' version '1.1.0'
 }
 
 group = 'org.mnm'
@@ -9,54 +9,54 @@ version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(25)
+  }
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 ext {
-    junitVersion = '6.0.3'
-    sqliteJdbcVersion = '3.53.0.0'
+  junitVersion = '6.0.3'
+  sqliteJdbcVersion = '3.53.0.0'
 }
 
 def os = org.gradle.internal.os.OperatingSystem.current()
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:2.0.17'
-    implementation 'ch.qos.logback:logback-classic:1.5.32'
-    implementation 'com.google.code.gson:gson:2.14.0'
-    implementation 'net.openhft:zero-allocation-hashing:2026.0'
-    // Graal partial support for previous version https://github.com/oracle/graalvm-reachability-metadata/pull/121/changes
-    implementation('com.github.luben:zstd-jni:1.5.7-7')
+  implementation 'org.slf4j:slf4j-api:2.0.17'
+  implementation 'ch.qos.logback:logback-classic:1.5.32'
+  implementation 'com.google.code.gson:gson:2.14.0'
+  implementation 'net.openhft:zero-allocation-hashing:2026.0'
+  // Graal partial support for previous version https://github.com/oracle/graalvm-reachability-metadata/pull/121/changes
+  implementation('com.github.luben:zstd-jni:1.5.7-7')
 
-    implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:without-natives")
-    if (os.isLinux()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-linux")
-    if (os.isWindows()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-windows")
+  implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:without-natives")
+  if (os.isLinux()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-linux")
+  if (os.isWindows()) implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}:natives-windows")
 
 
-    testImplementation platform("org.junit:junit-bom:$junitVersion")
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+  testImplementation platform("org.junit:junit-bom:$junitVersion")
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation "org.assertj:assertj-core:3.27.7"
-    testImplementation "org.mockito:mockito-core:5.20.0"
-    testImplementation "org.mockito:mockito-junit-jupiter:5.20.0"
-    testImplementation "org.wiremock:wiremock:3.13.2"
+  testImplementation "org.assertj:assertj-core:3.27.7"
+  testImplementation "org.mockito:mockito-core:5.20.0"
+  testImplementation "org.mockito:mockito-junit-jupiter:5.20.0"
+  testImplementation "org.wiremock:wiremock:3.13.2"
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+  useJUnitPlatform()
 //    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
 }
 
 jar {
-    manifest {
-        attributes 'Main-Class': application.mainClass
-    }
+  manifest {
+    attributes 'Main-Class': application.mainClass
+  }
 }
 
 /**
@@ -64,42 +64,42 @@ jar {
  * because in-memory file check loads the file in the heap.
  */
 application {
-    applicationName = 'sweet'
-    applicationDefaultJvmArgs = [
-            '--enable-native-access=ALL-UNNAMED',
+  applicationName = 'sweet'
+  applicationDefaultJvmArgs = [
+    '--enable-native-access=ALL-UNNAMED',
 //            '-Xmx256m'
-    ]
-    executableDir = ''
-    mainClass = 'org.mnm.MainClazz'
+  ]
+  executableDir = ''
+  mainClass = 'org.mnm.MainClazz'
 }
 
 graalvmNative {
-    binaries {
-        named("main") {
-            imageName = application.applicationName
-            buildArgs.addAll(
-                    '--enable-native-access=ALL-UNNAMED',
-                    '--enable-url-protocols=https',
-                    '--gc=serial',
+  binaries {
+    named("main") {
+      imageName = application.applicationName
+      buildArgs.addAll(
+        '--enable-native-access=ALL-UNNAMED',
+        '--enable-url-protocols=https',
+        '--gc=serial',
 //                    '-R:MaxHeapSize=256m'
-            )
-            resources {
-                includedPatterns.addAll('logback.xml', 'version.txt')
-            }
-        }
+      )
+      resources {
+        includedPatterns.addAll('logback.xml', 'version.txt')
+      }
     }
+  }
 }
 
 tasks.register("setVersion") {
-    doLast {
-        def gitSha = "git rev-parse --short HEAD".execute().text.trim()
-        def versionFile = layout.buildDirectory.file("resources/main/version.txt").get().asFile
+  doLast {
+    def gitSha = "git rev-parse --short HEAD".execute().text.trim()
+    def versionFile = layout.buildDirectory.file("resources/main/version.txt").get().asFile
 
-        def current = versionFile.text.trim()
-        versionFile.text = "${current}-${gitSha}\n"
-    }
+    def current = versionFile.text.trim()
+    versionFile.text = "${current}-${gitSha}\n"
+  }
 }
 
 tasks.named("classes") {
-    dependsOn(tasks.named("setVersion"))
+  dependsOn(tasks.named("setVersion"))
 }

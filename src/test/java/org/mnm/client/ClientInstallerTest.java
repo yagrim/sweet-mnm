@@ -46,8 +46,8 @@ class ClientInstallerTest {
         InstallOptions options = new InstallOptions("", "", null, xxhsum);
 
         assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
-                .isInstanceOf(PanicException.class)
-                .hasMessage("Username or password is empty");
+            .isInstanceOf(PanicException.class)
+            .hasMessage("Username or password is empty");
     }
 
     @Test
@@ -56,8 +56,8 @@ class ClientInstallerTest {
         InstallOptions options = new InstallOptions("username", null, null, xxhsum);
 
         assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
-                .isInstanceOf(PanicException.class)
-                .hasMessage("Username or password is empty");
+            .isInstanceOf(PanicException.class)
+            .hasMessage("Username or password is empty");
     }
 
     @Test
@@ -72,8 +72,8 @@ class ClientInstallerTest {
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG, xxhsum);
 
             assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
-                    .isInstanceOf(PanicException.class)
-                    .hasMessage("Session token has expired: run 'install --username ...' to create a new one");
+                .isInstanceOf(PanicException.class)
+                .hasMessage("Session token has expired: run 'install --username ...' to create a new one");
         }
     }
 
@@ -207,15 +207,15 @@ class ClientInstallerTest {
     private static void assertDatabaseContainsClientAndSession(Path dbFile, Path tempDir) throws SQLException {
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())
-                    .containsExactlyInAnyOrder("clients", "sessions");
+                .containsExactlyInAnyOrder("clients", "sessions");
 
             final Path installationPath = testInstallationPath(tempDir);
             testDatabase.assertThatTable("clients")
-                    .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath().toString()))
-                    .hasRows(1);
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath().toString()))
+                .hasRows(1);
             testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new Session(TEST_SLUG, VALID_TEST_TOKEN))
-                    .hasRows(1);
+                .containsSession(1, new Session(TEST_SLUG, VALID_TEST_TOKEN))
+                .hasRows(1);
         }
     }
 
@@ -240,10 +240,10 @@ class ClientInstallerTest {
     private static List<String> listDirs(Path base) {
         try {
             return Files.list(base).toList().stream()
-                    .filter(Files::isDirectory)
-                    .map(Path::getFileName)
-                    .map(Path::toString)
-                    .toList();
+                .filter(Files::isDirectory)
+                .map(Path::getFileName)
+                .map(Path::toString)
+                .toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

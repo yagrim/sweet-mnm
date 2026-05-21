@@ -1,12 +1,12 @@
 package org.mnm.client;
 
-import org.mnm.cli.Arguments;
-import org.mnm.cli.Command;
-import org.mnm.config.ConfigDb;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
+
+import org.mnm.cli.Arguments;
+import org.mnm.cli.Command;
+import org.mnm.config.ConfigDb;
 
 public class ClientsCommand implements Command {
 
@@ -22,11 +22,11 @@ public class ClientsCommand implements Command {
             configDb.initialize();
 
             List<ClientSummary> clients = configDb.getClients().stream()
-                    .map(client -> new ClientSummary(
-                            client.slug(),
-                            client.version(),
-                            configDb.getSessions(client.slug()).size()))
-                    .toList();
+                .map(client -> new ClientSummary(
+                    client.slug(),
+                    client.version(),
+                    configDb.getSessions(client.slug()).size()))
+                .toList();
 
             System.out.print(format(clients));
         }
@@ -67,14 +67,14 @@ public class ClientsCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s
-                
-                Options:
-                  --help   Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s
+            
+            Options:
+              --help   Shows this help
+            """.formatted(description(), name());
     }
 
     public record ClientSummary(String slug, String version, int sessions) {

@@ -1,12 +1,12 @@
 package org.mnm.cli;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mnm.SystemOutCaptureExtension;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,9 +29,9 @@ class UnknownCommandTest {
         command.run(new Arguments(Map.of()));
 
         assertThat(out.getOutput()).isEqualTo("""
-                Unrecognized command: 'hello'
-                
-                """);
+            Unrecognized command: 'hello'
+            
+            """);
     }
 
     @ParameterizedTest
@@ -42,9 +42,9 @@ class UnknownCommandTest {
         command.run(new Arguments(Map.of()));
 
         assertThat(out.getOutput()).isEqualTo("""
-                Command not set
-                
-                """);
+            Command not set
+            
+            """);
     }
 
     @Test
@@ -54,10 +54,10 @@ class UnknownCommandTest {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                Command not set
-                
-                Hello from the delegate!
-                """);
+            Command not set
+            
+            Hello from the delegate!
+            """);
     }
 
     private class TestCommand implements Command {

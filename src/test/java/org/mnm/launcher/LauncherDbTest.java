@@ -1,11 +1,11 @@
 package org.mnm.launcher;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -20,11 +20,11 @@ class LauncherDbTest {
             Map<String, String> settings = db.getSettings();
 
             assertThat(settings)
-                    .containsEntry("current_game", "mnm")
-                    .containsEntry("remember", "true")
-                    .containsEntry("token", INITIAL_TOKEN)
-                    .containsEntry("username", "a-username@some-email.com")
-                    .hasSize(4);
+                .containsEntry("current_game", "mnm")
+                .containsEntry("remember", "true")
+                .containsEntry("token", INITIAL_TOKEN)
+                .containsEntry("username", "a-username@some-email.com")
+                .hasSize(4);
         }
     }
 
@@ -37,11 +37,11 @@ class LauncherDbTest {
 
         try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
-                    .containsEntry("current_game", "mnm")
-                    .containsEntry("remember", "true")
-                    .containsEntry("token", "999.999.999")
-                    .containsEntry("username", "a-username@some-email.com")
-                    .hasSize(4);
+                .containsEntry("current_game", "mnm")
+                .containsEntry("remember", "true")
+                .containsEntry("token", "999.999.999")
+                .containsEntry("username", "a-username@some-email.com")
+                .hasSize(4);
         }
     }
 
@@ -54,11 +54,11 @@ class LauncherDbTest {
 
         try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
-                    .containsEntry("current_game", "mnm")
-                    .containsEntry("remember", "true")
-                    .containsEntry("token", "")
-                    .containsEntry("username", "a-username@some-email.com")
-                    .hasSize(4);
+                .containsEntry("current_game", "mnm")
+                .containsEntry("remember", "true")
+                .containsEntry("token", "")
+                .containsEntry("username", "a-username@some-email.com")
+                .hasSize(4);
         }
     }
 
@@ -71,11 +71,11 @@ class LauncherDbTest {
 
         try (LauncherDb launcherDb = new LauncherDb(testDb.path())) {
             assertThat(launcherDb.getSettings())
-                    .containsEntry("current_game", "mnm")
-                    .containsEntry("remember", "true")
-                    .containsEntry("token", null)
-                    .containsEntry("username", "a-username@some-email.com")
-                    .hasSize(4);
+                .containsEntry("current_game", "mnm")
+                .containsEntry("remember", "true")
+                .containsEntry("token", null)
+                .containsEntry("username", "a-username@some-email.com")
+                .hasSize(4);
         }
     }
 
@@ -84,8 +84,8 @@ class LauncherDbTest {
         Throwable throwable = catchThrowable(() -> new LauncherDb(Path.of("some-file.db")));
 
         assertThat(throwable)
-                .isInstanceOf(FileNotFoundException.class)
-                .hasMessageContaining("some-file.db");
+            .isInstanceOf(FileNotFoundException.class)
+            .hasMessageContaining("some-file.db");
     }
 
 }

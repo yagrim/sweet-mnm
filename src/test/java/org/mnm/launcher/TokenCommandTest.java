@@ -1,5 +1,7 @@
 package org.mnm.launcher;
 
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -8,8 +10,6 @@ import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
-
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.LauncherTestDatabase.withSchema;
@@ -22,14 +22,14 @@ class TokenCommandTest extends LinuxOnlyCommand {
         final Command command = new TokenCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-                Shows official launcher current token
-                
-                Usage:
-                  sweet token
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Shows official launcher current token
+            
+            Usage:
+              sweet token
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -39,8 +39,8 @@ class TokenCommandTest extends LinuxOnlyCommand {
         token.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                123.456.789
-                """);
+            123.456.789
+            """);
     }
 
     @Test
@@ -51,8 +51,8 @@ class TokenCommandTest extends LinuxOnlyCommand {
         token.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                No token found
-                """);
+            No token found
+            """);
     }
 
     @Override

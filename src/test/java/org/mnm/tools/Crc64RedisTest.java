@@ -1,8 +1,8 @@
 package org.mnm.tools;
 
-import org.junit.jupiter.api.Test;
-
 import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,7 +30,7 @@ class Crc64RedisTest {
     @Test
     void shouldFailWhenNull() {
         assertThatThrownBy(() -> Crc64Redis.calculateHex(null))
-                .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class);
     }
 
 }

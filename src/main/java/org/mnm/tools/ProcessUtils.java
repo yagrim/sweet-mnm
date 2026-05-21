@@ -33,8 +33,8 @@ public class ProcessUtils {
 
                 if (exitCode != 0 || stdout.isEmpty()) {
                     throw new RuntimeException("Process failed: exitCode=" + exitCode
-                            + ", stdout=" + stdout
-                            + ", stderr=" + stderr);
+                        + ", stdout=" + stdout
+                        + ", stderr=" + stderr);
                 }
                 return stdout;
             }

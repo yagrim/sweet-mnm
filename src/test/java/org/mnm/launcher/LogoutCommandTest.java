@@ -1,5 +1,7 @@
 package org.mnm.launcher;
 
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -8,8 +10,6 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
-
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.LauncherTestDatabase.*;
@@ -22,14 +22,14 @@ class LogoutCommandTest extends LinuxOnlyCommand {
         final Command command = new LogoutCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-                Removes token from the launcher database
-                
-                Usage:
-                  sweet logout
-                
-                Options:
-                  --help   Shows this help
-                """);
+            Removes token from the launcher database
+            
+            Usage:
+              sweet logout
+            
+            Options:
+              --help   Shows this help
+            """);
     }
 
     @Test
@@ -41,8 +41,8 @@ class LogoutCommandTest extends LinuxOnlyCommand {
 
         command.run(null);
         assertThat(out.getOutput()).isEqualTo("""
-                Token removed from launcher database
-                """);
+            Token removed from launcher database
+            """);
 
         testDb.assertThatToken().isEqualTo("");
     }
@@ -57,8 +57,8 @@ class LogoutCommandTest extends LinuxOnlyCommand {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                Token removed from launcher database
-                """);
+            Token removed from launcher database
+            """);
 
         testDb.assertThatSettings().isEmpty();
     }
@@ -75,8 +75,8 @@ class LogoutCommandTest extends LinuxOnlyCommand {
         command.run(null);
 
         assertThat(out.getOutput()).isEqualTo("""
-                Token removed from launcher database
-                """);
+            Token removed from launcher database
+            """);
 
         // we sanitize value since null cause official launcher to fail
         testDb.assertThatToken().isEqualTo("");
