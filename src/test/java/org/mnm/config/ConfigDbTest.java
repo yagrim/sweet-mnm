@@ -1,5 +1,6 @@
 package org.mnm.config;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
 import org.mnm.ConfigTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -148,12 +150,13 @@ class ConfigDbTest {
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(initClient);
 
-                config.updateClient(slug, "1.2.3-e42", INSTALLING, "/some/location");
+                config.updateClient(slug, "1.2.3-e42", INSTALLING, Path.of("/some/location"));
 
                 Client client = config.getClient(slug);
                 assertThat(client.version()).isEqualTo("1.2.3-e42");
                 assertThat(client.status()).isEqualTo(INSTALLING);
-                assertThat(client.path()).isEqualTo("/some/location");
+
+                assertThat(client.path().toString()).isEqualTo(File.separator + String.join(File.separator, "some", "location"));
             }
         }
 
@@ -263,7 +266,7 @@ class ConfigDbTest {
     }
 
     private static Client testClient(String slug) {
-        return new Client(slug, "1.0.0-patch", Client.Status.COMPLETED, "");
+        return new Client(slug, "1.0.0-patch", Client.Status.COMPLETED, Path.of(""));
     }
 
     private static Session testSession(String slug) {

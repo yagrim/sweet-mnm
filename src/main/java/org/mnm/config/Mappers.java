@@ -1,5 +1,6 @@
 package org.mnm.config;
 
+import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -11,7 +12,7 @@ class Mappers {
                 rs.getString("slug"),
                 rs.getString("version"),
                 Client.Status.valueOf(rs.getString("status")),
-                rs.getString("path"));
+                Path.of(rs.getString("path")));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

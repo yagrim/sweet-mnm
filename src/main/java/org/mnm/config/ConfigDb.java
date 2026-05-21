@@ -113,7 +113,7 @@ public class ConfigDb implements AutoCloseable {
             ps.setString(1, client.slug());
             ps.setString(2, client.version());
             ps.setString(3, client.status().name());
-            ps.setString(4, client.path());
+            ps.setString(4, client.path().toString());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -172,11 +172,11 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    public void updateClient(String slug, String version, Client.Status status, String path) {
+    public void updateClient(String slug, String version, Client.Status status, Path path) {
         try (PreparedStatement ps = connection.prepareStatement("update clients set version = ?, status = ?, path = ? where slug = ?")) {
             ps.setString(1, version);
             ps.setString(2, status.name());
-            ps.setString(3, path);
+            ps.setString(3, path.toString());
             ps.setString(4, slug);
             ps.execute();
         } catch (SQLException e) {

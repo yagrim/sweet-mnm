@@ -1,8 +1,13 @@
 package org.mnm.client;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.mnm.api.Session;
 import org.mnm.config.Client;
@@ -14,8 +19,6 @@ import org.mnm.tools.HashFunctions;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.StringUtils;
 import org.mnm.tools.Zstd;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.mnm.config.Client.Status.*;
 import static org.mnm.tools.FileUtils.fileExists;
@@ -63,7 +66,7 @@ public class ClientInstaller {
 
         final String slug = session.getSlug();
         final Installation installation = new Installation(workDir, slug);
-        final String installPath = installation.getInstallPath().toString();
+        final Path installPath = installation.getInstallPath();
         if (currentClient == null) {
             Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
             configDb.addClient(client);
@@ -101,30 +104,28 @@ public class ClientInstaller {
             }
         }
 
+        // Summary
         if (!invalid.isEmpty()) {
-            logger.info("Found {} invalid file(s)", invalid.size());
-            invalid.stream().forEach(s -> logger.info(s.path()));
+            logger.info("Found {} invalid file(s) to patch", invalid.size());
+            invalid.stream().forEach(s -> logger.info(Path.of(slug, s.path()).toString()));
         }
-
         if (!missing.isEmpty()) {
-            logger.info("Found {} missing file(s)", missing.size());
-            missing.stream().forEach(s -> logger.info(s.path()));
+            logger.info("Found {} missing file(s) to install", missing.size());
+            missing.stream().forEach(s -> logger.info(Path.of(slug, s.path()).toString()));
+        }
+        if (!currentFiles.isEmpty()) {
+            logger.info("Found {} orphan file(s) to delete", currentFiles.size());
+            currentFiles.stream().forEach(s -> logger.info(workDir.relativize(s).toString()));
         }
 
-        // download only invalid files
+        // Actual installation
         if (!invalid.isEmpty()) {
-            logger.info("Fixing updated files: {}", invalid.size());
             installFiles(invalid, session, installation);
         }
-
-        // download only invalid files
         if (!missing.isEmpty()) {
-            logger.info("Installing new files: {}", missing.size());
             installFiles(missing, session, installation);
         }
-
         if (!currentFiles.isEmpty()) {
-            logger.info("Deleting orphan files: {}", currentFiles.size());
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
@@ -160,7 +161,7 @@ public class ClientInstaller {
             for (Manifest.Bundle bundle : file.getBundlesList()) {
                 final String bundleName = bundle.bundleCrc() + ".bin";
                 final Path downloadPath = installation.getBundlePath(bundleName);
-                System.out.println("Downloading chunks for bundle: " + downloadPath.toAbsolutePath());
+                logger.info("Downloading bundle: {}", downloadPath.toAbsolutePath());
 
                 if (!fileExists(downloadPath)) {
                     Downloader.downloadFile(buildUrl(chunksUrl, bundleName).toString(), downloadPath);

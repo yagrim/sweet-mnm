@@ -13,10 +13,13 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
 import org.mnm.ConfigTestDatabase;
+import org.mnm.SystemOutCaptureExtension;
 import org.mnm.client.ClientInstaller.InstallationResult;
 import org.mnm.client.InstallOptions.FileCheck;
 import org.mnm.config.Client;
@@ -32,6 +35,7 @@ import static org.mnm.client.InstallOptions.FileCheck.xxhsum;
 import static org.mnm.config.Client.Status.COMPLETED;
 
 
+@ExtendWith(SystemOutCaptureExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @WireMockTest(extensionScanningEnabled = true)
 class ClientInstallerTest {
@@ -65,7 +69,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("expired-token.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath().toString()));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath()));
             configDb.addSession(new Session(TEST_SLUG, EXPIRED_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
@@ -79,15 +83,15 @@ class ClientInstallerTest {
 
     @ParameterizedTest
     @EnumSource(FileCheck.class)
-    public void shouldInstallAndRepair(FileCheck fileCheck, WireMockRuntimeInfo wiremock, @TempDir Path tempDir) throws SQLException {
-        shouldInstallClientFromScratch(fileCheck, tempDir, wiremock);
-        shouldValidateClientAfterInstallation(fileCheck, tempDir, wiremock);
-        shouldRepairAndReInstallMissingFiles(fileCheck, tempDir, wiremock);
-        shouldRepairAndFixCorruptedFiles(fileCheck, tempDir, wiremock);
-        shouldRemoveOrphanFiles(fileCheck, tempDir, wiremock);
+    public void shouldInstallAndRepair(FileCheck fileCheck, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock, @TempDir Path tempDir) throws SQLException {
+        shouldInstallClientFromScratch(fileCheck, tempDir, out, wiremock);
+        shouldValidateClientAfterInstallation(fileCheck, tempDir, out, wiremock);
+        shouldRepairAndReInstallMissingFiles(fileCheck, tempDir, out, wiremock);
+        shouldRepairAndFixCorruptedFiles(fileCheck, tempDir, out, wiremock);
+        shouldRemoveOrphanFiles(fileCheck, tempDir, out, wiremock);
     }
 
-    void shouldInstallClientFromScratch(FileCheck fileCheck, Path tempDir, WireMockRuntimeInfo wiremock) throws SQLException {
+    void shouldInstallClientFromScratch(FileCheck fileCheck, Path tempDir, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock) throws SQLException {
         stubAuthenticationFlow(wiremock);
         stubChunkDownload("a1fd9407db7effaf");
         stubChunkDownload("3d8638fbc9718fcb");
@@ -115,9 +119,12 @@ class ClientInstallerTest {
             assertThat(result.missing()).isEqualTo(3);
             assertThat(result.orphan()).isEqualTo(0);
         }
+
+        assertThat(out.getOutput())
+            .contains("Found 3 missing file(s) to install");
     }
 
-    void shouldValidateClientAfterInstallation(FileCheck fileCheck, Path tempDir, WireMockRuntimeInfo wiremock) throws SQLException {
+    void shouldValidateClientAfterInstallation(FileCheck fileCheck, Path tempDir, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock) throws SQLException {
         stubAuthenticationFlow(wiremock);
 
         final Path dbFile = testConfigDatabase(tempDir);
@@ -133,9 +140,13 @@ class ClientInstallerTest {
             assertThat(result.missing()).isEqualTo(0);
             assertThat(result.orphan()).isEqualTo(0);
         }
+
+        int start = out.getOutput().lastIndexOf("Connecting with token");
+        assertThat(out.getOutput().substring(start))
+            .doesNotContain("Found");
     }
 
-    void shouldRepairAndReInstallMissingFiles(FileCheck fileCheck, Path tempDir, WireMockRuntimeInfo wiremock) throws SQLException {
+    void shouldRepairAndReInstallMissingFiles(FileCheck fileCheck, Path tempDir, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock) throws SQLException {
         deletePath(testInstallationPath(tempDir).resolve("data"));
         stubAuthenticationFlow(wiremock);
 
@@ -152,9 +163,12 @@ class ClientInstallerTest {
             assertThat(result.missing()).isEqualTo(1);
             assertThat(result.orphan()).isEqualTo(0);
         }
+
+        assertThat(recentOutput(out))
+            .contains("Found 1 missing file(s) to install");
     }
 
-    void shouldRepairAndFixCorruptedFiles(FileCheck fileCheck, Path tempDir, WireMockRuntimeInfo wiremock) throws SQLException {
+    void shouldRepairAndFixCorruptedFiles(FileCheck fileCheck, Path tempDir, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock) throws SQLException {
         final Path installationPath = testInstallationPath(tempDir);
         appendToFile(installationPath.resolve("numbers.txt"), "corrupted");
         stubAuthenticationFlow(wiremock);
@@ -172,9 +186,12 @@ class ClientInstallerTest {
             assertThat(result.missing()).isEqualTo(0);
             assertThat(result.orphan()).isEqualTo(0);
         }
+
+        assertThat(recentOutput(out))
+            .contains("Found 1 invalid file(s) to patch");
     }
 
-    void shouldRemoveOrphanFiles(FileCheck fileCheck, Path tempDir, WireMockRuntimeInfo wiremock) throws SQLException {
+    void shouldRemoveOrphanFiles(FileCheck fileCheck, Path tempDir, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock) throws SQLException {
         final Path installationPath = testInstallationPath(tempDir);
         final Path additionalFile1 = installationPath.resolve("unnecessary-1.txt");
         final Path additionalFile2 = installationPath.resolve("unnecessary-2.bin");
@@ -202,6 +219,14 @@ class ClientInstallerTest {
             assertThat(result.missing()).isEqualTo(0);
             assertThat(result.orphan()).isEqualTo(2);
         }
+
+        assertThat(recentOutput(out))
+            .contains("Found 2 orphan file(s) to delete");
+    }
+
+    private static String recentOutput(SystemOutCaptureExtension out) {
+        int start = out.getOutput().lastIndexOf("Connecting with token");
+        return out.getOutput().substring(start);
     }
 
     private static void assertDatabaseContainsClientAndSession(Path dbFile, Path tempDir) throws SQLException {
@@ -211,7 +236,7 @@ class ClientInstallerTest {
 
             final Path installationPath = testInstallationPath(tempDir);
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath().toString()))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
                 .hasRows(1);
             testDatabase.assertThatTable("sessions")
                 .containsSession(1, new Session(TEST_SLUG, VALID_TEST_TOKEN))
