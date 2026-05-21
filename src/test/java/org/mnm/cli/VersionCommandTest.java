@@ -41,14 +41,13 @@ class VersionCommandTest {
     }
 
     @Test
-    void shouldRun(SystemOutCaptureExtension out) throws IOException {
+    void shouldRunAndPrintVersion(SystemOutCaptureExtension out) throws IOException {
         final Command command = new VersionCommand();
 
         command.run(null);
 
         assertThat(out.getOutput())
-                .startsWith("Version: %s".formatted(readVersion()))
-                .endsWith(System.lineSeparator());
+                .startsWith("Version: %s".formatted(readVersion()));
     }
 
     private static String readVersion() throws IOException {

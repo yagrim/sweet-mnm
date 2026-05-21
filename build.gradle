@@ -59,11 +59,15 @@ jar {
     }
 }
 
+/**
+ * Can't add static heap limit (-Xmxm,-R:MaxHeapSize) below max_size of file
+ * because in-memory file check loads the file in the heap.
+ */
 application {
     applicationName = 'sweet'
     applicationDefaultJvmArgs = [
             '--enable-native-access=ALL-UNNAMED',
-            '-Xmx256m'
+//            '-Xmx256m'
     ]
     executableDir = ''
     mainClass = 'org.mnm.MainClazz'
@@ -76,7 +80,8 @@ graalvmNative {
             buildArgs.addAll(
                     '--enable-native-access=ALL-UNNAMED',
                     '--enable-url-protocols=https',
-                    '-R:MaxHeapSize=256m'
+                    '--gc=serial',
+//                    '-R:MaxHeapSize=256m'
             )
             resources {
                 includedPatterns.addAll('logback.xml', 'version.txt')

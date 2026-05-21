@@ -19,12 +19,7 @@ public class InstallCommand implements Command {
 
     @Override
     public void run(Arguments args) {
-
-        InstallOptions options = new InstallOptions(
-                args.get("username"),
-                args.get("password"),
-                args.getOrDefault("slug", null)
-        );
+        InstallOptions options = InstallOptions.parse(args);
         options.validate();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
@@ -61,10 +56,11 @@ public class InstallCommand implements Command {
                   sweet %2$s --slug <slug>
                 
                 Options:
-                  --username   MnM account username (required when --slug is not set)
-                  --password   MnM account password (required when --username is set)
-                  --slug       Existing configured client slug, can be used instead of credentials
-                  --help       Shows this help
+                  --username      MnM account username (required when --slug is not set)
+                  --password      MnM account password (required when --username is set)
+                  --slug          Existing configured client slug, can be used instead of credentials
+                  --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
+                  --help          Shows this help
                 """.formatted(description(), name());
     }
 

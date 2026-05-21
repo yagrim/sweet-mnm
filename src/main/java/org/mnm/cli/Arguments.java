@@ -2,12 +2,14 @@ package org.mnm.cli;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Arguments {
 
     private final Map<String, String> argsMap;
 
     public Arguments(Map<String, String> argsMap) {
+        Objects.requireNonNull(argsMap);
         this.argsMap = new HashMap<>(argsMap);
     }
 
