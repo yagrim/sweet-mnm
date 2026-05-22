@@ -1,11 +1,10 @@
 package org.mnm.cli;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+
 import org.mnm.SystemOutCaptureExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +25,7 @@ class UnknownCommandTest {
     void shouldPrintOriginalCommand(SystemOutCaptureExtension out) {
         Command command = new UnknownCommand("hello", null);
 
-        command.run(new Arguments(Map.of()));
+        command.run(Arguments.parse());
 
         assertThat(out.getOutput()).isEqualTo("""
             Unrecognized command: 'hello'
@@ -39,7 +38,7 @@ class UnknownCommandTest {
     void shouldPrintEmptyWhenOriginalCommandIsEmpty(String input, SystemOutCaptureExtension out) {
         Command command = new UnknownCommand(input, null);
 
-        command.run(new Arguments(Map.of()));
+        command.run(Arguments.parse());
 
         assertThat(out.getOutput()).isEqualTo("""
             Command not set

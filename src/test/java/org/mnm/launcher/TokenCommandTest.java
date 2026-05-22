@@ -3,7 +3,7 @@ package org.mnm.launcher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -50,10 +50,10 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     @ParameterizedTest
     @MethodSource("outputRawOptions")
-    void shouldReturnTokenAsRaw(Map<String, String> args, SystemOutCaptureExtension out) {
-        Command token = new TokenCommand(LauncherTestDatabase::fromClasspath);
+    void shouldReturnTokenAsRaw(List<String> args, SystemOutCaptureExtension out) {
+        Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
 
-        token.run(new Arguments(args));
+        command.run(Arguments.parse(args.toArray(new String[0])));
 
         assertThat(out.getOutput()).isEqualTo("""
             123.456.789
@@ -62,18 +62,18 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     static Stream<org.junit.jupiter.params.provider.Arguments> outputRawOptions() {
         return Stream.of(
-            org.junit.jupiter.params.provider.Arguments.of(Map.of()),
-            org.junit.jupiter.params.provider.Arguments.of(Map.of("output", "")),
-            org.junit.jupiter.params.provider.Arguments.of(Map.of("output", "true")),
-            org.junit.jupiter.params.provider.Arguments.of(Map.of("output", "raw"))
+            org.junit.jupiter.params.provider.Arguments.of(List.of()),
+            org.junit.jupiter.params.provider.Arguments.of(List.of("--output")),
+            org.junit.jupiter.params.provider.Arguments.of(List.of("--output", "")),
+            org.junit.jupiter.params.provider.Arguments.of(List.of("--output", "raw"))
         );
     }
 
     @Test
     void shouldReturnTokenAsRaw(SystemOutCaptureExtension out) {
-        Command token = new TokenCommand(LauncherTestDatabase::fromClasspath);
+        final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
 
-        token.run(new Arguments(Map.of("output", "raw")));
+        command.run(Arguments.parse("--output", "raw"));
 
         assertThat(out.getOutput()).isEqualTo("""
             123.456.789
@@ -81,10 +81,10 @@ class TokenCommandTest extends LinuxOnlyCommand {
     }
 
     @Test
-    void shouldReturnTokenAsRawWhenSetAsBoolean(SystemOutCaptureExtension out) {
-        Command token = new TokenCommand(LauncherTestDatabase::fromClasspath);
+    void shouldReturnTokenAsRawWhenSetAsBooleanFlag(SystemOutCaptureExtension out) {
+        final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
 
-        token.run(new Arguments(Map.of("output", "true")));
+        command.run(Arguments.parse("--output"));
 
         assertThat(out.getOutput()).isEqualTo("""
             123.456.789
@@ -98,8 +98,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
         final Command command = new TokenCommand(() -> testDb.path());
 
-        Arguments args = new Arguments(Map.of("output", "rows"));
-        command.run(args);
+        command.run(Arguments.parse("--output", "rows"));
 
         assertThat(out.getOutput())
             .isEqualTo("""
@@ -114,7 +113,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
     void shouldPanicWhenOutputIsNotValid() {
         final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
 
-        assertThatThrownBy(() -> command.run(new Arguments(Map.of("output", "random"))))
+        assertThatThrownBy(() -> command.run(Arguments.parse("--output", "random")))
             .isInstanceOf(PanicException.class)
             .hasMessage("Invalid output: random");
     }

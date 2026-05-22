@@ -26,7 +26,7 @@ public class TokenCommand implements Command {
         if (isEmpty(token)) {
             System.out.println("No token found");
         } else {
-            String output = args.getAsString("output");
+            final String output = args.get("output");
             if (isEmpty(output) || output.equals("raw")) {
                 System.out.println(token);
             } else if (output.equals("rows")) {

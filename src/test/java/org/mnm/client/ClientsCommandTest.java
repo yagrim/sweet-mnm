@@ -1,11 +1,11 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -63,7 +63,7 @@ class ClientsCommandTest {
         }
 
         Command command = new ClientsCommand(() -> dbFile);
-        command.run(new Arguments(Map.of()));
+        command.run(Arguments.parse());
 
         assertThat(capture.getOutput()).isEqualTo("""
             Slug  Version  Tokens
@@ -77,7 +77,7 @@ class ClientsCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
 
         Command command = new ClientsCommand(() -> dbFile);
-        command.run(new Arguments(Map.of()));
+        command.run(Arguments.parse());
 
         assertThat(capture.getOutput()).isEqualTo("No clients found\n".formatted());
     }
