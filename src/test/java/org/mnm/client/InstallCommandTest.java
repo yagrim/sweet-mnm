@@ -1,12 +1,12 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+
 import org.mnm.ConfigTestDatabase;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
@@ -70,7 +70,7 @@ class InstallCommandTest {
             configFileLocated.set(true);
             return null;
         });
-        Arguments arguments = new Arguments(Map.of("password", "password"));
+        Arguments arguments = Arguments.parse("--password", "password");
 
         Throwable t = catchThrowable(() -> command.run(arguments));
 
@@ -87,7 +87,7 @@ class InstallCommandTest {
             configFileLocated.set(true);
             return null;
         });
-        Arguments arguments = new Arguments(Map.of("username", "username"));
+        Arguments arguments = Arguments.parse("--username", "username");
 
         Throwable t = catchThrowable(() -> command.run(arguments));
 
@@ -102,7 +102,7 @@ class InstallCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
 
         Command command = new InstallCommand(() -> dbFile);
-        Arguments arguments = new Arguments(Map.of("slug", "mnm"));
+        Arguments arguments = Arguments.parse("--slug", "mnm");
 
         Throwable t = catchThrowable(() -> command.run(arguments));
 

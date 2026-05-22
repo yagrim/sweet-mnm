@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mnm.cli.Arguments;
-import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.tools.PanicException;
 
@@ -41,7 +41,7 @@ class MainClazzTest {
 
         MainClazz.main(
             new String[]{"test", "--help"},
-            ArgumentsParser::parse,
+            Arguments::parse,
             _ -> command,
             _ -> {
             });
@@ -59,7 +59,7 @@ class MainClazzTest {
 
         MainClazz.main(
             new String[]{"broken"},
-            ArgumentsParser::parse,
+            Arguments::parse,
             _ -> failingCommand,
             exitStatus::set);
 
@@ -78,7 +78,7 @@ class MainClazzTest {
 
         MainClazz.main(
             new String[]{"broken"},
-            ArgumentsParser::parse,
+            Arguments::parse,
             _ -> failingCommand,
             exitStatus::set);
 
@@ -97,7 +97,7 @@ class MainClazzTest {
 
         MainClazz.main(
             new String[]{"test"},
-            ArgumentsParser::parse,
+            Arguments::parse,
             _ -> command,
             _ -> {
             });
@@ -114,7 +114,7 @@ class MainClazzTest {
 
         MainClazz.main(
             new String[]{"test"},
-            ArgumentsParser::parse,
+            Arguments::parse,
             _ -> command,
             _ -> {
             });

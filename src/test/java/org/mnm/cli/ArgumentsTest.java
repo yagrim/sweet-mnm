@@ -3,15 +3,14 @@ package org.mnm.cli;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
-class ArgumentParserTest {
+class ArgumentsTest {
 
     @Test
     void parsesKeyValuePairs() {
         String[] args = {"--name", "Alice", "--age", "30"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.get("name")).isEqualTo("Alice");
         assertThat(parsed.getInt("age", 0)).isEqualTo(30);
@@ -21,7 +20,7 @@ class ArgumentParserTest {
     void parsesBooleanFlag() {
         String[] args = {"--verbose"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.getBoolean("verbose")).isTrue();
     }
@@ -30,7 +29,7 @@ class ArgumentParserTest {
     void detectsHelpFlag() {
         String[] args = {"--help"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.isHelp()).isTrue();
     }
@@ -39,28 +38,26 @@ class ArgumentParserTest {
     void missingValueDefaultsToTrueFlag() {
         String[] args = {"--debug"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.getBoolean("debug")).isTrue();
     }
 
     @Test
-    void shouldFailWhenGettingBooleanAsString() {
+    void shouldReturnNullGettingABooleanAString() {
         String[] args = {"--debug"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
-        Throwable t = catchThrowable(() -> parsed.get("debug"));
+        Arguments parsed = Arguments.parse(args);
+        String value = parsed.get("debug");
 
-        assertThat(t)
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Boolean flag cannot be read as string");
+        assertThat(value).isNull();
     }
 
     @Test
     void returnsDefaultsWhenKeyMissing() {
         String[] args = {};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.getOrDefault("missing", "default")).isEqualTo("default");
         assertThat(parsed.getInt("missingInt", 42)).isEqualTo(42);
@@ -71,7 +68,7 @@ class ArgumentParserTest {
     void returnsDefaultStringWhenValueIsBoolean() {
         String[] args = {"--debug"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.getOrDefault("debug", "default")).isEqualTo("default");
     }
@@ -80,7 +77,7 @@ class ArgumentParserTest {
     void ignoresNonPrefixedArguments() {
         String[] args = {"name", "Alice", "--age", "25"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.get("name")).isNull();
         assertThat(parsed.getInt("age", 0)).isEqualTo(25);
@@ -94,7 +91,7 @@ class ArgumentParserTest {
             "--count", "5"
         };
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.get("name")).isEqualTo("Bob");
         assertThat(parsed.getBoolean("verbose")).isTrue();
@@ -105,7 +102,7 @@ class ArgumentParserTest {
     void invalidIntegerFallsBackToDefault() {
         String[] args = {"--age", "notANumber"};
 
-        Arguments parsed = ArgumentsParser.parse(args);
+        Arguments parsed = Arguments.parse(args);
 
         assertThat(parsed.getInt("age", 99)).isEqualTo(99);
     }

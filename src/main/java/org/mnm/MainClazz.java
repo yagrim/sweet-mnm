@@ -9,7 +9,6 @@ import ch.qos.logback.classic.LoggerContext;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.cli.Arguments;
-import org.mnm.cli.ArgumentsParser;
 import org.mnm.cli.Command;
 import org.mnm.cli.CommandParser;
 import org.mnm.tools.PanicException;
@@ -17,7 +16,7 @@ import org.mnm.tools.PanicException;
 public class MainClazz {
 
     static void main(String[] args) {
-        main(args, ArgumentsParser::parse, CommandParser::parse, System::exit);
+        main(args, Arguments::parse, CommandParser::parse, System::exit);
     }
 
     static void main(String[] args,

@@ -1,7 +1,6 @@
 package org.mnm.launcher;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.UUID;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
@@ -9,6 +8,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+
 import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
@@ -57,12 +57,11 @@ class LoginCommandTest extends LinuxOnlyCommand {
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
-        Arguments arguments = new Arguments(Map.of(
-            "username", "username",
-            "password", "password",
-            "dev-options", "true",
-            "api-endpoint", wiremock.getHttpBaseUrl()
-        ));
+        Arguments arguments = Arguments.parse(
+            "--username", "username",
+            "--password", "password",
+            "--dev-options", "true",
+            "--api-endpoint", wiremock.getHttpBaseUrl());
         command.run(arguments);
 
         assertThat(out.getOutput())
@@ -85,13 +84,12 @@ class LoginCommandTest extends LinuxOnlyCommand {
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
-        Arguments arguments = new Arguments(Map.of(
-            "dev-options", "true",
-            "api-endpoint", wiremock.getHttpBaseUrl(),
-            "username", "username",
-            "password", "password",
-            "ignore-update", "true"
-        ));
+        Arguments arguments = Arguments.parse(
+            "--dev-options", "true",
+            "--api-endpoint", wiremock.getHttpBaseUrl(),
+            "--username", "username",
+            "--password", "password",
+            "--ignore-update", "true");
         command.run(arguments);
 
         assertThat(out.getOutput())
@@ -103,13 +101,13 @@ class LoginCommandTest extends LinuxOnlyCommand {
     }
 
     @Test
-    void shouldPanicWhenUsernameIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+    void shouldPanicWhenUsernameIsNotSet(@TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
         final Command command = new LoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
-        Arguments arguments = new Arguments(Map.of("password", "password"));
+        Arguments arguments = Arguments.parse("--password", "password");
         Throwable t = catchThrowable(() -> command.run(arguments));
 
         assertThat(t)
@@ -120,13 +118,13 @@ class LoginCommandTest extends LinuxOnlyCommand {
     }
 
     @Test
-    void shouldPanicWhenPasswordIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
+    void shouldPanicWhenPasswordIsNotSet(@TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
         final Command command = new LoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
-        Arguments arguments = new Arguments(Map.of("username", "username"));
+        Arguments arguments = Arguments.parse("--username", "username");
         Throwable t = catchThrowable(() -> command.run(arguments));
 
         assertThat(t)
@@ -140,4 +138,5 @@ class LoginCommandTest extends LinuxOnlyCommand {
     protected Command buildCommand() {
         return new LoginCommand(null);
     }
+
 }

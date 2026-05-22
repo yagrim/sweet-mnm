@@ -1,11 +1,10 @@
 package org.mnm.client;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+
 import org.mnm.cli.Arguments;
 import org.mnm.tools.PanicException;
 
@@ -65,7 +64,7 @@ class InstallOptionsTest {
 
         @Test
         void shouldReturnDefaults() {
-            Arguments arguments = new Arguments(Map.of());
+            Arguments arguments = Arguments.parse();
 
             InstallOptions options = InstallOptions.parse(arguments);
 
@@ -75,12 +74,11 @@ class InstallOptionsTest {
 
         @Test
         void shouldParseAllOptions() {
-            Arguments arguments = new Arguments(Map.of(
-                "username", "me",
-                "password", "42",
-                "slug", "mnm",
-                "file-check", "in-memory"
-            ));
+            Arguments arguments = Arguments.parse(
+                "--username", "me",
+                "--password", "42",
+                "--slug", "mnm",
+                "--file-check", "in-memory");
 
             InstallOptions options = InstallOptions.parse(arguments);
 
@@ -90,9 +88,7 @@ class InstallOptionsTest {
 
         @Test
         void shouldNotParseInvalidFileCheck() {
-            Arguments arguments = new Arguments(Map.of(
-                "file-check", "in-valid"
-            ));
+            Arguments arguments = Arguments.parse("--file-check", "in-valid");
 
             InstallOptions options = InstallOptions.parse(arguments);
 
