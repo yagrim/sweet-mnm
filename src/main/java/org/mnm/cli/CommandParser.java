@@ -12,7 +12,6 @@ import org.mnm.config.Environment;
 import org.mnm.launcher.LoginCommand;
 import org.mnm.launcher.LogoutCommand;
 import org.mnm.launcher.TokenCommand;
-import org.mnm.launcher.TokenInfoCommand;
 
 public class CommandParser {
 
@@ -53,7 +52,6 @@ public class CommandParser {
             new LoginCommand(launcherDbSupplier),
             new LogoutCommand(launcherDbSupplier),
             new TokenCommand(launcherDbSupplier),
-            new TokenInfoCommand(launcherDbSupplier),
 
             new VersionCommand()
         );

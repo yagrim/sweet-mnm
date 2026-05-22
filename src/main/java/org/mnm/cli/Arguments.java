@@ -48,4 +48,13 @@ public class Arguments {
         return getBoolean("help");
     }
 
+    /**
+     * Forces string return. null if no value was set.
+     */
+    // To avoid boolean cannot be read when we check for string and user did not set any value.
+    public String getAsString(String output) {
+        String value = argsMap.get(output);
+        if (value != null && value.equals("true")) return null;
+        return value;
+    }
 }
