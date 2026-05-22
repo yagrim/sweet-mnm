@@ -190,7 +190,6 @@ class MainClazzTest {
               launcher-logout   Removes token from the launcher database
               launcher-token    Shows official launcher current token
               repair            Checks installation and updates if necessary
-              token-info        Shows official launcher token information
               version           Shows the version
             
             Options:

@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.OS;
+import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.tools.StringUtils.isEmpty;
 
@@ -25,7 +26,15 @@ public class TokenCommand implements Command {
         if (isEmpty(token)) {
             System.out.println("No token found");
         } else {
-            System.out.println(token);
+            String output = args.getAsString("output");
+            if (isEmpty(output) || output.equals("raw")) {
+                System.out.println(token);
+            } else if (output.equals("rows")) {
+                String formattedToken = tokenService.formatToColumns(token);
+                System.out.printf(formattedToken);
+            } else {
+                ProcessUtils.panic("Invalid output: " + output);
+            }
         }
     }
 
@@ -48,8 +57,9 @@ public class TokenCommand implements Command {
               sweet %s
             
             Options:
-              --debug  Enables debug messages
-              --help   Shows this help
+              --outout   Set output format: 'raw' for JWT token (default ), 'rows' for metadata
+              --debug    Enables debug messages
+              --help     Shows this help
             """.formatted(description(), name());
     }
 
