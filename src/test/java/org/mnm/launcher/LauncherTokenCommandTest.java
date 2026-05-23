@@ -24,16 +24,15 @@ import org.mnm.tools.PanicException;
 import static org.assertj.core.api.Assertions.*;
 import static org.mnm.LauncherTestDatabase.withSchema;
 import static org.mnm.LauncherTestDatabase.withSettings;
+import static org.mnm.TestData.TEST_TOKEN;
+
 
 @ExtendWith(SystemOutCaptureExtension.class)
-class TokenCommandTest extends LinuxOnlyCommand {
-
-    private static String TEST_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJtbm0iLCJlbWFpbCI6ImEtdXNlcm5hbWVAc29tZS1lbWFpbC5jb20iLCJleHAiOjE3ODA3OTAyNTcsImlhdCI6MTc3ODM3MTA1NywiaXNzIjoibW5tIiwianRpIjoiYzg2MThkMmEtYTExNy00YmQ4LWJiZmUtZDQwMjJkNWI4MThjIiwibmJmIjoxNzc4MzcxMDU2LCJwdXJwb3NlIjowLCJzdWIiOiI0MjQyNDIiLCJ0eXAiOiJhY2Nlc3MiLCJ2ZXJzaW9uIjoyMX0.8_TEQWuqz4abx3YoXawWRGlnPBVFgm9MigBA4nHt9eA";
-
+class LauncherTokenCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
-        final Command command = new TokenCommand(null);
+        final Command command = new LauncherTokenCommand(null);
 
         assertThat(command.help()).isEqualTo("""
             Shows official launcher current token
@@ -42,7 +41,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
               sweet launcher-token
             
             Options:
-              --outout   Set output format: 'raw' for JWT token (default ), 'rows' for metadata
+              --output   Set output format: 'raw' for JWT token (default ), 'rows' for metadata
               --debug    Enables debug messages
               --help     Shows this help
             """);
@@ -51,7 +50,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
     @ParameterizedTest
     @MethodSource("outputRawOptions")
     void shouldReturnTokenAsRaw(List<String> args, SystemOutCaptureExtension out) {
-        Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
+        Command command = new LauncherTokenCommand(LauncherTestDatabase::fromClasspath);
 
         command.run(Arguments.parse(args.toArray(new String[0])));
 
@@ -71,7 +70,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnTokenAsRaw(SystemOutCaptureExtension out) {
-        final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
+        final Command command = new LauncherTokenCommand(LauncherTestDatabase::fromClasspath);
 
         command.run(Arguments.parse("--output", "raw"));
 
@@ -82,7 +81,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnTokenAsRawWhenSetAsBooleanFlag(SystemOutCaptureExtension out) {
-        final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
+        final Command command = new LauncherTokenCommand(LauncherTestDatabase::fromClasspath);
 
         command.run(Arguments.parse("--output"));
 
@@ -96,7 +95,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
         final TestDatabase testDb = withSettings(tempDir);
         testDb.updateSettingsToken(TEST_TOKEN);
 
-        final Command command = new TokenCommand(() -> testDb.path());
+        final Command command = new LauncherTokenCommand(() -> testDb.path());
 
         command.run(Arguments.parse("--output", "rows"));
 
@@ -111,7 +110,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldPanicWhenOutputIsNotValid() {
-        final Command command = new TokenCommand(LauncherTestDatabase::fromClasspath);
+        final Command command = new LauncherTokenCommand(LauncherTestDatabase::fromClasspath);
 
         assertThatThrownBy(() -> command.run(Arguments.parse("--output", "random")))
             .isInstanceOf(PanicException.class)
@@ -121,7 +120,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
     @Test
     void shouldPrintMessageWhenTokenIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final TestDatabase testDb = withSchema(tempDir);
-        Command token = new TokenCommand(testDb::path);
+        Command token = new LauncherTokenCommand(testDb::path);
 
         token.run(null);
 
@@ -134,7 +133,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
     void shouldFailWhenDatabaseFileNotPresent(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final Path path = tempDir.resolve("not-a-db.db");
 
-        final Command command = new TokenCommand(() -> path);
+        final Command command = new LauncherTokenCommand(() -> path);
 
         Throwable t = catchThrowable(() -> command.run(null));
 
@@ -149,7 +148,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
     void shouldPanicWhenPasswordIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) throws Exception {
         final Path path = tempDir.resolve("not-a-db.db");
         path.toFile().createNewFile();
-        final Command command = new TokenCommand(() -> path);
+        final Command command = new LauncherTokenCommand(() -> path);
 
         Throwable t = catchThrowable(() -> command.run(null));
 
@@ -162,7 +161,7 @@ class TokenCommandTest extends LinuxOnlyCommand {
 
     @Override
     protected Command buildCommand() {
-        return new TokenCommand(null);
+        return new LauncherTokenCommand(null);
     }
 
 }

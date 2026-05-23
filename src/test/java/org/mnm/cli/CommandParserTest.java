@@ -9,6 +9,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
+import org.mnm.client.TokenCommand;
+import org.mnm.client.TokensCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,6 +30,8 @@ class CommandParserTest {
             Arguments.of("clients", ClientsCommand.class),
             Arguments.of("install", InstallCommand.class),
             Arguments.of("repair", RepairCommand.class),
+            Arguments.of("token", TokenCommand.class),
+            Arguments.of("tokens", TokensCommand.class),
             Arguments.of("help", HelpCommand.class)
         );
     }

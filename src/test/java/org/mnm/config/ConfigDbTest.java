@@ -208,6 +208,22 @@ class ConfigDbTest {
         }
 
         @Test
+        void shouldGetSessionById(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            Client client = testClient();
+            Session session = testSession(client.slug());
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                config.addClient(client);
+                config.addSession(session);
+
+                Session actual = config.getSession(1);
+                assertThat(actual).isEqualTo(new Session(1, session.slug(), session.token()));
+            }
+        }
+
+        @Test
         void shouldAddMultipleSessionsForTheSameClient(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
@@ -232,7 +248,7 @@ class ConfigDbTest {
         }
 
         @Test
-        void shouldGetAllSessions(@TempDir Path tempDir) {
+        void shouldGetAllSessionsBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
@@ -252,11 +268,45 @@ class ConfigDbTest {
                 config.addSession(session5);
 
                 assertThat(config.getSessions("mnm-1"))
-                    .containsExactlyInAnyOrder(session1, session4);
+                    .containsExactlyInAnyOrder(
+                        new Session(1, "mnm-1", "1"),
+                        new Session(4, "mnm-1", "11"));
                 assertThat(config.getSessions("mnm-2"))
-                    .containsExactlyInAnyOrder(session2, session5);
+                    .containsExactlyInAnyOrder(
+                        new Session(2, "mnm-2", "2"),
+                        new Session(5, "mnm-2", "22"));
                 assertThat(config.getSessions("mnm-3"))
-                    .containsExactlyInAnyOrder(session3);
+                    .containsExactlyInAnyOrder(new Session(3, "mnm-3", "3"));
+            }
+        }
+
+        @Test
+        void shouldGetAllSessions(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                Stream.of("mnm-1", "mnm-2", "mnm-3")
+                    .forEach(slug -> config.addClient(testClient(slug)));
+
+                Session session1 = new Session("mnm-1", "1");
+                Session session2 = new Session("mnm-2", "2");
+                Session session3 = new Session("mnm-3", "3");
+                Session session4 = new Session("mnm-1", "11");
+                Session session5 = new Session("mnm-2", "22");
+
+                config.addSession(session1);
+                config.addSession(session2);
+                config.addSession(session3);
+                config.addSession(session4);
+                config.addSession(session5);
+
+                assertThat(config.getSessions())
+                    .containsExactlyInAnyOrder(
+                        new Session(1, "mnm-1", "1"),
+                        new Session(2, "mnm-2", "2"),
+                        new Session(3, "mnm-3", "3"),
+                        new Session(4, "mnm-1", "11"),
+                        new Session(5, "mnm-2", "22"));
             }
         }
     }

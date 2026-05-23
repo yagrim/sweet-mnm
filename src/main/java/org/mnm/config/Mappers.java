@@ -21,6 +21,7 @@ class Mappers {
     static Session mapSession(ResultSet rs) {
         try {
             return new Session(
+                rs.getInt("id"),
                 rs.getString("slug"),
                 rs.getString("token"));
         } catch (SQLException e) {

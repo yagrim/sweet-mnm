@@ -12,9 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import org.mnm.tools.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Mappers.mapClient;
 import static org.mnm.tools.StringUtils.isEmpty;
@@ -135,7 +136,7 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public List<Client> getClients() {
-        return select("clients", "", Mappers::mapClient);
+        return select("clients", null, Mappers::mapClient);
     }
 
     public Client getClient(String slug) {
@@ -155,6 +156,25 @@ public class ConfigDb implements AutoCloseable {
 
     public List<Session> getSessions(String slug) {
         return select("sessions", "slug = '%s'".formatted(slug), Mappers::mapSession);
+    }
+
+    public List<Session> getSessions() {
+        return select("sessions", null, Mappers::mapSession);
+    }
+
+    public Session getSession(int id) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from sessions where id = ?")) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Mappers.mapSession(rs);
+                } else {
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private <T> List<T> select(String table, String where, Function<ResultSet, T> mapper) {
