@@ -8,6 +8,8 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 
+import static org.mnm.tools.Formatting.width;
+
 public class ClientsCommand implements Command {
 
     private final Supplier<Path> configFileLocator;
@@ -37,9 +39,10 @@ public class ClientsCommand implements Command {
             return "No clients found%n".formatted();
         }
 
-        int slugWidth = width("Slug", clients.stream().map(ClientSummary::slug).toList());
-        int versionWidth = width("Version", clients.stream().map(ClientSummary::version).toList());
-        int tokensWidth = width("Tokens", clients.stream().map(client -> String.valueOf(client.sessions())).toList());
+        int slugWidth = width("Slug", clients.stream().map(c -> c.slug));
+        int versionWidth = width("Version", clients.stream().map(c -> c.version));
+        // We can assume no one is going to have more than 99999 tokens
+        int tokensWidth = 6;
 
         String rowFormat = "%-" + slugWidth + "s  %-" + versionWidth + "s  %" + tokensWidth + "s%n";
         StringBuilder sb = new StringBuilder();
@@ -48,10 +51,6 @@ public class ClientsCommand implements Command {
             sb.append(rowFormat.formatted(client.slug(), client.version(), client.sessions()));
         }
         return sb.toString();
-    }
-
-    private static int width(String header, List<String> values) {
-        return Math.max(header.length(), values.stream().mapToInt(String::length).max().orElse(0));
     }
 
     @Override
