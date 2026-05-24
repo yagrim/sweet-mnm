@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Command;
@@ -15,11 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.LauncherTestDatabase.*;
 
 @ExtendWith(SystemOutCaptureExtension.class)
-class LogoutCommandTest extends LinuxOnlyCommand {
+class LauncherLogoutCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
-        final Command command = new LogoutCommand(null);
+        final Command command = new LauncherLogoutCommand(null);
 
         assertThat(command.help()).isEqualTo("""
             Removes token from the launcher database
@@ -36,7 +37,7 @@ class LogoutCommandTest extends LinuxOnlyCommand {
     @Test
     void shouldClearToken(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
-        final Command command = new LogoutCommand(testDb::path);
+        final Command command = new LauncherLogoutCommand(testDb::path);
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
@@ -51,7 +52,7 @@ class LogoutCommandTest extends LinuxOnlyCommand {
     @Test
     void shouldNotFailWhenTokenVariableIsNotSet(SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final TestDatabase testDb = withSchema(tempDir);
-        final Command command = new LogoutCommand(() -> testDb.path());
+        final Command command = new LauncherLogoutCommand(() -> testDb.path());
 
         testDb.assertThatSettings().isEmpty();
 
@@ -68,7 +69,7 @@ class LogoutCommandTest extends LinuxOnlyCommand {
     @NullAndEmptySource
     void shouldNotFailWhenTokenValueIsNotSet(String value, SystemOutCaptureExtension out, @TempDir Path tempDir) {
         final TestDatabase testDb = withSchema(tempDir);
-        final Command command = new LogoutCommand(() -> testDb.path());
+        final Command command = new LauncherLogoutCommand(() -> testDb.path());
 
         testDb.insertSettingsToken(value);
         testDb.assertThatToken().isEqualTo(value);
@@ -85,6 +86,6 @@ class LogoutCommandTest extends LinuxOnlyCommand {
 
     @Override
     protected Command buildCommand() {
-        return new LogoutCommand(null);
+        return new LauncherLogoutCommand(null);
     }
 }
