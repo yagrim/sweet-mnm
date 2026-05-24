@@ -3,6 +3,7 @@ package org.mnm.client;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -24,6 +25,7 @@ public class RunCommand implements Command {
 
     private static final Logger logger = LoggerFactory.getLogger(RunCommand.class);
 
+
     @FunctionalInterface
     interface ProcessRunner {
         String run(Path workingDirectory, String[] command, Map<String, String> environment);
@@ -32,15 +34,22 @@ public class RunCommand implements Command {
     private final Supplier<Path> configFileLocator;
     private final ProcessRunner processRunner;
     private final BooleanSupplier windowsDetector;
+    private final BiConsumer<String, Client> versionChecker;
 
     public RunCommand(Supplier<Path> locator) {
-        this(locator, (workingDirectory, command, environment) -> ProcessUtils.run(workingDirectory, command, environment), OS::isWindows);
+        this(
+            locator,
+            (workingDirectory, command, environment) -> ProcessUtils.run(workingDirectory, command, environment),
+            OS::isWindows,
+            Validators::checkVersion
+        );
     }
 
-    RunCommand(Supplier<Path> configDbSupplier, ProcessRunner processRunner, BooleanSupplier windowsDetector) {
+    RunCommand(Supplier<Path> configDbSupplier, ProcessRunner processRunner, BooleanSupplier windowsDetector, BiConsumer<String, Client> versionChecker) {
         this.configFileLocator = configDbSupplier;
         this.processRunner = processRunner;
         this.windowsDetector = windowsDetector;
+        this.versionChecker = versionChecker;
     }
 
     @Override
@@ -48,9 +57,14 @@ public class RunCommand implements Command {
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
             configDb.initialize();
 
-            final String slug = args == null ? null : args.get("slug");
+            final String slug = args.get("slug");
+            final boolean skipVersionCheck = args.getBoolean("skip-version-check");
             final Client client = selectClient(configDb, slug);
             final Token token = selectToken(configDb, client.slug());
+
+            if (!skipVersionCheck) {
+                versionChecker.accept(token.token(), client);
+            }
 
             final Path workingDirectory = client.path();
             final boolean isWindows = windowsDetector.getAsBoolean();
@@ -135,12 +149,13 @@ public class RunCommand implements Command {
             %s
             
             Usage:
-              sweet %s [--slug <slug>]
+              sweet %s [--slug <slug>] [--skip-version-check]
             
             Options:
-              --slug    Client slug to run (optional)
-              --debug   Enables debug messages
-              --help    Shows this help
+              --slug               Client slug to run (optional)
+              --skip-version-check  Skip client version validation
+              --debug               Enables debug messages
+              --help                Shows this help
             """.formatted(description(), name());
     }
 
