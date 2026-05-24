@@ -277,6 +277,29 @@ class ConfigDbTest {
         }
 
         @Test
+        void shouldDeleteTokensBySlug(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                Stream.of("mnm-1", "mnm-2")
+                    .forEach(slug -> config.addClient(testClient(slug)));
+
+                config.addToken(new Token("mnm-1", "1"));
+                config.addToken(new Token("mnm-1", "11"));
+                config.addToken(new Token("mnm-2", "2"));
+
+                int deleted = config.deleteTokens("mnm-1");
+
+                assertThat(deleted).isEqualTo(2);
+            }
+
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("token")
+                    .hasRows(1);
+            }
+        }
+
+        @Test
         void shouldGetAllTokensBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 

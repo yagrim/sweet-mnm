@@ -8,11 +8,11 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.OS;
 
-public class LogoutCommand implements Command {
+public class LauncherLogoutCommand implements Command {
 
     private final Supplier<Path> databaseFileLocator;
 
-    public LogoutCommand(Supplier<Path> locator) {
+    public LauncherLogoutCommand(Supplier<Path> locator) {
         this.databaseFileLocator = locator;
     }
 

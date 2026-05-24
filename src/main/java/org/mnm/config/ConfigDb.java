@@ -221,4 +221,13 @@ public class ConfigDb implements AutoCloseable {
             throw new RuntimeException(e);
         }
     }
+
+    public int deleteTokens(String slug) {
+        try (PreparedStatement ps = connection.prepareStatement("delete from token where slug = ?")) {
+            ps.setString(1, slug);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

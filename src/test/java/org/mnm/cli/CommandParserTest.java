@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
+import org.mnm.client.LogoutCommand;
 import org.mnm.client.RepairCommand;
 import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
@@ -29,6 +30,7 @@ class CommandParserTest {
         return Stream.of(
             Arguments.of("clients", ClientsCommand.class),
             Arguments.of("install", InstallCommand.class),
+            Arguments.of("logout", LogoutCommand.class),
             Arguments.of("repair", RepairCommand.class),
             Arguments.of("token", TokenCommand.class),
             Arguments.of("tokens", TokensCommand.class),
