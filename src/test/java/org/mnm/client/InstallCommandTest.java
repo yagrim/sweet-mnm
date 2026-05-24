@@ -112,9 +112,9 @@ class InstallCommandTest {
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "sessions");
+                .containsExactlyInAnyOrder("clients", "token");
             testDatabase.assertThatTable("clients").isEmpty();
-            testDatabase.assertThatTable("sessions").isEmpty();
+            testDatabase.assertThatTable("token").isEmpty();
         }
     }
 

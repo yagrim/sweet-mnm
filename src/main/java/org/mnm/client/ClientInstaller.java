@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 import org.mnm.manifest.Manifest;
 import org.mnm.tools.Downloader;
 import org.mnm.tools.FileUtils;
@@ -51,13 +51,13 @@ public class ClientInstaller {
             if (currentClient == null) {
                 panic("No client found: run 'install --username ...' first");
             }
-            var sessions = configDb.getSessions(slug);
-            if (sessions.isEmpty()) {
+            List<Token> tokens = configDb.getTokens(slug);
+            if (tokens.isEmpty()) {
                 panic("No client found: run 'install --username ...' first");
             }
-            logger.debug("Found {} sessions for '{}'", sessions.size(), slug);
-            validateTokens(sessions);
-            final String token = sessions.get(0).token();
+            logger.debug("Found {} tokens for '{}'", tokens.size(), slug);
+            validateTokens(tokens);
+            final String token = tokens.get(0).token();
             session = Session.login(token, apiBaseUrl);
         } else {
             session = Session.login(options.username(), options.password(), apiBaseUrl);
@@ -70,7 +70,7 @@ public class ClientInstaller {
         if (currentClient == null) {
             Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
             configDb.addClient(client);
-            configDb.addSession(new StoredSession(session.getSlug(), session.getToken()));
+            configDb.addToken(new Token(session.getSlug(), session.getToken()));
         } else {
             configDb.updateClient(slug, session.getVersion(), REPAIRING, installPath);
             refreshSessionToken(currentClient, session);
@@ -135,36 +135,35 @@ public class ClientInstaller {
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 
-    private void validateTokens(List<StoredSession> sessions) {
-        Optional<StoredSession> activeToken = findSession(sessions, false);
+    private void validateTokens(List<Token> tokens) {
+        Optional<Token> activeToken = findToken(tokens, false);
         if (!activeToken.isPresent()) {
-            panic("All session token(s) expired: run 'install --username ...' to create a new one");
+            panic("All token(s) expired: run 'install --username ...' to create a new one");
         }
     }
 
     private void refreshSessionToken(Client currentClient, Session session) {
-        final List<StoredSession> sessions = configDb.getSessions(currentClient.slug());
-        final Optional<StoredSession> expiredSession = findSession(sessions, true);
+        final List<Token> tokens = configDb.getTokens(currentClient.slug());
+        final Optional<Token> expiredToken = findToken(tokens, true);
 
-        StoredSession sessionToUpdate;
-        if (expiredSession.isPresent()) {
-            sessionToUpdate = expiredSession.get();
-            logger.debug("Updating expired token: {}", sessionToUpdate.id());
+        Token tokenToUpdate;
+        if (expiredToken.isPresent()) {
+            tokenToUpdate = expiredToken.get();
+            logger.debug("Updating expired token: {}", tokenToUpdate.id());
         } else {
-            sessionToUpdate = sessions.get(0);
-            logger.debug("Refreshing token: {}", sessionToUpdate.id());
+            tokenToUpdate = tokens.get(0);
+            logger.debug("Refreshing token: {}", tokenToUpdate.id());
         }
-        configDb.updateSession(sessionToUpdate.id(), session.getToken());
+        configDb.updateToken(tokenToUpdate.id(), session.getToken());
     }
 
-    private Optional<StoredSession> findSession(List<StoredSession> sessions, boolean isExpired) {
-        return sessions.stream()
+    private Optional<Token> findToken(List<Token> tokens, boolean isExpired) {
+        return tokens.stream()
             .filter(s -> JwtParser.parse(s.token()).isExpired() == isExpired)
             .findFirst();
     }
 
     record InstallationResult(int invalid, int missing, int orphan) {
-
     }
 
     // We could have async workers to download and extract in parallel

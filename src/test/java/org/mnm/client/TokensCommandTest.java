@@ -11,7 +11,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.TestData.TEST_TOKEN;
@@ -54,7 +54,7 @@ class TokensCommandTest {
     @Test
     void shouldListAllTokens(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initTokens(dbFile);
 
         Command command = new TokensCommand(() -> dbFile);
         command.run(Arguments.parse());
@@ -70,7 +70,7 @@ class TokensCommandTest {
     @Test
     void shouldListTokensForSlug(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initTokens(dbFile);
 
         Command command = new TokensCommand(() -> dbFile);
         command.run(Arguments.parse("--slug", "mnm-2"));
@@ -94,7 +94,7 @@ class TokensCommandTest {
     @Test
     void shouldPrintMessageWhenThereAreNoTokensForSlug(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initTokens(dbFile);
 
         Command command = new TokensCommand(() -> dbFile);
         command.run(Arguments.parse("--slug", "mnm-3"));
@@ -102,15 +102,15 @@ class TokensCommandTest {
         assertThat(capture.getOutput()).isEqualTo("No tokens found\n");
     }
 
-    private static void initSessions(Path dbFile) {
+    private static void initTokens(Path dbFile) {
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
             Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client);
-            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
-            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
+            config.addToken(new Token(client.slug(), TEST_TOKEN));
+            config.addToken(new Token(client.slug(), TEST_TOKEN));
             Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client2);
-            config.addSession(new StoredSession(client2.slug(), TEST_TOKEN));
+            config.addToken(new Token(client2.slug(), TEST_TOKEN));
         }
     }
 }

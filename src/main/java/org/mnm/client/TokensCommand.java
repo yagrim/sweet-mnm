@@ -8,7 +8,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.JwtParser.JwtClaims;
 
@@ -30,37 +30,38 @@ public class TokensCommand implements Command {
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
             configDb.initialize();
-            List<StoredSession> sessions = isEmpty(slug) ? configDb.getSessions() : configDb.getSessions(slug);
+            List<Token> tokens = isEmpty(slug) ? configDb.getTokens() : configDb.getTokens(slug);
 
-            List<SessionSummary> list = sessions.stream()
+            List<TokenMetadata> list = tokens.stream()
                 .map(session -> {
                     JwtClaims claims = JwtParser.parse(session.token());
-                    return new SessionSummary(session.id(), session.slug(), claims.email(), toInstant(claims.expiration()).toString());
+                    return new TokenMetadata(session.id(), session.slug(), claims.email(), toInstant(claims.expiration()).toString());
                 })
                 .toList();
 
-
             System.out.print(format(list));
         }
-
     }
 
-    private static String format(List<SessionSummary> sessions) {
-        if (sessions.isEmpty()) {
+    private record TokenMetadata(Integer id, String slug, String email, String expiration) {
+    }
+
+    private static String format(List<TokenMetadata> tokens) {
+        if (tokens.isEmpty()) {
             return "No tokens found%n".formatted();
         }
 
-        int slugWidth = width("Slug", sessions.stream().map(SessionSummary::slug));
+        int slugWidth = width("Slug", tokens.stream().map(TokenMetadata::slug));
         // We can assume no one is going to have more than 99 tokens
         int idWidth = 2;
-        int emailWidth = width("email", sessions.stream().map(s -> s.email));
+        int emailWidth = width("email", tokens.stream().map(s -> s.email));
         // We assume format like: 2026-06-11T20:45:00Z
         int expirationWidth = 20;
 
         String rowFormat = "%-" + slugWidth + "s  %-" + idWidth + "s  %" + emailWidth + "s  %" + expirationWidth + "s%n";
         StringBuilder sb = new StringBuilder();
         sb.append(rowFormat.formatted("Slug", "Id", "email", "Expiration"));
-        for (SessionSummary session : sessions) {
+        for (TokenMetadata session : tokens) {
             sb.append(rowFormat.formatted(session.slug, session.id(), session.email, session.expiration));
         }
         return sb.toString();
@@ -96,6 +97,4 @@ public class TokensCommand implements Command {
         return !OS.isWindows();
     }
 
-    public record SessionSummary(Integer id, String slug, String email, String expiration) {
-    }
 }

@@ -11,7 +11,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +49,7 @@ class ClientsCommandTest {
     }
 
     @Test
-    void shouldListClientsWithSessionCount(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
+    void shouldListClientsWithTokensCount(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
         final Path dbFile = tempDir.resolve("config.db");
 
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
@@ -57,9 +57,9 @@ class ClientsCommandTest {
             Client ptr = testClient("ptr");
             config.addClient(mnm);
             config.addClient(ptr);
-            config.addSession(new StoredSession(mnm.slug(), "token-1"));
-            config.addSession(new StoredSession(mnm.slug(), "token-2"));
-            config.addSession(new StoredSession(ptr.slug(), "token-3"));
+            config.addToken(new Token(mnm.slug(), "token-1"));
+            config.addToken(new Token(mnm.slug(), "token-2"));
+            config.addToken(new Token(ptr.slug(), "token-3"));
         }
 
         Command command = new ClientsCommand(() -> dbFile);

@@ -18,9 +18,9 @@ class Mappers {
         }
     }
 
-    static StoredSession mapSession(ResultSet rs) {
+    static Token mapToken(ResultSet rs) {
         try {
-            return new StoredSession(
+            return new Token(
                 rs.getInt("id"),
                 rs.getString("slug"),
                 rs.getString("token"));
