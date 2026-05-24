@@ -25,7 +25,7 @@ clean:
 test: clean
 	@$(GRADLEW) test
 
-install:
+install: test
 	@$(GRADLEW) installDist
 	@mkdir -p $(PREFIX)
 	@rm -rf $(APPDIR)
@@ -36,7 +36,7 @@ uninstall:
 	@rm -rf $(APPDIR)
 	@rm -f $(PREFIX)/sweet
 
-native: test
+native:
 	@$(GRADLEW) nativeCompile
 
 native-install: install native
