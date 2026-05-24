@@ -17,7 +17,7 @@ public class ManifestExplorer {
 
     public static void main(String[] args) {
 
-        final Path location = Environment.downloads.resolve("manifest.json");
+        final Path location = Path.of("").resolve("manifest.json");
         final ManifestHandler manifestHandler = new ManifestHandler(location);
 
         Set<Integer> sizes = new HashSet<>();

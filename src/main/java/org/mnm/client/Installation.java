@@ -20,12 +20,12 @@ class Installation {
         return getInstallPath().resolve(filePath.substring(1)).toAbsolutePath();
     }
 
-    Path getDownloadPath() {
+    Path getDownloadsPath() {
         return baseDir.resolve("downloads");
     }
 
     Path getBundlesPath() {
-        return getDownloadPath().resolve("bundles");
+        return getDownloadsPath().resolve("bundles");
     }
 
     Path getBundlePath(String name) {
