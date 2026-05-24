@@ -93,15 +93,16 @@ public class ConfigTestDatabase {
                 return this;
             }
 
-            public TableAsserter containsToken(int id, Token expected) {
+            public TableAsserter containsToken(Token expected) {
                 try (PreparedStatement st = connection.prepareStatement("select * from %s where id = ? and slug = ? and token = ?;".formatted(tableName));) {
-                    st.setInt(1, id);
+                    st.setInt(1, expected.id());
                     st.setString(2, expected.slug());
                     st.setString(3, expected.token());
                     try (ResultSet resultSet = st.executeQuery()) {
                         boolean found = false;
                         while (resultSet.next()) {
                             Token actual = new Token(
+                                resultSet.getInt("id"),
                                 resultSet.getString("slug"),
                                 resultSet.getString("token"));
                             assertThat(actual).isEqualTo(expected);

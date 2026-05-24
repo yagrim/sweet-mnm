@@ -66,13 +66,13 @@ public class ClientInstaller {
 
         final String slug = session.getSlug();
         final Installation installation = new Installation(workDir, slug);
-        final Path installPath = installation.getInstallPath();
+
         if (currentClient == null) {
-            Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
+            Client client = new Client(slug, session.getVersion(), INSTALLING, workDir);
             configDb.addClient(client);
             configDb.addToken(new Token(session.getSlug(), session.getToken()));
         } else {
-            configDb.updateClient(slug, session.getVersion(), REPAIRING, installPath);
+            configDb.updateClient(slug, session.getVersion(), REPAIRING, workDir);
             refreshSessionToken(currentClient, session);
         }
 
@@ -130,7 +130,7 @@ public class ClientInstaller {
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
-        configDb.updateClient(slug, session.getVersion(), COMPLETED, installPath);
+        configDb.updateClient(slug, session.getVersion(), COMPLETED, workDir);
 
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
