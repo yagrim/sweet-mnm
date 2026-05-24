@@ -50,6 +50,10 @@ dependencies {
 
 tasks.named('test') {
   useJUnitPlatform()
+  beforeTest { descriptor ->
+    def className = descriptor.className.tokenize('.').last()
+    println("Running test: ${className}.${descriptor.name}")
+  }
 //    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
 }
 
