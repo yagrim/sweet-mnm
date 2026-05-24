@@ -28,13 +28,11 @@ class ConfigDbTest {
             config.initialize();
         }
 
-        var testDatabase = ConfigTestDatabase.open(dbFile);
-        assertThat(testDatabase.getTables())
-            .containsExactlyInAnyOrder("clients", "sessions");
-        testDatabase.assertThatTable("clients").isEmpty();
-        testDatabase.assertThatTable("sessions").isEmpty();
-
-        testDatabase.close();
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "sessions");
+            testDatabase.assertThatTable("clients").isEmpty();
+            testDatabase.assertThatTable("sessions").isEmpty();
+        }
     }
 
     @Test
@@ -47,13 +45,11 @@ class ConfigDbTest {
             config.initialize();
         }
 
-        var testDatabase = ConfigTestDatabase.open(dbFile);
-        assertThat(testDatabase.getTables())
-            .containsExactlyInAnyOrder("clients", "sessions");
-        testDatabase.assertThatTable("clients").isEmpty();
-        testDatabase.assertThatTable("sessions").isEmpty();
-
-        testDatabase.close();
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "sessions");
+            testDatabase.assertThatTable("clients").isEmpty();
+            testDatabase.assertThatTable("sessions").isEmpty();
+        }
     }
 
     @Nested
@@ -69,12 +65,11 @@ class ConfigDbTest {
                 config.addClient(client);
             }
 
-            var testDatabase = ConfigTestDatabase.open(dbFile);
-            testDatabase.assertThatTable("clients")
-                .containsClient(testClient("mnm"))
-                .hasRows(1);
-
-            testDatabase.close();
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("clients")
+                    .containsClient(testClient("mnm"))
+                    .hasRows(1);
+            }
         }
 
         @Test
@@ -91,14 +86,13 @@ class ConfigDbTest {
                 config.addClient(client3);
             }
 
-            var testDatabase = ConfigTestDatabase.open(dbFile);
-            testDatabase.assertThatTable("clients")
-                .containsClient(client1)
-                .containsClient(client2)
-                .containsClient(client3)
-                .hasRows(3);
-
-            testDatabase.close();
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("clients")
+                    .containsClient(client1)
+                    .containsClient(client2)
+                    .containsClient(client3)
+                    .hasRows(3);
+            }
         }
 
         @Test
@@ -192,19 +186,18 @@ class ConfigDbTest {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            Session session = testSession(client.slug());
+            StoredSession session = testSession(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
                 config.addSession(session);
             }
 
-            var testDatabase = ConfigTestDatabase.open(dbFile);
-            testDatabase.assertThatTable("sessions")
-                .containsSession(1, new Session(session.slug(), session.token()))
-                .hasRows(1);
-
-            testDatabase.close();
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("sessions")
+                    .containsSession(1, new StoredSession(session.slug(), session.token()))
+                    .hasRows(1);
+            }
         }
 
         @Test
@@ -212,14 +205,35 @@ class ConfigDbTest {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            Session session = testSession(client.slug());
+            StoredSession session = testSession(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
                 config.addSession(session);
 
-                Session actual = config.getSession(1);
-                assertThat(actual).isEqualTo(new Session(1, session.slug(), session.token()));
+                StoredSession actual = config.getSession(1);
+                assertThat(actual).isEqualTo(new StoredSession(1, session.slug(), session.token()));
+            }
+        }
+
+        @Test
+        void shouldUpdateSessionToken(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            Client client = testClient();
+            StoredSession session = testSession(client.slug());
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                config.addClient(client);
+                config.addSession(session);
+
+                config.updateSession(1, "new-token");
+            }
+
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("sessions")
+                    .containsSession(1, new StoredSession(session.slug(), "new-token"))
+                    .hasRows(1);
             }
         }
 
@@ -228,7 +242,7 @@ class ConfigDbTest {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            Session session = testSession(client.slug());
+            StoredSession session = testSession(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
@@ -237,14 +251,13 @@ class ConfigDbTest {
                 config.addSession(session);
             }
 
-            var testDatabase = ConfigTestDatabase.open(dbFile);
-            testDatabase.assertThatTable("sessions")
-                .containsSession(1, new Session(session.slug(), session.token()))
-                .containsSession(2, new Session(session.slug(), session.token()))
-                .containsSession(3, new Session(session.slug(), session.token()))
-                .hasRows(3);
-
-            testDatabase.close();
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("sessions")
+                    .containsSession(1, new StoredSession(session.slug(), session.token()))
+                    .containsSession(2, new StoredSession(session.slug(), session.token()))
+                    .containsSession(3, new StoredSession(session.slug(), session.token()))
+                    .hasRows(3);
+            }
         }
 
         @Test
@@ -255,11 +268,11 @@ class ConfigDbTest {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
-                Session session1 = new Session("mnm-1", "1");
-                Session session2 = new Session("mnm-2", "2");
-                Session session3 = new Session("mnm-3", "3");
-                Session session4 = new Session("mnm-1", "11");
-                Session session5 = new Session("mnm-2", "22");
+                StoredSession session1 = new StoredSession("mnm-1", "1");
+                StoredSession session2 = new StoredSession("mnm-2", "2");
+                StoredSession session3 = new StoredSession("mnm-3", "3");
+                StoredSession session4 = new StoredSession("mnm-1", "11");
+                StoredSession session5 = new StoredSession("mnm-2", "22");
 
                 config.addSession(session1);
                 config.addSession(session2);
@@ -269,14 +282,14 @@ class ConfigDbTest {
 
                 assertThat(config.getSessions("mnm-1"))
                     .containsExactlyInAnyOrder(
-                        new Session(1, "mnm-1", "1"),
-                        new Session(4, "mnm-1", "11"));
+                        new StoredSession(1, "mnm-1", "1"),
+                        new StoredSession(4, "mnm-1", "11"));
                 assertThat(config.getSessions("mnm-2"))
                     .containsExactlyInAnyOrder(
-                        new Session(2, "mnm-2", "2"),
-                        new Session(5, "mnm-2", "22"));
+                        new StoredSession(2, "mnm-2", "2"),
+                        new StoredSession(5, "mnm-2", "22"));
                 assertThat(config.getSessions("mnm-3"))
-                    .containsExactlyInAnyOrder(new Session(3, "mnm-3", "3"));
+                    .containsExactlyInAnyOrder(new StoredSession(3, "mnm-3", "3"));
             }
         }
 
@@ -288,11 +301,11 @@ class ConfigDbTest {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
-                Session session1 = new Session("mnm-1", "1");
-                Session session2 = new Session("mnm-2", "2");
-                Session session3 = new Session("mnm-3", "3");
-                Session session4 = new Session("mnm-1", "11");
-                Session session5 = new Session("mnm-2", "22");
+                StoredSession session1 = new StoredSession("mnm-1", "1");
+                StoredSession session2 = new StoredSession("mnm-2", "2");
+                StoredSession session3 = new StoredSession("mnm-3", "3");
+                StoredSession session4 = new StoredSession("mnm-1", "11");
+                StoredSession session5 = new StoredSession("mnm-2", "22");
 
                 config.addSession(session1);
                 config.addSession(session2);
@@ -302,11 +315,11 @@ class ConfigDbTest {
 
                 assertThat(config.getSessions())
                     .containsExactlyInAnyOrder(
-                        new Session(1, "mnm-1", "1"),
-                        new Session(2, "mnm-2", "2"),
-                        new Session(3, "mnm-3", "3"),
-                        new Session(4, "mnm-1", "11"),
-                        new Session(5, "mnm-2", "22"));
+                        new StoredSession(1, "mnm-1", "1"),
+                        new StoredSession(2, "mnm-2", "2"),
+                        new StoredSession(3, "mnm-3", "3"),
+                        new StoredSession(4, "mnm-1", "11"),
+                        new StoredSession(5, "mnm-2", "22"));
             }
         }
     }
@@ -319,8 +332,8 @@ class ConfigDbTest {
         return new Client(slug, "1.0.0-patch", Client.Status.COMPLETED, Path.of(""));
     }
 
-    private static Session testSession(String slug) {
-        return new Session(slug, "123456789.123456789.123456789");
+    private static StoredSession testSession(String slug) {
+        return new StoredSession(slug, "123456789.123456789.123456789");
     }
 
 }

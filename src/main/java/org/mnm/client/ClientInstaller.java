@@ -1,10 +1,9 @@
 package org.mnm.client;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.StoredSession;
 import org.mnm.manifest.Manifest;
 import org.mnm.tools.Downloader;
 import org.mnm.tools.FileUtils;
@@ -56,8 +56,8 @@ public class ClientInstaller {
                 panic("No client found: run 'install --username ...' first");
             }
             logger.debug("Found {} sessions for '{}'", sessions.size(), slug);
+            validateTokens(sessions);
             final String token = sessions.get(0).token();
-            validateToken(token);
             session = Session.login(token, apiBaseUrl);
         } else {
             session = Session.login(options.username(), options.password(), apiBaseUrl);
@@ -70,9 +70,10 @@ public class ClientInstaller {
         if (currentClient == null) {
             Client client = new Client(slug, session.getVersion(), INSTALLING, installPath);
             configDb.addClient(client);
-            configDb.addSession(new org.mnm.config.Session(session.getSlug(), session.getToken()));
+            configDb.addSession(new StoredSession(session.getSlug(), session.getToken()));
         } else {
             configDb.updateClient(slug, session.getVersion(), REPAIRING, installPath);
+            refreshSessionToken(currentClient, session);
         }
 
         final List<Manifest.File> invalid = new ArrayList<>();
@@ -134,15 +135,36 @@ public class ClientInstaller {
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 
+    private void validateTokens(List<StoredSession> sessions) {
+        Optional<StoredSession> activeToken = findSession(sessions, false);
+        if (!activeToken.isPresent()) {
+            panic("All session token(s) expired: run 'install --username ...' to create a new one");
+        }
+    }
+
+    private void refreshSessionToken(Client currentClient, Session session) {
+        final List<StoredSession> sessions = configDb.getSessions(currentClient.slug());
+        final Optional<StoredSession> expiredSession = findSession(sessions, true);
+
+        StoredSession sessionToUpdate;
+        if (expiredSession.isPresent()) {
+            sessionToUpdate = expiredSession.get();
+            logger.debug("Updating expired token: {}", sessionToUpdate.id());
+        } else {
+            sessionToUpdate = sessions.get(0);
+            logger.debug("Refreshing token: {}", sessionToUpdate.id());
+        }
+        configDb.updateSession(sessionToUpdate.id(), session.getToken());
+    }
+
+    private Optional<StoredSession> findSession(List<StoredSession> sessions, boolean isExpired) {
+        return sessions.stream()
+            .filter(s -> JwtParser.parse(s.token()).isExpired() == isExpired)
+            .findFirst();
+    }
 
     record InstallationResult(int invalid, int missing, int orphan) {
 
-    }
-
-    private static void validateToken(String token) {
-        if (JwtParser.parse(token).isExpired()) {
-            panic("Session token has expired: run 'install --username ...' to create a new one");
-        }
     }
 
     // We could have async workers to download and extract in parallel

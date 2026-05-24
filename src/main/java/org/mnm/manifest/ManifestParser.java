@@ -5,9 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.mnm.tools.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.mnm.tools.JsonParser;
 
 public class ManifestParser {
 

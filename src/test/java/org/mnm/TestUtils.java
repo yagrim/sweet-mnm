@@ -35,7 +35,9 @@ public class TestUtils {
 
     public static void deletePath(Path path) {
         try {
-            FileUtils.forceDelete(path.toFile());
+            if (path.toFile().exists()) {
+                FileUtils.forceDelete(path.toFile());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

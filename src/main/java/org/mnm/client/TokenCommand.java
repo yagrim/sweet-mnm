@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 import org.mnm.launcher.LauncherTokenCommand;
 
 import static org.mnm.tools.ProcessUtils.panic;
@@ -38,7 +38,7 @@ public class TokenCommand implements Command {
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
             configDb.initialize();
 
-            final Session session = configDb.getSession(id);
+            final StoredSession session = configDb.getSession(id);
             final String token = session == null ? null : session.token();
 
             if (isEmpty(token)) {

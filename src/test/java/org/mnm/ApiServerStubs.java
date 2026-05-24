@@ -64,6 +64,14 @@ public class ApiServerStubs {
                 .withBody(manifest)));
     }
 
+    public static void stubEmptyManifestDownload() {
+        stubFor(get(urlPathEqualTo("/manifests/65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withBody("""
+                    { "manifest": [] }""")));
+    }
+
     public static void stubChunkDownload(String bundleCrc) {
         byte[] chunk;
         try {
