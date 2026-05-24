@@ -118,10 +118,9 @@ class ClientInstallerTest {
         stubEmptyManifestDownload();
 
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
-        final Path installationPath = testInstallationPath(tempDir);
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
@@ -138,12 +137,12 @@ class ClientInstallerTest {
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("token")
-                .containsToken(1, new Token(TEST_SLUG, VALID_TEST_TOKEN))
-                .containsToken(2, new Token(TEST_SLUG, refreshToken))
-                .containsToken(3, new Token(TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(1, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(2, TEST_SLUG, refreshToken))
+                .containsToken(new Token(3, TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(3);
         }
     }
@@ -156,10 +155,9 @@ class ClientInstallerTest {
         stubEmptyManifestDownload();
 
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
-        final Path installationPath = testInstallationPath(tempDir);
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
@@ -176,12 +174,12 @@ class ClientInstallerTest {
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("token")
-                .containsToken(1, new Token(TEST_SLUG, refreshToken))
-                .containsToken(2, new Token(TEST_SLUG, VALID_TEST_TOKEN))
-                .containsToken(3, new Token(TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(1, TEST_SLUG, refreshToken))
+                .containsToken(new Token(2, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(3, TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(3);
         }
     }
@@ -339,12 +337,11 @@ class ClientInstallerTest {
             assertThat(testDatabase.getTables())
                 .containsExactlyInAnyOrder("clients", "token");
 
-            final Path installationPath = testInstallationPath(tempDir);
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("token")
-                .containsToken(1, new Token(TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(1, TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(1);
         }
     }

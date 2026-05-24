@@ -52,12 +52,9 @@ public class RunCommand implements Command {
             final Client client = selectClient(configDb, slug);
             final Token token = selectToken(configDb, client.slug());
 
-            Path workingDirectory = client.path().getParent();
-            if (workingDirectory == null) {
-                panic("Invalid client path");
-            }
-
+            final Path workingDirectory = client.path();
             final boolean isWindows = windowsDetector.getAsBoolean();
+
             String[] command = buildCommand(client.slug(), token.token(), isWindows);
             Map<String, String> environment = buildEnvironment(isWindows, workingDirectory);
 

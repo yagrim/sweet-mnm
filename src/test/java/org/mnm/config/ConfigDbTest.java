@@ -195,7 +195,7 @@ class ConfigDbTest {
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
                 testDatabase.assertThatTable("token")
-                    .containsToken(1, new Token(token.slug(), token.token()))
+                    .containsToken(new Token(1, token.slug(), token.token()))
                     .hasRows(1);
             }
         }
@@ -232,7 +232,7 @@ class ConfigDbTest {
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
                 testDatabase.assertThatTable("token")
-                    .containsToken(1, new Token(token.slug(), "new-token"))
+                    .containsToken(new Token(1, token.slug(), "new-token"))
                     .hasRows(1);
             }
         }
@@ -269,9 +269,9 @@ class ConfigDbTest {
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
                 testDatabase.assertThatTable("token")
-                    .containsToken(1, new Token(token.slug(), token.token()))
-                    .containsToken(2, new Token(token.slug(), token.token()))
-                    .containsToken(3, new Token(token.slug(), token.token()))
+                    .containsToken(new Token(1, token.slug(), token.token()))
+                    .containsToken(new Token(2, token.slug(), token.token()))
+                    .containsToken(new Token(3, token.slug(), token.token()))
                     .hasRows(3);
             }
         }

@@ -55,15 +55,14 @@ class RunCommandTest {
     @Test
     void shouldRunWindowsCommandForSingleClientWithoutSlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
-        final Path installPath = tempDir.resolve("install").resolve("mnm");
+        final Path installPath = tempDir.resolve("install");
         initDb(dbFile, testClient("mnm", installPath), testToken());
 
         CapturingRunner runner = new CapturingRunner();
         Command command = new RunCommand(() -> dbFile, runner, windows());
         command.run(Arguments.parse());
 
-        Path workingDirectory = installPath.getParent();
-        assertThat(runner.workingDirectory()).isEqualTo(workingDirectory);
+        assertThat(runner.workingDirectory()).isEqualTo(installPath);
         assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
         assertThat(runner.environment()).isEmpty();
     }
@@ -71,30 +70,29 @@ class RunCommandTest {
     @Test
     void shouldRunLinuxCommandForSingleClientWithoutSlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
-        final Path installPath = tempDir.resolve("install").resolve("mnm");
+        final Path installPath = tempDir.resolve("install");
         initDb(dbFile, testClient("mnm", installPath), testToken());
 
         CapturingRunner runner = new CapturingRunner();
         Command command = new RunCommand(() -> dbFile, runner, linux());
         command.run(Arguments.parse());
 
-        Path workingDirectory = installPath.getParent();
-        assertThat(runner.workingDirectory()).isEqualTo(workingDirectory);
+        assertThat(runner.workingDirectory()).isEqualTo(installPath);
         assertThat(runner.command()).containsExactly("umu-run", Path.of(".", "mnm", "mnm.exe").toString(), "--token", "token-1");
         assertThat(runner.environment())
             .containsEntry("GAMEID", "mnm")
             .containsEntry("PROTONPATH", "GE-Proton10-33")
-            .containsEntry("WINEPREFIX", workingDirectory.toAbsolutePath().resolve("mnm_prefix").toString());
+            .containsEntry("WINEPREFIX", installPath.toAbsolutePath().resolve("mnm_prefix").toString());
     }
 
     @Test
     void shouldSelectClientBySlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
-        final Path installPath = tempDir.resolve("install").resolve("mnm-2");
-        initDb(
-            dbFile,
-            testClient("mnm-1", tempDir.resolve("install").resolve("mnm-1")),
-            testClient("mnm-2", installPath));
+        final Path installPath1 = tempDir.resolve("install").resolve("mnm-1");
+        final Path installPath2 = tempDir.resolve("install").resolve("mnm-2");
+        initDb(dbFile,
+            testClient("mnm-1", installPath1),
+            testClient("mnm-2", installPath2));
 
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
             config.addToken(new Token("mnm-2", "token-2"));
@@ -104,8 +102,7 @@ class RunCommandTest {
         Command command = new RunCommand(() -> dbFile, runner, windows());
         command.run(Arguments.parse("--slug", "mnm-2"));
 
-        Path workingDirectory = installPath.getParent();
-        assertThat(runner.workingDirectory()).isEqualTo(workingDirectory);
+        assertThat(runner.workingDirectory()).isEqualTo(installPath2);
         assertThat(runner.command()).containsExactly(Path.of("mnm-2", "mnm.exe").toString(), "--token", "token-2");
     }
 
