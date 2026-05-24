@@ -150,11 +150,18 @@ public class ClientInstaller {
         if (expiredToken.isPresent()) {
             tokenToUpdate = expiredToken.get();
             logger.debug("Updating expired token: {}", tokenToUpdate.id());
+            configDb.updateToken(tokenToUpdate.id(), session.getToken());
         } else {
-            tokenToUpdate = tokens.get(0);
-            logger.debug("Refreshing token: {}", tokenToUpdate.id());
+            // TODO test
+            if (tokens.isEmpty()) {
+                // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
+                configDb.addToken(new Token(session.getSlug(), session.getToken()));
+            } else {
+                tokenToUpdate = tokens.get(0);
+                logger.debug("Refreshing token: {}", tokenToUpdate.id());
+                configDb.updateToken(tokenToUpdate.id(), session.getToken());
+            }
         }
-        configDb.updateToken(tokenToUpdate.id(), session.getToken());
     }
 
     private Optional<Token> findToken(List<Token> tokens, boolean isExpired) {

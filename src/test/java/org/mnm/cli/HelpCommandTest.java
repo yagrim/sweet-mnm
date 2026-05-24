@@ -8,6 +8,7 @@ import org.mnm.SystemOutCaptureExtension;
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.RepairCommand;
+import org.mnm.client.RunCommand;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +36,7 @@ class HelpCommandTest {
 
     @Test
     void shouldReturnListOfCommands(SystemOutCaptureExtension out) {
-        HelpCommand command = new HelpCommand(List.of(new ClientsCommand(null), new InstallCommand(null), new RepairCommand(null)));
+        HelpCommand command = new HelpCommand(List.of(new ClientsCommand(null), new InstallCommand(null), new RepairCommand(null), new RunCommand(null)));
 
         command.run(null);
 
@@ -49,6 +50,7 @@ class HelpCommandTest {
               clients   Lists configured clients
               install   Installs MnM client in the current location
               repair    Checks installation and updates if necessary
+              run       Runs configured client
             
             Options:
               --debug  Enables debug messages

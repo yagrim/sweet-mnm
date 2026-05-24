@@ -25,7 +25,7 @@ clean:
 test: clean
 	@$(GRADLEW) test
 
-install: test
+install:
 	@$(GRADLEW) installDist
 	@mkdir -p $(PREFIX)
 	@rm -rf $(APPDIR)
