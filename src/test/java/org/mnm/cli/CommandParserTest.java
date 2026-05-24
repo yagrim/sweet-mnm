@@ -10,6 +10,7 @@ import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.LogoutCommand;
 import org.mnm.client.RepairCommand;
+import org.mnm.client.RunCommand;
 import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
 
@@ -32,6 +33,7 @@ class CommandParserTest {
             Arguments.of("install", InstallCommand.class),
             Arguments.of("logout", LogoutCommand.class),
             Arguments.of("repair", RepairCommand.class),
+            Arguments.of("run", RunCommand.class),
             Arguments.of("token", TokenCommand.class),
             Arguments.of("tokens", TokensCommand.class),
             Arguments.of("help", HelpCommand.class)

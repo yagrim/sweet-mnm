@@ -8,13 +8,14 @@ import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.LogoutCommand;
 import org.mnm.client.RepairCommand;
+import org.mnm.client.RunCommand;
 import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.Environment;
+import org.mnm.launcher.LauncherLogoutCommand;
 import org.mnm.launcher.LauncherTokenCommand;
 import org.mnm.launcher.LoginCommand;
-import org.mnm.launcher.LauncherLogoutCommand;
 
 public class CommandParser {
 
@@ -51,6 +52,7 @@ public class CommandParser {
             new InstallCommand(configDbSupplier),
             new LogoutCommand(configDbSupplier),
             new RepairCommand(configDbSupplier),
+            new RunCommand(configDbSupplier),
             new TokenCommand(configDbSupplier),
             new TokensCommand(configDbSupplier),
 

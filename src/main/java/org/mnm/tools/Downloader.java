@@ -27,7 +27,7 @@ public class Downloader {
             Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
 
             if (destination.toFile().exists() && destination.toFile().length() > 0) {
-                logger.info("Downloaded {} to {} ({})", url, destination, humanReadableSize(destination.toFile().length()));
+                logger.debug("Downloaded {} to {} ({})", url, destination, humanReadableSize(destination.toFile().length()));
             } else {
                 logger.info("Could not download {}", url);
                 destination.toFile().delete();

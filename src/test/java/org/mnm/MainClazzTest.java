@@ -191,6 +191,7 @@ class MainClazzTest {
               launcher-token    Shows official launcher current token
               logout            Removes stored tokens for a client slug
               repair            Checks installation and updates if necessary
+              run               Runs configured client
               token             Shows stored token by id
               tokens            Lists stored tokens
               version           Shows the version

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -16,10 +17,17 @@ public class ProcessUtils {
     }
 
     public static String run(Path workingDirectory, String[] command) {
+        return run(workingDirectory, command, null);
+    }
+
+    public static String run(Path workingDirectory, String[] command, Map<String, String> environment) {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             if (workingDirectory != null) {
                 processBuilder.directory(workingDirectory.toFile());
+            }
+            if (environment != null && !environment.isEmpty()) {
+                processBuilder.environment().putAll(environment);
             }
             Process process = processBuilder.start();
 
