@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -21,12 +20,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import org.mnm.ConfigTestDatabase;
 import org.mnm.SystemOutCaptureExtension;
-import org.mnm.TestUtils;
 import org.mnm.client.ClientInstaller.InstallationResult;
 import org.mnm.client.InstallOptions.FileCheck;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Environment;
 import org.mnm.config.StoredSession;
 import org.mnm.tools.PanicException;
 
@@ -45,11 +42,6 @@ class ClientInstallerTest {
 
     private static final String VALID_TEST_TOKEN = testToken(Instant.now().plus(5, ChronoUnit.MINUTES));
     private static final String EXPIRED_TEST_TOKEN = testToken(Instant.ofEpochSecond(1000));
-
-    @BeforeEach
-    void setUp() {
-        TestUtils.deletePath(Environment.downloads);
-    }
 
     @Test
     void shouldFailWithoutCredentials(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {

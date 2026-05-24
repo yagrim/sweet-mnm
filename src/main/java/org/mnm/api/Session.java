@@ -65,15 +65,15 @@ public class Session {
         return new Session(gamesVersions.get(0), connection.getToken());
     }
 
-    public ManifestHandler getManifestHandler() {
+    public ManifestHandler getManifestHandler(Path downloadsCache) {
         logger.info("Processing Game Version: {}@{}", gameVersion.slug(), gameVersion.version());
-        return new ManifestHandler(downloadManifest());
+        return new ManifestHandler(downloadManifest(downloadsCache));
     }
 
-    private Path downloadManifest() {
+    private Path downloadManifest(Path downloadsCache) {
         String manifestUrl = gameVersion.manifest_url();
         String manifestName = getLastSegment(manifestUrl);
-        final Path downloadPath = Environment.downloads.resolve(manifestName);
+        final Path downloadPath = downloadsCache.resolve(manifestName);
         if (fileExists(downloadPath)) {
             logger.info("Skipping manifest download: {} already present", manifestName);
         } else {
