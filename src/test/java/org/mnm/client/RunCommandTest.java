@@ -2,6 +2,7 @@ package org.mnm.client;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
@@ -43,12 +44,13 @@ class RunCommandTest {
             Runs configured client
             
             Usage:
-              sweet run [--slug <slug>]
+              sweet run [--slug <slug>] [--skip-version-check]
             
             Options:
-              --slug    Client slug to run (optional)
-              --debug   Enables debug messages
-              --help    Shows this help
+              --slug               Client slug to run (optional)
+              --skip-version-check  Skip client version validation
+              --debug               Enables debug messages
+              --help                Shows this help
             """);
     }
 
@@ -59,7 +61,7 @@ class RunCommandTest {
         initDb(dbFile, testClient("mnm", installPath), testToken());
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, windows());
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
         command.run(Arguments.parse());
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
@@ -74,7 +76,7 @@ class RunCommandTest {
         initDb(dbFile, testClient("mnm", installPath), testToken());
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, linux());
+        Command command = new RunCommand(() -> dbFile, runner, linux(), this::emptyCheckVersion);
         command.run(Arguments.parse());
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
@@ -99,7 +101,7 @@ class RunCommandTest {
         }
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, windows());
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
         command.run(Arguments.parse("--slug", "mnm-2"));
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath2);
@@ -107,10 +109,48 @@ class RunCommandTest {
     }
 
     @Test
+    void shouldRunVersionCheck(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path installPath = tempDir.resolve("install");
+        initDb(dbFile, testClient("mnm", installPath), testToken());
+
+        final AtomicBoolean run = new AtomicBoolean(false);
+
+        CapturingRunner runner = new CapturingRunner();
+        Command command = new RunCommand(() -> dbFile, runner, windows(), (s, c) -> {
+            run.set(true);
+        });
+        command.run(Arguments.parse());
+
+        assertThat(run).isTrue();
+        assertThat(runner.workingDirectory()).isEqualTo(installPath);
+        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
+    }
+
+    @Test
+    void shouldSkipVersionCheckWhenFlagIsPresent(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path installPath = tempDir.resolve("install");
+        initDb(dbFile, testClient("mnm", installPath), testToken());
+
+        final AtomicBoolean run = new AtomicBoolean(false);
+
+        CapturingRunner runner = new CapturingRunner();
+        Command command = new RunCommand(() -> dbFile, runner, windows(), (s, c) -> {
+            run.set(true);
+        });
+        command.run(Arguments.parse("--skip-version-check"));
+
+        assertThat(run).isFalse();
+        assertThat(runner.workingDirectory()).isEqualTo(installPath);
+        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
+    }
+
+    @Test
     void shouldPanicWhenNoClientsExist(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows());
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -125,7 +165,7 @@ class RunCommandTest {
             testClient("mnm-1", tempDir.resolve("install").resolve("mnm-1")),
             testClient("mnm-2", tempDir.resolve("install").resolve("mnm-2")));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows());
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -139,7 +179,7 @@ class RunCommandTest {
             dbFile,
             testClient("mnm", tempDir.resolve("install").resolve("mnm")));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows());
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -155,7 +195,7 @@ class RunCommandTest {
             testToken(),
             new Token("mnm", "token-2"));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows());
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -225,4 +265,8 @@ class RunCommandTest {
     private static Token testToken() {
         return new Token("mnm", "token-1");
     }
+
+    private void emptyCheckVersion(String token, Client client) {
+    }
+
 }
