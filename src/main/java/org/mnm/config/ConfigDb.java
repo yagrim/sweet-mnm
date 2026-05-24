@@ -33,8 +33,8 @@ public class ConfigDb implements AutoCloseable {
         );
         """;
 
-    private static String SESSIONS = """
-        CREATE TABLE sessions (
+    private static String TOKENS = """
+        CREATE TABLE token (
             id INTEGER PRIMARY KEY,
             slug text NOT NULL,
             token text,
@@ -81,8 +81,8 @@ public class ConfigDb implements AutoCloseable {
             if (!tableNames.contains("clients")) {
                 createTableSchema(connection, CLIENTS);
             }
-            if (!tableNames.contains("sessions")) {
-                createTableSchema(connection, SESSIONS);
+            if (!tableNames.contains("token")) {
+                createTableSchema(connection, TOKENS);
             }
             return this;
         } catch (SQLException e) {
@@ -122,12 +122,12 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    private static final String INSERT_SESSION_QUERY = "INSERT INTO sessions (slug, token) VALUES (?, ?)";
+    private static final String INSERT_TOKEN_QUERY = "INSERT INTO token (slug, token) VALUES (?, ?)";
 
-    public int addSession(StoredSession session) {
-        try (PreparedStatement ps = connection.prepareStatement(INSERT_SESSION_QUERY)) {
-            ps.setString(1, session.slug());
-            ps.setString(2, session.token());
+    public int addToken(Token token) {
+        try (PreparedStatement ps = connection.prepareStatement(INSERT_TOKEN_QUERY)) {
+            ps.setString(1, token.slug());
+            ps.setString(2, token.token());
 
             ps.executeUpdate();
 
@@ -162,20 +162,20 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    public List<StoredSession> getSessions(String slug) {
-        return select("sessions", "slug = '%s'".formatted(slug), Mappers::mapSession);
+    public List<Token> getTokens(String slug) {
+        return select("token", "slug = '%s'".formatted(slug), Mappers::mapToken);
     }
 
-    public List<StoredSession> getSessions() {
-        return select("sessions", null, Mappers::mapSession);
+    public List<Token> getTokens() {
+        return select("token", null, Mappers::mapToken);
     }
 
-    public StoredSession getSession(int id) {
-        try (PreparedStatement ps = connection.prepareStatement("select * from sessions where id = ? order by id")) {
+    public Token getToken(int id) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from token where id = ? order by id")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return Mappers.mapSession(rs);
+                    return Mappers.mapToken(rs);
                 } else {
                     return null;
                 }
@@ -212,8 +212,8 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    public void updateSession(Integer id, String token) {
-        try (PreparedStatement ps = connection.prepareStatement("update sessions set token = ? where id = ?")) {
+    public void updateToken(Integer id, String token) {
+        try (PreparedStatement ps = connection.prepareStatement("update token set token = ? where id = ?")) {
             ps.setString(1, token);
             ps.setInt(2, id);
             ps.execute();

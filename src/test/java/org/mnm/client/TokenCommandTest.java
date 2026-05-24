@@ -16,7 +16,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,7 +62,7 @@ class TokenCommandTest {
     @MethodSource("outputRawOptions")
     void shouldReturnTokenAsRaw(List<String> options, @TempDir Path tempDir, SystemOutCaptureExtension out) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initClientToken(dbFile);
 
         Command command = new TokenCommand(() -> dbFile);
         command.run(Arguments.parse(Stream.concat(Arrays.stream(new String[]{"--id", "1"}), options.stream()).toArray(String[]::new)));
@@ -84,7 +84,7 @@ class TokenCommandTest {
     @Test
     void shouldReturnTokenAsRows(@TempDir Path tempDir, SystemOutCaptureExtension out) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initClientToken(dbFile);
 
         Command command = new TokenCommand(() -> dbFile);
         command.run(Arguments.parse("--id", "1", "--output", "rows"));
@@ -99,7 +99,7 @@ class TokenCommandTest {
     }
 
     @Test
-    void shouldPrintNoTokenFoundWhenSessionDoesNotExist(@TempDir Path tempDir, SystemOutCaptureExtension out) {
+    void shouldPrintNoTokenFoundWhenTokenDoesNotExist(@TempDir Path tempDir, SystemOutCaptureExtension out) {
         final Path dbFile = tempDir.resolve("config.db");
 
         Command command = new TokenCommand(() -> dbFile);
@@ -113,7 +113,7 @@ class TokenCommandTest {
     @Test
     void shouldPanicWhenOutputIsInvalid(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
-        initSessions(dbFile);
+        initClientToken(dbFile);
 
         Command command = new TokenCommand(() -> dbFile);
 
@@ -140,11 +140,11 @@ class TokenCommandTest {
             .hasMessage("Invalid id: expected integer but found abc");
     }
 
-    private static void initSessions(Path dbFile) {
+    private static void initClientToken(Path dbFile) {
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
             Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client);
-            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
+            config.addToken(new Token(client.slug(), TEST_TOKEN));
         }
     }
 

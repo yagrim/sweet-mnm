@@ -27,7 +27,7 @@ public class ClientsCommand implements Command {
                 .map(client -> new ClientSummary(
                     client.slug(),
                     client.version(),
-                    configDb.getSessions(client.slug()).size()))
+                    configDb.getTokens(client.slug()).size()))
                 .toList();
 
             System.out.print(format(clients));
@@ -48,7 +48,7 @@ public class ClientsCommand implements Command {
         StringBuilder sb = new StringBuilder();
         sb.append(rowFormat.formatted("Slug", "Version", "Tokens"));
         for (ClientSummary client : clients) {
-            sb.append(rowFormat.formatted(client.slug(), client.version(), client.sessions()));
+            sb.append(rowFormat.formatted(client.slug(), client.version(), client.tokens()));
         }
         return sb.toString();
     }
@@ -77,6 +77,6 @@ public class ClientsCommand implements Command {
             """.formatted(description(), name());
     }
 
-    public record ClientSummary(String slug, String version, int sessions) {
+    public record ClientSummary(String slug, String version, int tokens) {
     }
 }

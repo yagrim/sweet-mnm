@@ -29,9 +29,9 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "sessions");
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "token");
             testDatabase.assertThatTable("clients").isEmpty();
-            testDatabase.assertThatTable("sessions").isEmpty();
+            testDatabase.assertThatTable("token").isEmpty();
         }
     }
 
@@ -46,9 +46,9 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "sessions");
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "token");
             testDatabase.assertThatTable("clients").isEmpty();
-            testDatabase.assertThatTable("sessions").isEmpty();
+            testDatabase.assertThatTable("token").isEmpty();
         }
     }
 
@@ -179,147 +179,163 @@ class ConfigDbTest {
     }
 
     @Nested
-    class Sessions {
+    class Tokens {
 
         @Test
-        void shouldAddANewSession(@TempDir Path tempDir) {
+        void shouldAddNewToken(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            StoredSession session = testSession(client.slug());
+            Token token = testToken(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
-                config.addSession(session);
+                config.addToken(token);
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new StoredSession(session.slug(), session.token()))
+                testDatabase.assertThatTable("token")
+                    .containsToken(1, new Token(token.slug(), token.token()))
                     .hasRows(1);
             }
         }
 
         @Test
-        void shouldGetSessionById(@TempDir Path tempDir) {
+        void shouldGetTokenById(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            StoredSession session = testSession(client.slug());
+            Token token = testToken(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
-                config.addSession(session);
+                config.addToken(token);
 
-                StoredSession actual = config.getSession(1);
-                assertThat(actual).isEqualTo(new StoredSession(1, session.slug(), session.token()));
+                Token actual = config.getToken(1);
+                assertThat(actual).isEqualTo(new Token(1, token.slug(), token.token()));
             }
         }
 
         @Test
-        void shouldUpdateSessionToken(@TempDir Path tempDir) {
+        void shouldUpdateExistingToken(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Client client = testClient();
-            StoredSession session = testSession(client.slug());
+            Token token = testToken(client.slug());
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 config.addClient(client);
-                config.addSession(session);
+                config.addToken(token);
 
-                config.updateSession(1, "new-token");
+                config.updateToken(1, "new-token");
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new StoredSession(session.slug(), "new-token"))
+                testDatabase.assertThatTable("token")
+                    .containsToken(1, new Token(token.slug(), "new-token"))
                     .hasRows(1);
             }
         }
 
         @Test
-        void shouldAddMultipleSessionsForTheSameClient(@TempDir Path tempDir) {
+        void shouldNotFailUpdatingMissingTokenAndNotAddNewRow(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            Client client = testClient();
-            StoredSession session = testSession(client.slug());
-
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
-                config.addClient(client);
-                config.addSession(session);
-                config.addSession(session);
-                config.addSession(session);
+                config.addClient(testClient());
+
+                config.updateToken(1, "new-token");
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("sessions")
-                    .containsSession(1, new StoredSession(session.slug(), session.token()))
-                    .containsSession(2, new StoredSession(session.slug(), session.token()))
-                    .containsSession(3, new StoredSession(session.slug(), session.token()))
+                testDatabase.assertThatTable("token")
+                    .hasRows(0);
+            }
+        }
+
+        @Test
+        void shouldAddMultipleTokensForTheSameClient(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            Client client = testClient();
+            Token token = testToken(client.slug());
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                config.addClient(client);
+                config.addToken(token);
+                config.addToken(token);
+                config.addToken(token);
+            }
+
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("token")
+                    .containsToken(1, new Token(token.slug(), token.token()))
+                    .containsToken(2, new Token(token.slug(), token.token()))
+                    .containsToken(3, new Token(token.slug(), token.token()))
                     .hasRows(3);
             }
         }
 
         @Test
-        void shouldGetAllSessionsBySlug(@TempDir Path tempDir) {
+        void shouldGetAllTokensBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
-                StoredSession session1 = new StoredSession("mnm-1", "1");
-                StoredSession session2 = new StoredSession("mnm-2", "2");
-                StoredSession session3 = new StoredSession("mnm-3", "3");
-                StoredSession session4 = new StoredSession("mnm-1", "11");
-                StoredSession session5 = new StoredSession("mnm-2", "22");
+                Token token1 = new Token("mnm-1", "1");
+                Token token2 = new Token("mnm-2", "2");
+                Token token3 = new Token("mnm-3", "3");
+                Token token4 = new Token("mnm-1", "11");
+                Token token5 = new Token("mnm-2", "22");
 
-                config.addSession(session1);
-                config.addSession(session2);
-                config.addSession(session3);
-                config.addSession(session4);
-                config.addSession(session5);
+                config.addToken(token1);
+                config.addToken(token2);
+                config.addToken(token3);
+                config.addToken(token4);
+                config.addToken(token5);
 
-                assertThat(config.getSessions("mnm-1"))
+                assertThat(config.getTokens("mnm-1"))
                     .containsExactlyInAnyOrder(
-                        new StoredSession(1, "mnm-1", "1"),
-                        new StoredSession(4, "mnm-1", "11"));
-                assertThat(config.getSessions("mnm-2"))
+                        new Token(1, "mnm-1", "1"),
+                        new Token(4, "mnm-1", "11"));
+                assertThat(config.getTokens("mnm-2"))
                     .containsExactlyInAnyOrder(
-                        new StoredSession(2, "mnm-2", "2"),
-                        new StoredSession(5, "mnm-2", "22"));
-                assertThat(config.getSessions("mnm-3"))
-                    .containsExactlyInAnyOrder(new StoredSession(3, "mnm-3", "3"));
+                        new Token(2, "mnm-2", "2"),
+                        new Token(5, "mnm-2", "22"));
+                assertThat(config.getTokens("mnm-3"))
+                    .containsExactlyInAnyOrder(new Token(3, "mnm-3", "3"));
             }
         }
 
         @Test
-        void shouldGetAllSessions(@TempDir Path tempDir) {
+        void shouldGetAllTokens(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
             try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
-                StoredSession session1 = new StoredSession("mnm-1", "1");
-                StoredSession session2 = new StoredSession("mnm-2", "2");
-                StoredSession session3 = new StoredSession("mnm-3", "3");
-                StoredSession session4 = new StoredSession("mnm-1", "11");
-                StoredSession session5 = new StoredSession("mnm-2", "22");
+                Token token1 = new Token("mnm-1", "1");
+                Token token2 = new Token("mnm-2", "2");
+                Token token3 = new Token("mnm-3", "3");
+                Token token4 = new Token("mnm-1", "11");
+                Token token5 = new Token("mnm-2", "22");
 
-                config.addSession(session1);
-                config.addSession(session2);
-                config.addSession(session3);
-                config.addSession(session4);
-                config.addSession(session5);
+                config.addToken(token1);
+                config.addToken(token2);
+                config.addToken(token3);
+                config.addToken(token4);
+                config.addToken(token5);
 
-                assertThat(config.getSessions())
+                assertThat(config.getTokens())
                     .containsExactlyInAnyOrder(
-                        new StoredSession(1, "mnm-1", "1"),
-                        new StoredSession(2, "mnm-2", "2"),
-                        new StoredSession(3, "mnm-3", "3"),
-                        new StoredSession(4, "mnm-1", "11"),
-                        new StoredSession(5, "mnm-2", "22"));
+                        new Token(1, "mnm-1", "1"),
+                        new Token(2, "mnm-2", "2"),
+                        new Token(3, "mnm-3", "3"),
+                        new Token(4, "mnm-1", "11"),
+                        new Token(5, "mnm-2", "22"));
             }
         }
     }
@@ -332,8 +348,8 @@ class ConfigDbTest {
         return new Client(slug, "1.0.0-patch", Client.Status.COMPLETED, Path.of(""));
     }
 
-    private static StoredSession testSession(String slug) {
-        return new StoredSession(slug, "123456789.123456789.123456789");
+    private static Token testToken(String slug) {
+        return new Token(slug, "123456789.123456789.123456789");
     }
 
 }

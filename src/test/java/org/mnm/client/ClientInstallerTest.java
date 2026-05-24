@@ -24,7 +24,7 @@ import org.mnm.client.ClientInstaller.InstallationResult;
 import org.mnm.client.InstallOptions.FileCheck;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.StoredSession;
+import org.mnm.config.Token;
 import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,7 +78,7 @@ class ClientInstallerTest {
     }
 
     @Test
-    void shouldFailWhenNoSessiontIsFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+    void shouldFailWhenNoTokenIsFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("missing-client.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
@@ -94,24 +94,24 @@ class ClientInstallerTest {
     }
 
     @Test
-    void shouldFailWhenStoredSessionTokenIsExpired(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+    void shouldFailWhenStoredTokenIsExpired(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("expired-token.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath()));
-            configDb.addSession(new StoredSession(TEST_SLUG, EXPIRED_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG, xxhsum);
 
             assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
                 .isInstanceOf(PanicException.class)
-                .hasMessage("All session token(s) expired: run 'install --username ...' to create a new one");
+                .hasMessage("All token(s) expired: run 'install --username ...' to create a new one");
         }
     }
 
     @Test
-    void shouldRefreshExpiredStoredSessionToken(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+    void shouldRefreshExpiredStoredToken(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final String refreshToken = testToken(Instant.now().plus(10, ChronoUnit.MINUTES));
         stubAccountLogin(refreshToken);
         stubGameVersions(wiremock.getHttpBaseUrl());
@@ -122,9 +122,9 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()));
-            configDb.addSession(new StoredSession(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addSession(new StoredSession(TEST_SLUG, EXPIRED_TEST_TOKEN));
-            configDb.addSession(new StoredSession(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions("username", "password", null, xxhsum);
@@ -140,10 +140,10 @@ class ClientInstallerTest {
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
                 .hasRows(1);
-            testDatabase.assertThatTable("sessions")
-                .containsSession(1, new StoredSession(TEST_SLUG, VALID_TEST_TOKEN))
-                .containsSession(2, new StoredSession(TEST_SLUG, refreshToken))
-                .containsSession(3, new StoredSession(TEST_SLUG, VALID_TEST_TOKEN))
+            testDatabase.assertThatTable("token")
+                .containsToken(1, new Token(TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(2, new Token(TEST_SLUG, refreshToken))
+                .containsToken(3, new Token(TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(3);
         }
     }
@@ -160,9 +160,9 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()));
-            configDb.addSession(new StoredSession(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addSession(new StoredSession(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addSession(new StoredSession(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallOptions options = new InstallOptions("username", "password", null, xxhsum);
@@ -178,10 +178,10 @@ class ClientInstallerTest {
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
                 .hasRows(1);
-            testDatabase.assertThatTable("sessions")
-                .containsSession(1, new StoredSession(TEST_SLUG, refreshToken))
-                .containsSession(2, new StoredSession(TEST_SLUG, VALID_TEST_TOKEN))
-                .containsSession(3, new StoredSession(TEST_SLUG, VALID_TEST_TOKEN))
+            testDatabase.assertThatTable("token")
+                .containsToken(1, new Token(TEST_SLUG, refreshToken))
+                .containsToken(2, new Token(TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(3, new Token(TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(3);
         }
     }
@@ -213,7 +213,7 @@ class ClientInstallerTest {
             InstallOptions options = new InstallOptions("username", "password", null, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
-            assertDatabaseContainsClientAndSession(dbFile, tempDir);
+            assertDatabaseContainsClientAndToken(dbFile, tempDir);
 
             assertThat(listDirs(tempDir)).containsExactlyInAnyOrder("mnm", "downloads");
             assertThat(tempDir.resolve("mnm")).isNotEmptyDirectory();
@@ -239,7 +239,7 @@ class ClientInstallerTest {
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
-            assertDatabaseContainsClientAndSession(dbFile, tempDir);
+            assertDatabaseContainsClientAndToken(dbFile, tempDir);
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(0);
@@ -262,7 +262,7 @@ class ClientInstallerTest {
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
-            assertDatabaseContainsClientAndSession(dbFile, tempDir);
+            assertDatabaseContainsClientAndToken(dbFile, tempDir);
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(1);
@@ -285,7 +285,7 @@ class ClientInstallerTest {
             InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
-            assertDatabaseContainsClientAndSession(dbFile, tempDir);
+            assertDatabaseContainsClientAndToken(dbFile, tempDir);
 
             assertThat(result.invalid()).isEqualTo(1);
             assertThat(result.missing()).isEqualTo(0);
@@ -318,7 +318,7 @@ class ClientInstallerTest {
             assertThat(additionalFile1).doesNotExist();
             assertThat(additionalFile2).doesNotExist();
 
-            assertDatabaseContainsClientAndSession(dbFile, tempDir);
+            assertDatabaseContainsClientAndToken(dbFile, tempDir);
 
             assertThat(result.invalid()).isEqualTo(0);
             assertThat(result.missing()).isEqualTo(0);
@@ -334,17 +334,17 @@ class ClientInstallerTest {
         return out.getOutput().substring(start);
     }
 
-    private static void assertDatabaseContainsClientAndSession(Path dbFile, Path tempDir) throws SQLException {
+    private static void assertDatabaseContainsClientAndToken(Path dbFile, Path tempDir) throws SQLException {
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "sessions");
+                .containsExactlyInAnyOrder("clients", "token");
 
             final Path installationPath = testInstallationPath(tempDir);
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, installationPath.toAbsolutePath()))
                 .hasRows(1);
-            testDatabase.assertThatTable("sessions")
-                .containsSession(1, new StoredSession(TEST_SLUG, VALID_TEST_TOKEN))
+            testDatabase.assertThatTable("token")
+                .containsToken(1, new Token(TEST_SLUG, VALID_TEST_TOKEN))
                 .hasRows(1);
         }
     }
