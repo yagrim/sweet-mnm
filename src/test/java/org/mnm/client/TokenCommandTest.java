@@ -16,7 +16,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -144,7 +144,7 @@ class TokenCommandTest {
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
             Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client);
-            config.addSession(new Session(client.slug(), TEST_TOKEN));
+            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
         }
     }
 

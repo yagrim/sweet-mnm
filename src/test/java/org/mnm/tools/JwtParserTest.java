@@ -53,7 +53,7 @@ class JwtParserTest {
         "eyJzdWIiOiJtZSIsImlhdCI6MTUxNjIzOTAyMn0"
     })
     void shouldFailWhenTokenIsNotValid(String token) {
-        Throwable t = catchThrowable(() -> JwtParser.parse("invalid-token"));
+        Throwable t = catchThrowable(() -> JwtParser.parse(token));
 
         assertThat(t)
             .isInstanceOf(IllegalArgumentException.class)

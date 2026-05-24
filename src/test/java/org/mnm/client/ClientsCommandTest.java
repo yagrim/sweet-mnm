@@ -11,7 +11,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,9 +57,9 @@ class ClientsCommandTest {
             Client ptr = testClient("ptr");
             config.addClient(mnm);
             config.addClient(ptr);
-            config.addSession(new Session(mnm.slug(), "token-1"));
-            config.addSession(new Session(mnm.slug(), "token-2"));
-            config.addSession(new Session(ptr.slug(), "token-3"));
+            config.addSession(new StoredSession(mnm.slug(), "token-1"));
+            config.addSession(new StoredSession(mnm.slug(), "token-2"));
+            config.addSession(new StoredSession(ptr.slug(), "token-3"));
         }
 
         Command command = new ClientsCommand(() -> dbFile);

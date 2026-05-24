@@ -8,7 +8,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.JwtParser.JwtClaims;
 
@@ -30,7 +30,7 @@ public class TokensCommand implements Command {
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
             configDb.initialize();
-            List<Session> sessions = isEmpty(slug) ? configDb.getSessions() : configDb.getSessions(slug);
+            List<StoredSession> sessions = isEmpty(slug) ? configDb.getSessions() : configDb.getSessions(slug);
 
             List<SessionSummary> list = sessions.stream()
                 .map(session -> {

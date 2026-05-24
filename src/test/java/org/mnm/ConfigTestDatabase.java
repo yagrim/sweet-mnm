@@ -12,7 +12,7 @@ import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.mnm.config.Client;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,7 +93,7 @@ public class ConfigTestDatabase {
                 return this;
             }
 
-            public TableAsserter containsSession(int id, Session expected) {
+            public TableAsserter containsSession(int id, StoredSession expected) {
                 try (PreparedStatement st = connection.prepareStatement("select * from %s where id = ? and slug = ? and token = ?;".formatted(tableName));) {
                     st.setInt(1, id);
                     st.setString(2, expected.slug());
@@ -101,7 +101,7 @@ public class ConfigTestDatabase {
                     try (ResultSet resultSet = st.executeQuery()) {
                         boolean found = false;
                         while (resultSet.next()) {
-                            Session actual = new Session(
+                            StoredSession actual = new StoredSession(
                                 resultSet.getString("slug"),
                                 resultSet.getString("token"));
                             assertThat(actual).isEqualTo(expected);

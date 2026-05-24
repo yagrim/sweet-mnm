@@ -11,7 +11,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Session;
+import org.mnm.config.StoredSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.TestData.TEST_TOKEN;
@@ -106,11 +106,11 @@ class TokensCommandTest {
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
             Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client);
-            config.addSession(new Session(client.slug(), TEST_TOKEN));
-            config.addSession(new Session(client.slug(), TEST_TOKEN));
+            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
+            config.addSession(new StoredSession(client.slug(), TEST_TOKEN));
             Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client2);
-            config.addSession(new Session(client2.slug(), TEST_TOKEN));
+            config.addSession(new StoredSession(client2.slug(), TEST_TOKEN));
         }
     }
 }

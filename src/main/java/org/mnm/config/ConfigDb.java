@@ -124,12 +124,20 @@ public class ConfigDb implements AutoCloseable {
 
     private static final String INSERT_SESSION_QUERY = "INSERT INTO sessions (slug, token) VALUES (?, ?)";
 
-    public void addSession(Session session) {
+    public int addSession(StoredSession session) {
         try (PreparedStatement ps = connection.prepareStatement(INSERT_SESSION_QUERY)) {
             ps.setString(1, session.slug());
             ps.setString(2, session.token());
 
             ps.executeUpdate();
+
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new IllegalStateException("No generated key found");
+                }
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -140,7 +148,7 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public Client getClient(String slug) {
-        try (PreparedStatement ps = connection.prepareStatement("select * from clients where slug = ?")) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from clients where slug = ? group by slug")) {
             ps.setString(1, slug);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -154,16 +162,16 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    public List<Session> getSessions(String slug) {
+    public List<StoredSession> getSessions(String slug) {
         return select("sessions", "slug = '%s'".formatted(slug), Mappers::mapSession);
     }
 
-    public List<Session> getSessions() {
+    public List<StoredSession> getSessions() {
         return select("sessions", null, Mappers::mapSession);
     }
 
-    public Session getSession(int id) {
-        try (PreparedStatement ps = connection.prepareStatement("select * from sessions where id = ?")) {
+    public StoredSession getSession(int id) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from sessions where id = ? order by id")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -204,4 +212,13 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
+    public void updateSession(Integer id, String token) {
+        try (PreparedStatement ps = connection.prepareStatement("update sessions set token = ? where id = ?")) {
+            ps.setString(1, token);
+            ps.setInt(2, id);
+            ps.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

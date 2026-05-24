@@ -1,12 +1,12 @@
 package org.mnm.config;
 
-public record Session(
+public record StoredSession(
     Integer id,
     String slug,
     String token
 ) {
 
-    public Session(String slug, String token) {
+    public StoredSession(String slug, String token) {
         this(null, slug, token);
     }
 }
