@@ -39,7 +39,7 @@ public class ClientInstaller {
         this.configDb = configDb;
     }
 
-    public InstallationResult install(InstallOptions options,
+    public InstallationResult install(InstallerOptions options,
                                       Path workDir, String apiBaseUrl) {
 
         Client currentClient;

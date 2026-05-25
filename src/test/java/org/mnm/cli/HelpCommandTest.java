@@ -49,7 +49,7 @@ class HelpCommandTest {
             Available commands:
               clients   Lists configured clients
               install   Installs MnM client in the current location
-              repair    Checks installation and updates if necessary
+              repair    Checks an installation and updates if necessary
               run       Runs configured client
             
             Options:
