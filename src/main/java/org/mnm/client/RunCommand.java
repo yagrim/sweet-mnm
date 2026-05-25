@@ -58,9 +58,10 @@ public class RunCommand implements Command {
             configDb.initialize();
 
             final String slug = args.get("slug");
+            final Integer tokenId = parseTokenId(args.get("id"));
             final boolean skipVersionCheck = args.getBoolean("skip-version-check");
             final Client client = selectClient(configDb, slug);
-            final Token token = selectToken(configDb, client.slug());
+            final Token token = selectToken(configDb, client.slug(), tokenId);
 
             if (!skipVersionCheck) {
                 versionChecker.accept(token.token(), client);
@@ -102,15 +103,36 @@ public class RunCommand implements Command {
         return clients.get(0);
     }
 
-    private Token selectToken(ConfigDb configDb, String slug) {
+    private Token selectToken(ConfigDb configDb, String slug, Integer id) {
+        if (id != null) {
+            Token token = configDb.getToken(id);
+            if (token == null || !slug.equals(token.slug())) {
+                panic("No token found for id %s".formatted(id));
+            }
+            return token;
+        }
+
         var tokens = configDb.getTokens(slug);
         if (tokens.isEmpty()) {
             panic("No token found: run 'install --username ...' first");
         }
         if (tokens.size() > 1) {
-            panic("Could not identify token");
+            panic("Could not identify token: use --id");
         }
         return tokens.get(0);
+    }
+
+    private Integer parseTokenId(String tokenId) {
+        if (isEmpty(tokenId)) {
+            return null;
+        }
+
+        try {
+            return Integer.valueOf(tokenId);
+        } catch (NumberFormatException e) {
+            panic("Invalid token id: %s".formatted(tokenId));
+            return null;
+        }
     }
 
     private String[] buildCommand(String slug, String token, boolean isWindows) {
@@ -149,13 +171,14 @@ public class RunCommand implements Command {
             %s
             
             Usage:
-              sweet %s [--slug <slug>] [--skip-version-check]
+              sweet %s [--slug <slug>] [--id <id>] [--skip-version-check]
             
             Options:
-              --slug               Client slug to run (optional)
-              --skip-version-check  Skip client version validation
-              --debug               Enables debug messages
-              --help                Shows this help
+              --slug                 Client slug to run (optional)
+              --id                   Token id to use when multiple tokens exist
+              --skip-version-check   Skip client version validation
+              --debug                Enables debug messages
+              --help                 Shows this help
             """.formatted(description(), name());
     }
 
