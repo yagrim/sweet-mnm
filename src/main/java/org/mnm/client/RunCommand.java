@@ -2,6 +2,7 @@ package org.mnm.client;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -35,21 +36,28 @@ public class RunCommand implements Command {
     private final ProcessRunner processRunner;
     private final BooleanSupplier windowsDetector;
     private final BiConsumer<String, Client> versionChecker;
+    private final Supplier<Map<String, String>> environmentSupplier;
 
     public RunCommand(Supplier<Path> locator) {
         this(
             locator,
             (workingDirectory, command, environment) -> ProcessUtils.run(workingDirectory, command, environment),
             OS::isWindows,
-            Validators::checkVersion
+            Validators::checkVersion,
+            System::getenv
         );
     }
 
     RunCommand(Supplier<Path> configDbSupplier, ProcessRunner processRunner, BooleanSupplier windowsDetector, BiConsumer<String, Client> versionChecker) {
+        this(configDbSupplier, processRunner, windowsDetector, versionChecker, System::getenv);
+    }
+
+    RunCommand(Supplier<Path> configDbSupplier, ProcessRunner processRunner, BooleanSupplier windowsDetector, BiConsumer<String, Client> versionChecker, Supplier<Map<String, String>> environmentSupplier) {
         this.configFileLocator = configDbSupplier;
         this.processRunner = processRunner;
         this.windowsDetector = windowsDetector;
         this.versionChecker = versionChecker;
+        this.environmentSupplier = environmentSupplier;
     }
 
     @Override
@@ -71,7 +79,7 @@ public class RunCommand implements Command {
             final boolean isWindows = windowsDetector.getAsBoolean();
 
             String[] command = buildCommand(client.slug(), token.token(), isWindows);
-            Map<String, String> environment = buildEnvironment(isWindows, workingDirectory);
+            Map<String, String> environment = buildEnvironment(isWindows, workingDirectory, environmentSupplier.get());
 
             logger.info("Running: {}", String.join(" ", command));
             logger.info("Working directory: {}", workingDirectory);
@@ -142,13 +150,16 @@ public class RunCommand implements Command {
         return new String[]{"umu-run", concatPath(".", slug, "mnm.exe"), "--token", token};
     }
 
-    private static Map<String, String> buildEnvironment(boolean isWindows, Path workingDirectory) {
-        return isWindows
-            ? Map.of()
-            : Map.of(
-            "GAMEID", "mnm",
-            "PROTONPATH", "GE-Proton10-33",
-            "WINEPREFIX", workingDirectory.toAbsolutePath().resolve("mnm_prefix").toString());
+    private static Map<String, String> buildEnvironment(boolean isWindows, Path workingDirectory, Map<String, String> currentEnvironment) {
+        return isWindows ? Map.of() : buildLinuxEnvironment(workingDirectory, currentEnvironment);
+    }
+
+    private static Map<String, String> buildLinuxEnvironment(Path workingDirectory, Map<String, String> currentEnvironment) {
+        Map<String, String> environment = new HashMap<>();
+        environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", "mnm"));
+        environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", "GE-Proton10-33"));
+        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", workingDirectory.toAbsolutePath().resolve("mnm_prefix").toString()));
+        return Map.copyOf(environment);
     }
 
     private static String concatPath(String... parts) {
