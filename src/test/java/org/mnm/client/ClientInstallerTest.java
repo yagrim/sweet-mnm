@@ -21,7 +21,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mnm.ConfigTestDatabase;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.client.ClientInstaller.InstallationResult;
-import org.mnm.client.InstallOptions.FileCheck;
+import org.mnm.client.InstallerOptions.FileCheck;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.ApiServerStubs.*;
 import static org.mnm.TestUtils.*;
-import static org.mnm.client.InstallOptions.FileCheck.xxhsum;
+import static org.mnm.client.InstallerOptions.FileCheck.xxhsum;
 import static org.mnm.config.Client.Status.COMPLETED;
 
 
@@ -46,7 +46,7 @@ class ClientInstallerTest {
     @Test
     void shouldFailWithoutCredentials(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final ClientInstaller installer = new ClientInstaller(null);
-        InstallOptions options = new InstallOptions("", "", null, xxhsum);
+        InstallerOptions options = new InstallerOptions("", "", null, xxhsum);
 
         assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
             .isInstanceOf(PanicException.class)
@@ -56,7 +56,7 @@ class ClientInstallerTest {
     @Test
     void shouldFailWithOnlyUsername(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final ClientInstaller installer = new ClientInstaller(null);
-        InstallOptions options = new InstallOptions("username", null, null, xxhsum);
+        InstallerOptions options = new InstallerOptions("username", null, null, xxhsum);
 
         assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
             .isInstanceOf(PanicException.class)
@@ -69,7 +69,7 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, xxhsum);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
 
             assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
                 .isInstanceOf(PanicException.class)
@@ -85,7 +85,7 @@ class ClientInstallerTest {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, Path.of("")));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, xxhsum);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
 
             assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
                 .isInstanceOf(PanicException.class)
@@ -102,7 +102,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, xxhsum);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
 
             assertThatThrownBy(() -> installer.install(options, tempDir, mockApiBaseUrl(wiremock)))
                 .isInstanceOf(PanicException.class)
@@ -126,7 +126,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions("username", "password", null, xxhsum);
+            InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
 
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
@@ -163,7 +163,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions("username", "password", null, xxhsum);
+            InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
 
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
@@ -208,7 +208,7 @@ class ClientInstallerTest {
             assertThat(tempDir.resolve("downloads")).doesNotExist();
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions("username", "password", null, fileCheck);
+            InstallerOptions options = new InstallerOptions("username", "password", null, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndToken(dbFile, tempDir);
@@ -234,7 +234,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndToken(dbFile, tempDir);
@@ -257,7 +257,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndToken(dbFile, tempDir);
@@ -280,7 +280,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertDatabaseContainsClientAndToken(dbFile, tempDir);
@@ -310,7 +310,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
-            InstallOptions options = new InstallOptions(null, null, TEST_SLUG, fileCheck);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, mockApiBaseUrl(wiremock));
 
             assertThat(additionalFile1).doesNotExist();

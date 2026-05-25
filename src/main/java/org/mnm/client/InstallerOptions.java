@@ -4,31 +4,40 @@ import org.mnm.cli.Arguments;
 import org.mnm.tools.StringUtils;
 
 import static org.mnm.tools.ProcessUtils.panic;
+import static org.mnm.tools.StringUtils.isEmpty;
 
-record InstallOptions(String username,
-                      String password,
-                      String slug,
-                      FileCheck fileCheck
-
+public record InstallerOptions(String username,
+                               String password,
+                               String slug,
+                               FileCheck fileCheck
 ) {
 
-    public static InstallOptions parse(Arguments args) {
-        return new InstallOptions(
+    public static InstallerOptions parse(Arguments args) {
+        return new InstallerOptions(
             args.get("username"),
             args.get("password"),
             args.getOrDefault("slug", null),
             FileCheck.from(args.get("file-check")));
     }
 
-    public void validate() {
-        if (StringUtils.isEmpty(slug)) {
-            if (StringUtils.isEmpty(username)) {
-                panic("Missing or empty parameter: '--username' or '--slug'");
-            }
-            if (!StringUtils.isEmpty(username) && StringUtils.isEmpty(password)) {
-                panic("Missing or empty parameter: '--password'");
-            }
+    public void validateInstall() {
+        if (isEmpty(username)) {
+            panic("Missing or empty parameter: '--username'");
         }
+        if (!isEmpty(username) && isEmpty(password)) {
+            panic("Missing or empty parameter: '--password'");
+        }
+        validateFileCheck();
+    }
+
+    public void validateRepair() {
+        if (StringUtils.isEmpty(slug)) {
+            panic("Missing or empty parameter: '--slug'");
+        }
+        validateFileCheck();
+    }
+
+    private void validateFileCheck() {
         if (fileCheck == null) {
             panic("Invalid File Check value, use 'in-memory' or 'xxhsum'");
         }
