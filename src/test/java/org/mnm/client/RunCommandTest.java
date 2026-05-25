@@ -44,13 +44,14 @@ class RunCommandTest {
             Runs configured client
             
             Usage:
-              sweet run [--slug <slug>] [--skip-version-check]
+              sweet run [--slug <slug>] [--id <id>] [--skip-version-check]
             
             Options:
-              --slug               Client slug to run (optional)
-              --skip-version-check  Skip client version validation
-              --debug               Enables debug messages
-              --help                Shows this help
+              --slug                 Client slug to run (optional)
+              --id                   Token id to use when multiple tokens exist
+              --skip-version-check   Skip client version validation
+              --debug                Enables debug messages
+              --help                 Shows this help
             """);
     }
 
@@ -199,7 +200,26 @@ class RunCommandTest {
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
-            .hasMessage("Could not identify token");
+            .hasMessage("Could not identify token: use --id");
+    }
+
+    @Test
+    void shouldRunWithTokenIdWhenMultipleTokensExist(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path installPath = tempDir.resolve("install");
+        initDb(dbFile, testClient("mnm", installPath), testToken());
+
+        final int tokenId;
+        try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            tokenId = config.addToken(new Token("mnm", "token-2"));
+        }
+
+        CapturingRunner runner = new CapturingRunner();
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
+        command.run(Arguments.parse("--id", String.valueOf(tokenId)));
+
+        assertThat(runner.workingDirectory()).isEqualTo(installPath);
+        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-2");
     }
 
     private static void initDb(Path dbFile, Client client, Token... tokens) {
