@@ -212,6 +212,16 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
+    public void updateClientStatus(String slug, Client.Status status) {
+        try (PreparedStatement ps = connection.prepareStatement("update clients set status = ? where slug = ?")) {
+            ps.setString(1, status.name());
+            ps.setString(2, slug);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void updateToken(Integer id, String token) {
         try (PreparedStatement ps = connection.prepareStatement("update token set token = ? where id = ?")) {
             ps.setString(1, token);

@@ -1,6 +1,5 @@
 package org.mnm.config;
 
-import java.nio.file.Path;
 import java.util.Locale;
 
 public final class OS {
@@ -13,7 +12,4 @@ public final class OS {
         return os != null && os.toLowerCase(Locale.ROOT).startsWith("windows");
     }
 
-    public static Path getWorkingDirectory() {
-        return Path.of(System.getProperty("user.dir"));
-    }
 }

@@ -44,6 +44,7 @@ public class ClientInstaller {
 
         Client currentClient;
         Session session;
+        Path installDir;
 
         if (!StringUtils.isEmpty(options.slug())) {
             final String slug = options.slug();
@@ -59,20 +60,23 @@ public class ClientInstaller {
             validateTokens(tokens);
             final String token = tokens.get(0).token();
             session = Session.login(token, apiBaseUrl);
+            installDir = currentClient.path();
         } else {
             session = Session.login(options.username(), options.password(), apiBaseUrl);
             currentClient = configDb.getClient(session.getSlug());
+            installDir = workDir;
         }
+        logger.info("Running in path: {}", installDir);
 
         final String slug = session.getSlug();
-        final Installation installation = new Installation(workDir, slug);
+        final Installation installation = new Installation(installDir, slug);
 
         if (currentClient == null) {
-            Client client = new Client(slug, session.getVersion(), INSTALLING, workDir);
+            Client client = new Client(slug, session.getVersion(), INSTALLING, installDir);
             configDb.addClient(client);
             configDb.addToken(new Token(session.getSlug(), session.getToken()));
         } else {
-            configDb.updateClient(slug, session.getVersion(), REPAIRING, workDir);
+            configDb.updateClientStatus(slug, REPAIRING);
             refreshSessionToken(currentClient, session);
         }
 
@@ -116,7 +120,7 @@ public class ClientInstaller {
         }
         if (!currentFiles.isEmpty()) {
             logger.info("Found {} orphan file(s) to delete", currentFiles.size());
-            currentFiles.stream().forEach(s -> logger.info(workDir.relativize(s).toString()));
+            currentFiles.stream().forEach(s -> logger.info(installDir.relativize(s).toString()));
         }
 
         // Actual installation
@@ -130,7 +134,7 @@ public class ClientInstaller {
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
-        configDb.updateClient(slug, session.getVersion(), COMPLETED, workDir);
+        configDb.updateClientStatus(slug, COMPLETED);
 
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
