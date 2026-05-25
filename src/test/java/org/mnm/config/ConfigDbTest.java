@@ -136,7 +136,7 @@ class ConfigDbTest {
         }
 
         @Test
-        void shouldUpdateClientStatus(@TempDir Path tempDir) {
+        void shouldUpdateClient(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
             final String slug = "mnm";
 
@@ -151,6 +151,37 @@ class ConfigDbTest {
                 assertThat(client.status()).isEqualTo(INSTALLING);
 
                 assertThat(client.path().toString()).isEqualTo(File.separator + String.join(File.separator, "some", "location"));
+            }
+        }
+
+        @Test
+        void shouldUpdateOnlyClientStatus(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+            final String slug = "mnm";
+
+            Client initClient = testClient(slug);
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                config.addClient(initClient);
+
+                config.updateClientStatus(slug, INSTALLING);
+            }
+
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("clients")
+                    .containsClient(new Client(slug, initClient.version(), INSTALLING, initClient.path()));
+            }
+        }
+
+        @Test
+        void shouldNotFailUpdatingMissingClientStatusAndNotAddNewRow(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+                config.updateClientStatus("missing-slug", INSTALLING);
+            }
+
+            try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+                testDatabase.assertThatTable("clients").hasRows(0);
             }
         }
 
