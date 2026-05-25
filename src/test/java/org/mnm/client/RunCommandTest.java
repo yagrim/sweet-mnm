@@ -89,6 +89,30 @@ class RunCommandTest {
     }
 
     @Test
+    void shouldPreserveExistingLinuxEnvironmentVariables(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path installPath = tempDir.resolve("install");
+        initDb(dbFile, testClient("mnm", installPath), testToken());
+
+        CapturingRunner runner = new CapturingRunner();
+        Command command = new RunCommand(
+            () -> dbFile,
+            runner,
+            linux(),
+            this::emptyCheckVersion,
+            () -> Map.of(
+                "GAMEID", "custom-game",
+                "PROTONPATH", "custom-proton",
+                "WINEPREFIX", "/tmp/custom-prefix"));
+        command.run(Arguments.parse());
+
+        assertThat(runner.environment())
+            .containsEntry("GAMEID", "custom-game")
+            .containsEntry("PROTONPATH", "custom-proton")
+            .containsEntry("WINEPREFIX", "/tmp/custom-prefix");
+    }
+
+    @Test
     void shouldSelectClientBySlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath1 = tempDir.resolve("install").resolve("mnm-1");
