@@ -8,9 +8,6 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 
-import static org.mnm.config.Environment.API_BASE_URL;
-import static org.mnm.config.OS.getWorkingDirectory;
-
 public class RepairCommand implements Command {
 
     private final Supplier<Path> configFileLocator;
@@ -28,13 +25,11 @@ public class RepairCommand implements Command {
     @Override
     public void run(Arguments args) {
         InstallerOptions options = InstallerOptions.parse(args);
-        options.validateInstall();
+        options.validateRepair();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
             configDb.initialize();
-
-            ClientInstaller client = new ClientInstaller(configDb);
-            client.install(options, getWorkingDirectory(), API_BASE_URL);
+            installer.accept(options, configDb);
         }
 
         System.out.println("Repair completed");
@@ -47,7 +42,7 @@ public class RepairCommand implements Command {
 
     @Override
     public String description() {
-        return "Checks installation and updates if necessary";
+        return "Checks an installation and updates if necessary";
     }
 
     @Override

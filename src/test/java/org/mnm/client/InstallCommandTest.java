@@ -97,4 +97,17 @@ class InstallCommandTest {
             .hasMessage("Missing or empty parameter: '--username'");
     }
 
+    @Test
+    void shouldCallInstallerWhenConditionsAreMet(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final AtomicBoolean installerCalled = new AtomicBoolean(false);
+
+        Command command = new InstallCommand(() -> dbFile, (_, _) -> installerCalled.set(true));
+        Arguments arguments = Arguments.parse("--username", "username", "--password", "password");
+
+        command.run(arguments);
+
+        assertThat(installerCalled).isTrue();
+    }
+
 }

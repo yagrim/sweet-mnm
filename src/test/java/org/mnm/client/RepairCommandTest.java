@@ -1,9 +1,11 @@
 package org.mnm.client;
 
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
@@ -27,7 +29,7 @@ class RepairCommandTest {
     void shouldReturnDescription() {
         final Command command = new RepairCommand(null);
 
-        assertThat(command.description()).isEqualTo("Checks installation and updates if necessary");
+        assertThat(command.description()).isEqualTo("Checks an installation and updates if necessary");
     }
 
     @Test
@@ -35,7 +37,7 @@ class RepairCommandTest {
         final Command command = new RepairCommand(null);
 
         assertThat(command.help()).isEqualTo("""
-            Checks installation and updates if necessary
+            Checks an installation and updates if necessary
             
             Usage:
               sweet repair --slug <slug>
@@ -80,6 +82,19 @@ class RepairCommandTest {
             .isInstanceOf(PanicException.class)
             .hasMessage("Invalid File Check value, use 'in-memory' or 'xxhsum'");
         assertThat(configFileLocated).isFalse();
+    }
+
+    @Test
+    void shouldCallInstallerWhenConditionsAreMet(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final AtomicBoolean installerCalled = new AtomicBoolean(false);
+
+        Command command = new RepairCommand(() -> dbFile, (_, _) -> installerCalled.set(true));
+        Arguments arguments = Arguments.parse("--slug", "mnm");
+
+        command.run(arguments);
+
+        assertThat(installerCalled).isTrue();
     }
 
 }
