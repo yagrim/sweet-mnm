@@ -13,11 +13,18 @@ jobs:
   test:
     name: Gradle tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      BINARY_LOCATION: build/native/nativeCompile/
     strategy:
       matrix:
         os:
           - ubuntu-latest
           - windows-latest
+        include:
+          - os: ubuntu-latest
+            artifact_os: linux
+          - os: windows-latest
+            artifact_os: windows
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -70,10 +77,32 @@ jobs:
       - name: Native build
         shell: bash
         run: make native
+      - name: Write native checksum (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd "$BINARY_LOCATION"
+          md5sum sweet | awk '{print $1}' > md5checksum.txt
+      - name: Write native checksum (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-Location $env:BINARY_LOCATION
+          (Get-FileHash -Algorithm MD5 -Path sweet.exe).Hash | Out-File -FilePath md5checksum.txt -Encoding ascii
+      - name: Set artifact architecture
+        id: arch
+        shell: bash
+        run: echo "arch=$RUNNER_ARCH" >> "$GITHUB_OUTPUT"
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: build-reports-${{ matrix.os }}
           path: build/reports/**
+          if-no-files-found: warn
+      - name: Upload native binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary-${{ matrix.artifact_os }}-${{ steps.arch.outputs.arch }}.zip
+          path: ${{ env.BINARY_LOCATION }}
           if-no-files-found: warn
