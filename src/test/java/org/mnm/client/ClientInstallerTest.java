@@ -40,8 +40,8 @@ import static org.mnm.config.Client.Status.COMPLETED;
 @WireMockTest(extensionScanningEnabled = true)
 class ClientInstallerTest {
 
-    private static final String VALID_TEST_TOKEN = testToken(Instant.now().plus(5, ChronoUnit.MINUTES));
-    private static final String EXPIRED_TEST_TOKEN = testToken(Instant.ofEpochSecond(1000));
+    private static final String VALID_TOKEN = validToken();
+    private static final String EXPIRED_TOKEN = expiredToken();
 
     @Test
     void shouldFailWithoutCredentials(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
@@ -99,7 +99,7 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath()));
-            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
@@ -121,9 +121,9 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
-            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TEST_TOKEN));
-            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
@@ -140,9 +140,9 @@ class ClientInstallerTest {
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("token")
-                .containsToken(new Token(1, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))
                 .containsToken(new Token(2, TEST_SLUG, refreshToken))
-                .containsToken(new Token(3, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(3, TEST_SLUG, VALID_TOKEN))
                 .hasRows(3);
         }
     }
@@ -158,9 +158,9 @@ class ClientInstallerTest {
 
         try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
-            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
-            configDb.addToken(new Token(TEST_SLUG, VALID_TEST_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
@@ -178,8 +178,8 @@ class ClientInstallerTest {
                 .hasRows(1);
             testDatabase.assertThatTable("token")
                 .containsToken(new Token(1, TEST_SLUG, refreshToken))
-                .containsToken(new Token(2, TEST_SLUG, VALID_TEST_TOKEN))
-                .containsToken(new Token(3, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(2, TEST_SLUG, VALID_TOKEN))
+                .containsToken(new Token(3, TEST_SLUG, VALID_TOKEN))
                 .hasRows(3);
         }
     }
@@ -341,13 +341,13 @@ class ClientInstallerTest {
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("token")
-                .containsToken(new Token(1, TEST_SLUG, VALID_TEST_TOKEN))
+                .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))
                 .hasRows(1);
         }
     }
 
     private static void stubAuthenticationFlow(WireMockRuntimeInfo wiremock) {
-        stubAccountLogin(VALID_TEST_TOKEN);
+        stubAccountLogin(VALID_TOKEN);
         stubGameVersions(wiremock.getHttpBaseUrl());
         stubManifestDownload();
     }

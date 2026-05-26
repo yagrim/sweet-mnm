@@ -18,9 +18,17 @@ import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mnm.TestUtils.expiredToken;
+import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.COMPLETED;
 
 class RunCommandTest {
+
+    private static final String TEST_SLUG = "mnm";
+
+    private static final String VALID_TOKEN = validToken();
+    private static final String EXPIRED_TOKEN = expiredToken();
+
 
     @Test
     void shouldReturnName() {
@@ -59,14 +67,14 @@ class RunCommandTest {
     void shouldRunWindowsCommandForSingleClientWithoutSlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::dummyCheckVersion);
         command.run(Arguments.parse());
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
-        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
+        assertThat(runner.command()).containsExactly(Path.of(TEST_SLUG, "mnm.exe").toString(), "--token", VALID_TOKEN);
         assertThat(runner.environment()).isEmpty();
     }
 
@@ -74,16 +82,16 @@ class RunCommandTest {
     void shouldRunLinuxCommandForSingleClientWithoutSlug(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, linux(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, runner, linux(), this::dummyCheckVersion);
         command.run(Arguments.parse());
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
-        assertThat(runner.command()).containsExactly("umu-run", Path.of(".", "mnm", "mnm.exe").toString(), "--token", "token-1");
+        assertThat(runner.command()).containsExactly("umu-run", Path.of(".", TEST_SLUG, "mnm.exe").toString(), "--token", VALID_TOKEN);
         assertThat(runner.environment())
-            .containsEntry("GAMEID", "mnm")
+            .containsEntry("GAMEID", TEST_SLUG)
             .containsEntry("PROTONPATH", "GE-Proton10-33")
             .containsEntry("WINEPREFIX", installPath.toAbsolutePath().resolve("mnm_prefix").toString());
     }
@@ -92,14 +100,14 @@ class RunCommandTest {
     void shouldPreserveExistingLinuxEnvironmentVariables(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         CapturingRunner runner = new CapturingRunner();
         Command command = new RunCommand(
             () -> dbFile,
             runner,
             linux(),
-            this::emptyCheckVersion,
+            this::dummyCheckVersion,
             () -> Map.of(
                 "GAMEID", "custom-game",
                 "PROTONPATH", "custom-proton",
@@ -122,22 +130,22 @@ class RunCommandTest {
             testClient("mnm-2", installPath2));
 
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
-            config.addToken(new Token("mnm-2", "token-2"));
+            config.addToken(new Token("mnm-2", VALID_TOKEN));
         }
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::dummyCheckVersion);
         command.run(Arguments.parse("--slug", "mnm-2"));
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath2);
-        assertThat(runner.command()).containsExactly(Path.of("mnm-2", "mnm.exe").toString(), "--token", "token-2");
+        assertThat(runner.command()).containsExactly(Path.of("mnm-2", "mnm.exe").toString(), "--token", VALID_TOKEN);
     }
 
     @Test
     void shouldRunVersionCheck(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         final AtomicBoolean run = new AtomicBoolean(false);
 
@@ -149,14 +157,14 @@ class RunCommandTest {
 
         assertThat(run).isTrue();
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
-        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
+        assertThat(runner.command()).containsExactly(Path.of(TEST_SLUG, "mnm.exe").toString(), "--token", VALID_TOKEN);
     }
 
     @Test
     void shouldSkipVersionCheckWhenFlagIsPresent(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         final AtomicBoolean run = new AtomicBoolean(false);
 
@@ -168,14 +176,14 @@ class RunCommandTest {
 
         assertThat(run).isFalse();
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
-        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-1");
+        assertThat(runner.command()).containsExactly(Path.of(TEST_SLUG, "mnm.exe").toString(), "--token", VALID_TOKEN);
     }
 
     @Test
     void shouldPanicWhenNoClientsExist(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::dummyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -190,7 +198,7 @@ class RunCommandTest {
             testClient("mnm-1", tempDir.resolve("install").resolve("mnm-1")),
             testClient("mnm-2", tempDir.resolve("install").resolve("mnm-2")));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::dummyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -202,9 +210,9 @@ class RunCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
         initDb(
             dbFile,
-            testClient("mnm", tempDir.resolve("install").resolve("mnm")));
+            testClient(TEST_SLUG, tempDir.resolve("install").resolve(TEST_SLUG)));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::dummyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -212,15 +220,30 @@ class RunCommandTest {
     }
 
     @Test
+    void shouldPanicWhenTokenIsExpired(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        initDb(
+            dbFile,
+            testClient(TEST_SLUG, tempDir.resolve("install").resolve(TEST_SLUG)),
+            new Token(TEST_SLUG, EXPIRED_TOKEN));
+
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::dummyCheckVersion);
+
+        assertThatThrownBy(() -> command.run(Arguments.parse()))
+            .isInstanceOf(PanicException.class)
+            .hasMessage("Token expired: run 'install --username ...' to create a new one");
+    }
+
+    @Test
     void shouldPanicWhenMultipleTokensExist(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         initDb(
             dbFile,
-            testClient("mnm", tempDir.resolve("install").resolve("mnm")),
-            testToken(),
-            new Token("mnm", "token-2"));
+            testClient(TEST_SLUG, tempDir.resolve("install").resolve(TEST_SLUG)),
+            validTestToken(),
+            new Token(TEST_SLUG, VALID_TOKEN));
 
-        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, failingRunner(), windows(), this::dummyCheckVersion);
 
         assertThatThrownBy(() -> command.run(Arguments.parse()))
             .isInstanceOf(PanicException.class)
@@ -231,19 +254,19 @@ class RunCommandTest {
     void shouldRunWithTokenIdWhenMultipleTokensExist(@TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         final Path installPath = tempDir.resolve("install");
-        initDb(dbFile, testClient("mnm", installPath), testToken());
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
 
         final int tokenId;
         try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
-            tokenId = config.addToken(new Token("mnm", "token-2"));
+            tokenId = config.addToken(new Token(TEST_SLUG, VALID_TOKEN));
         }
 
         CapturingRunner runner = new CapturingRunner();
-        Command command = new RunCommand(() -> dbFile, runner, windows(), this::emptyCheckVersion);
+        Command command = new RunCommand(() -> dbFile, runner, windows(), this::dummyCheckVersion);
         command.run(Arguments.parse("--id", String.valueOf(tokenId)));
 
         assertThat(runner.workingDirectory()).isEqualTo(installPath);
-        assertThat(runner.command()).containsExactly(Path.of("mnm", "mnm.exe").toString(), "--token", "token-2");
+        assertThat(runner.command()).containsExactly(Path.of(TEST_SLUG, "mnm.exe").toString(), "--token", VALID_TOKEN);
     }
 
     private static void initDb(Path dbFile, Client client, Token... tokens) {
@@ -306,11 +329,11 @@ class RunCommandTest {
         return new Client(mnm, "v1.0.0", COMPLETED, installPath);
     }
 
-    private static Token testToken() {
-        return new Token("mnm", "token-1");
+    private static Token validTestToken() {
+        return new Token(TEST_SLUG, VALID_TOKEN);
     }
 
-    private void emptyCheckVersion(String token, Client client) {
+    private void dummyCheckVersion(String token, Client client) {
     }
 
 }

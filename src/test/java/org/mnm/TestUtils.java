@@ -13,6 +13,8 @@ import java.util.Base64;
 
 import org.apache.commons.io.FileUtils;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
+
 public class TestUtils {
 
     public static Path classpathFile(String path) {
@@ -47,6 +49,14 @@ public class TestUtils {
         return "%s.%s.123".formatted(
             base64Url("{\"alg\":\"none\"}"),
             base64Url("{\"exp\":%s}".formatted(expiration.getEpochSecond())));
+    }
+
+    public static String validToken() {
+        return testToken(Instant.now().plus(5, MINUTES));
+    }
+
+    public static String expiredToken() {
+        return testToken(Instant.now().minus(1, MINUTES));
     }
 
     private static String base64Url(String content) {

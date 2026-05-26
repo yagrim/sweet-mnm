@@ -17,6 +17,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
+import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.tools.ProcessUtils.panic;
@@ -70,6 +71,7 @@ public class RunCommand implements Command {
             final boolean skipVersionCheck = args.getBoolean("skip-version-check");
             final Client client = selectClient(configDb, slug);
             final Token token = selectToken(configDb, client.slug(), tokenId);
+            tokenIsNotExpired(token);
 
             if (!skipVersionCheck) {
                 versionChecker.accept(token.token(), client);
@@ -91,6 +93,12 @@ public class RunCommand implements Command {
         }
     }
 
+
+    private static void tokenIsNotExpired(Token token) {
+        if (JwtParser.parse(token.token()).isExpired()) {
+            panic("Token expired: run 'install --username ...' to create a new one");
+        }
+    }
 
     private Client selectClient(ConfigDb configDb, String slug) {
         if (!isEmpty(slug)) {
