@@ -1,5 +1,6 @@
 package org.mnm.client;
 
+import java.io.File;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -67,9 +68,9 @@ class ClientsCommandTest {
 
         assertThat(capture.getOutput()).isEqualTo("""
             Slug  Version  Tokens  Install_path
-            mnm   v1.0.0        2  /install/mnm
-            ptr   v1.0.0        1  /install/ptr
-            """);
+            mnm   v1.0.0        2  %1$sinstall%1$smnm
+            ptr   v1.0.0        1  %1$sinstall%1$sptr
+            """.formatted(File.separator));
     }
 
     @Test
