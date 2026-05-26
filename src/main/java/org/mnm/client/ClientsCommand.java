@@ -27,7 +27,8 @@ public class ClientsCommand implements Command {
                 .map(client -> new ClientSummary(
                     client.slug(),
                     client.version(),
-                    configDb.getTokens(client.slug()).size()))
+                    configDb.getTokens(client.slug()).size(),
+                    client.path().toString()))
                 .toList();
 
             System.out.print(format(clients));
@@ -43,12 +44,13 @@ public class ClientsCommand implements Command {
         int versionWidth = width("Version", clients.stream().map(c -> c.version));
         // We can assume no one is going to have more than 99999 tokens
         int tokensWidth = 6;
+        int pathWidth = width("Install_path", clients.stream().map(c -> c.path));
 
-        String rowFormat = "%-" + slugWidth + "s  %-" + versionWidth + "s  %" + tokensWidth + "s%n";
+        String rowFormat = "%-" + slugWidth + "s  %-" + versionWidth + "s  %" + tokensWidth + "s  %-" + pathWidth + "s%n";
         StringBuilder sb = new StringBuilder();
-        sb.append(rowFormat.formatted("Slug", "Version", "Tokens"));
+        sb.append(rowFormat.formatted("Slug", "Version", "Tokens", "Install_path"));
         for (ClientSummary client : clients) {
-            sb.append(rowFormat.formatted(client.slug(), client.version(), client.tokens()));
+            sb.append(rowFormat.formatted(client.slug(), client.version(), client.tokens(), client.path()));
         }
         return sb.toString();
     }
@@ -77,6 +79,6 @@ public class ClientsCommand implements Command {
             """.formatted(description(), name());
     }
 
-    public record ClientSummary(String slug, String version, int tokens) {
+    public record ClientSummary(String slug, String version, int tokens, String path) {
     }
 }

@@ -66,9 +66,9 @@ class ClientsCommandTest {
         command.run(Arguments.parse());
 
         assertThat(capture.getOutput()).isEqualTo("""
-            Slug  Version  Tokens
-            mnm   v1.0.0        2
-            ptr   v1.0.0        1
+            Slug  Version  Tokens  Install_path
+            mnm   v1.0.0        2  /install/mnm
+            ptr   v1.0.0        1  /install/ptr
             """);
     }
 
@@ -83,6 +83,6 @@ class ClientsCommandTest {
     }
 
     private static Client testClient(String slug) {
-        return new Client(slug, "v1.0.0", Client.Status.COMPLETED, Path.of(""));
+        return new Client(slug, "v1.0.0", Client.Status.COMPLETED, Path.of("/install/" + slug));
     }
 }
