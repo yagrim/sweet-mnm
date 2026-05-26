@@ -83,7 +83,7 @@ public class RunCommand implements Command {
             String[] command = buildCommand(client.slug(), token.token(), isWindows);
             Map<String, String> environment = buildEnvironment(isWindows, workingDirectory, environmentSupplier.get());
 
-            logger.info("Running: {}", String.join(" ", command));
+            logger.info("Running: {}", String.join(" ", redactToken(command)));
             logger.info("Working directory: {}", workingDirectory);
             if (!environment.isEmpty()) {
                 logger.info("Environment variables: {}", environment);
@@ -156,6 +156,16 @@ public class RunCommand implements Command {
             return new String[]{concatPath(slug, "mnm.exe"), "--token", token};
         }
         return new String[]{"umu-run", concatPath(".", slug, "mnm.exe"), "--token", token};
+    }
+
+    private static String[] redactToken(String[] command) {
+        String[] redacted = command.clone();
+        for (int i = 0; i < redacted.length - 1; i++) {
+            if ("--token".equals(redacted[i])) {
+                redacted[i + 1] = "***";
+            }
+        }
+        return redacted;
     }
 
     private static Map<String, String> buildEnvironment(boolean isWindows, Path workingDirectory, Map<String, String> currentEnvironment) {

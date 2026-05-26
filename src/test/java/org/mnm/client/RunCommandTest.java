@@ -6,8 +6,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -94,6 +98,30 @@ class RunCommandTest {
             .containsEntry("GAMEID", TEST_SLUG)
             .containsEntry("PROTONPATH", "GE-Proton10-33")
             .containsEntry("WINEPREFIX", installPath.toAbsolutePath().resolve("mnm_prefix").toString());
+    }
+
+    @Test
+    void shouldNotLogTokenValue(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path installPath = tempDir.resolve("install");
+        initDb(dbFile, testClient(TEST_SLUG, installPath), validTestToken());
+
+        Logger logger = (Logger) LoggerFactory.getLogger(RunCommand.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            CapturingRunner runner = new CapturingRunner();
+            Command command = new RunCommand(() -> dbFile, runner, windows(), this::dummyCheckVersion);
+            command.run(Arguments.parse());
+
+            assertThat(appender.list)
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .anyMatch(message -> message.startsWith("Running: "))
+                .noneMatch(message -> message.contains(VALID_TOKEN));
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test
