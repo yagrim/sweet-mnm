@@ -13,6 +13,7 @@ import org.mnm.client.RepairCommand;
 import org.mnm.client.RunCommand;
 import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
+import org.mnm.gui.GuiCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,6 +31,7 @@ class CommandParserTest {
     static Stream<Arguments> supportedCommands() {
         return Stream.of(
             Arguments.of("clients", ClientsCommand.class),
+            Arguments.of("gui", GuiCommand.class),
             Arguments.of("install", InstallCommand.class),
             Arguments.of("logout", LogoutCommand.class),
             Arguments.of("repair", RepairCommand.class),

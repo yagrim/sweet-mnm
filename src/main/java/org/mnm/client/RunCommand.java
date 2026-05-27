@@ -1,7 +1,6 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -10,11 +9,6 @@ import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 
 public class RunCommand implements Command {
-
-    @FunctionalInterface
-    interface ProcessRunner {
-        String run(Path workingDirectory, String[] command, Map<String, String> environment);
-    }
 
     private final Supplier<Path> configFileLocator;
     private final BiConsumer<RunnerOptions, ConfigDb> runner;
