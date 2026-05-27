@@ -71,6 +71,21 @@ class GuiCommandTest {
     }
 
     @Test
+    void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
+        var tabs = GuiCommand.createTabbedPanel(null, true, (_, _) -> {
+        }, args -> {
+        }, slug -> {
+        });
+
+        assertThat(tabs.getTabCount()).isEqualTo(2);
+        assertThat(tabs.getTitleAt(0)).isEqualTo("Main");
+        assertThat(tabs.getTitleAt(1)).isEqualTo("Options");
+        assertThat(findButton(tabs.getComponentAt(0), "Install")).isNotNull();
+        assertThat(findCheckBox(tabs.getComponentAt(1), "Enable debug")).isNotNull();
+        assertThat(findCheckBox(tabs.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
+    }
+
+    @Test
     void shouldCreateInstallDialogWithEmailAndPasswordFields() {
         var panel = GuiCommand.createInstallDialogPanel();
 
@@ -193,6 +208,21 @@ class GuiCommandTest {
         if (component instanceof java.awt.Container container) {
             for (java.awt.Component child : container.getComponents()) {
                 javax.swing.JButton found = findButton(child, text);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static javax.swing.JCheckBox findCheckBox(java.awt.Component component, String text) {
+        if (component instanceof javax.swing.JCheckBox checkBox && text.equals(checkBox.getText())) {
+            return checkBox;
+        }
+        if (component instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                javax.swing.JCheckBox found = findCheckBox(child, text);
                 if (found != null) {
                     return found;
                 }

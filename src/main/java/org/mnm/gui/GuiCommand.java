@@ -16,6 +16,7 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 
+import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.config.Environment.API_BASE_URL;
 
 public class GuiCommand implements Command {
@@ -106,10 +107,10 @@ public class GuiCommand implements Command {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final JFrame frame = new JFrame("Sweet GUI");
-                final JPanel buttons = createButtonsPanel(frame, hasClients, installAction, runAction, repairAction);
+                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, installAction, runAction, repairAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.getContentPane().add(buttons, BorderLayout.CENTER);
+                frame.getContentPane().add(tabs, BorderLayout.CENTER);
                 frame.setResizable(false);
                 frame.pack();
                 frame.setLocationRelativeTo(null);
@@ -161,6 +162,23 @@ public class GuiCommand implements Command {
         buttons.add(Box.createVerticalStrut(8));
         buttons.add(secondRow);
         return buttons;
+    }
+
+    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients, InstallAction installAction, RunAction runAction, RepairAction repairAction) {
+        final JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("Main", createButtonsPanel(frame, hasClients, installAction, runAction, repairAction));
+        tabs.addTab("Options", createOptionsPanel());
+        return tabs;
+    }
+
+    static JPanel createOptionsPanel() {
+        final JCheckBox debugOption = new JCheckBox("Enable debug");
+        debugOption.setActionCommand("debug");
+        debugOption.addActionListener(_ -> toggleDebug(debugOption.isSelected()));
+
+        final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        panel.add(debugOption);
+        return panel;
     }
 
     private static void runRepairAction(JButton repairButton, RepairAction repairAction) {

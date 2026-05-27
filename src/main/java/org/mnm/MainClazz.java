@@ -3,15 +3,12 @@ package org.mnm;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import org.slf4j.LoggerFactory;
-
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.CommandParser;
 import org.mnm.tools.PanicException;
+
+import static org.mnm.GeneralOptions.toggleDebug;
 
 public class MainClazz {
 
@@ -32,7 +29,7 @@ public class MainClazz {
             Arguments arguments = argumentsParser.apply(args);
 
             if (arguments.getBoolean("debug")) {
-                enableDebug();
+                toggleDebug(true);
             }
 
             if (arguments.isHelp() && command.help() != null) {
@@ -54,10 +51,4 @@ public class MainClazz {
         }
     }
 
-    private static void enableDebug() {
-        final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-        final Logger myLogger = context.getLogger("org.mnm");
-        myLogger.setLevel(Level.DEBUG);
-    }
 }
