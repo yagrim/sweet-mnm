@@ -67,7 +67,7 @@ class ClientInstallerTest {
     void shouldFailWhenNoClientIsFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("missing-client.db");
 
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
 
@@ -81,7 +81,7 @@ class ClientInstallerTest {
     void shouldFailWhenNoTokenIsFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("missing-client.db");
 
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, Path.of("")));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
@@ -97,7 +97,7 @@ class ClientInstallerTest {
     void shouldFailWhenStoredTokenIsExpired(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
         final Path dbFile = tempDir.resolve("expired-token.db");
 
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath()));
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
 
@@ -119,7 +119,7 @@ class ClientInstallerTest {
 
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
 
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
@@ -156,7 +156,7 @@ class ClientInstallerTest {
 
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
 
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
@@ -202,7 +202,7 @@ class ClientInstallerTest {
         stubChunkDownload("31054dae2bb797ad");
 
         final Path dbFile = testConfigDatabase(tempDir);
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             assertThat(tempDir.resolve("mnm")).doesNotExist();
             assertThat(tempDir.resolve("downloads")).doesNotExist();
@@ -231,7 +231,7 @@ class ClientInstallerTest {
         stubAuthenticationFlow(wiremock);
 
         final Path dbFile = testConfigDatabase(tempDir);
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
@@ -254,7 +254,7 @@ class ClientInstallerTest {
         stubAuthenticationFlow(wiremock);
 
         final Path dbFile = testConfigDatabase(tempDir);
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
@@ -277,7 +277,7 @@ class ClientInstallerTest {
         stubAuthenticationFlow(wiremock);
 
         final Path dbFile = testConfigDatabase(tempDir);
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
@@ -307,7 +307,7 @@ class ClientInstallerTest {
         stubAuthenticationFlow(wiremock);
 
         final Path dbFile = testConfigDatabase(tempDir);
-        try (ConfigDb configDb = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);

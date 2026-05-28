@@ -48,6 +48,7 @@ public class ConfigDb implements AutoCloseable {
         this.connection = connection;
     }
 
+    // TODO handle multiple & concurrent openings
     public static final ConfigDb open(Path dbFile) {
         boolean dbFileExists = dbFile.toFile().exists();
         logger.debug("Opening Config DB: {}", dbFile.toAbsolutePath());
@@ -56,7 +57,7 @@ public class ConfigDb implements AutoCloseable {
         }
         try {
             var connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath());
-            return new ConfigDb(connection);
+            return new ConfigDb(connection).initialize();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -72,7 +73,7 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    public ConfigDb initialize() {
+    private ConfigDb initialize() {
         try {
             final List<String> tableNames = getTableNames(connection);
             try (Statement stmt = connection.createStatement()) {

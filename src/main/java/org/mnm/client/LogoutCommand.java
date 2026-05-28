@@ -31,8 +31,6 @@ public class LogoutCommand implements Command {
         }
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
-            configDb.initialize();
-
             int deletedTokens = configDb.deleteTokens(slug);
             logger.info("Removed {} token(s) for slug '{}'", deletedTokens, slug);
         }

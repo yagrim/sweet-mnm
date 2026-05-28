@@ -28,7 +28,6 @@ public class RepairCommand implements Command {
         options.validateRepair();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            configDb.initialize();
             installer.accept(options, configDb);
         }
 

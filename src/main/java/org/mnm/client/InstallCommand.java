@@ -28,8 +28,6 @@ public class InstallCommand implements Command {
         options.validateInstall();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            configDb.initialize();
-
             installer.accept(options, configDb);
         }
 

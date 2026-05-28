@@ -29,7 +29,7 @@ public class TokensCommand implements Command {
         final String slug = args.get("slug");
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
-            configDb.initialize();
+
             List<Token> tokens = isEmpty(slug) ? configDb.getTokens() : configDb.getTokens(slug);
 
             List<TokenMetadata> list = tokens.stream()

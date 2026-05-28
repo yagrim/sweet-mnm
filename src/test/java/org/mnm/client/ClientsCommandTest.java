@@ -53,7 +53,7 @@ class ClientsCommandTest {
     void shouldListClientsWithTokensCount(@TempDir Path tempDir, SystemOutCaptureExtension capture) {
         final Path dbFile = tempDir.resolve("config.db");
 
-        try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb config = ConfigDb.open(dbFile)) {
             Client mnm = testClient("mnm");
             Client ptr = testClient("ptr");
             config.addClient(mnm);

@@ -36,7 +36,6 @@ public class TokenCommand implements Command {
         }
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
-            configDb.initialize();
 
             final Token tokenRow = configDb.getToken(id);
             final String token = tokenRow == null ? null : tokenRow.token();

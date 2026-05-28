@@ -21,7 +21,6 @@ public class ClientsCommand implements Command {
     @Override
     public void run(Arguments args) {
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            configDb.initialize();
 
             List<ClientSummary> clients = configDb.getClients().stream()
                 .map(client -> new ClientSummary(

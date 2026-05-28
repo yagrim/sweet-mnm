@@ -25,7 +25,6 @@ class ConfigDbTest {
         final Path dbFile = testConfigDatabase(tempDir);
 
         try (ConfigDb config = ConfigDb.open(dbFile)) {
-            config.initialize();
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
@@ -36,13 +35,17 @@ class ConfigDbTest {
     }
 
     @Test
-    void shouldNotFailWhenInitializingMultipleTimes(@TempDir Path tempDir) throws SQLException {
+    void shouldNotFailWhenOpeningMultipleTimes(@TempDir Path tempDir) throws SQLException {
         final Path dbFile = testConfigDatabase(tempDir);
 
-        try (ConfigDb config = ConfigDb.open(dbFile)) {
-            config.initialize();
-            config.initialize();
-            config.initialize();
+        try (ConfigDb config1 = ConfigDb.open(dbFile)) {
+            try (ConfigDb config2 = ConfigDb.open(dbFile)) {
+                try (ConfigDb config3 = ConfigDb.open(dbFile)) {
+                    assertThat(config1.getClients()).isEmpty();
+                    assertThat(config2.getClients()).isEmpty();
+                    assertThat(config3.getClients()).isEmpty();
+                }
+            }
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
@@ -61,7 +64,7 @@ class ConfigDbTest {
 
             Client client = testClient();
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client);
             }
 
@@ -80,7 +83,7 @@ class ConfigDbTest {
             Client client2 = testClient("22");
             Client client3 = testClient("333");
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client1);
                 config.addClient(client2);
                 config.addClient(client3);
@@ -101,7 +104,7 @@ class ConfigDbTest {
             final String slug = "slugslug";
 
             Client initClient = testClient(slug);
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(initClient);
 
                 Client client = config.getClient(slug);
@@ -113,7 +116,7 @@ class ConfigDbTest {
         void shouldGetAllClients(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(testClient("slug_1"));
                 config.addClient(testClient("slug_2"));
                 config.addClient(testClient("slug_3"));
@@ -129,7 +132,7 @@ class ConfigDbTest {
         void shouldReturnNullWhenClientBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 Client client = config.getClient("slugslug");
                 assertThat(client).isNull();
             }
@@ -141,7 +144,7 @@ class ConfigDbTest {
             final String slug = "mnm";
 
             Client initClient = testClient(slug);
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(initClient);
 
                 config.updateClient(slug, "1.2.3-e42", INSTALLING, Path.of("/some/location"));
@@ -160,7 +163,7 @@ class ConfigDbTest {
             final String slug = "mnm";
 
             Client initClient = testClient(slug);
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(initClient);
 
                 config.updateClientStatus(slug, INSTALLING);
@@ -176,7 +179,7 @@ class ConfigDbTest {
         void shouldNotFailUpdatingMissingClientStatusAndNotAddNewRow(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.updateClientStatus("missing-slug", INSTALLING);
             }
 
@@ -190,7 +193,7 @@ class ConfigDbTest {
             final Path dbFile = testConfigDatabase(tempDir);
 
             Throwable t;
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 Client client = testClient("my-slug");
                 config.addClient(client);
 
@@ -219,7 +222,7 @@ class ConfigDbTest {
             Client client = testClient();
             Token token = testToken(client.slug());
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client);
                 config.addToken(token);
             }
@@ -238,7 +241,7 @@ class ConfigDbTest {
             Client client = testClient();
             Token token = testToken(client.slug());
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client);
                 config.addToken(token);
 
@@ -254,7 +257,7 @@ class ConfigDbTest {
             Client client = testClient();
             Token token = testToken(client.slug());
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client);
                 config.addToken(token);
 
@@ -272,7 +275,7 @@ class ConfigDbTest {
         void shouldNotFailUpdatingMissingTokenAndNotAddNewRow(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(testClient());
 
                 config.updateToken(1, "new-token");
@@ -291,7 +294,7 @@ class ConfigDbTest {
             Client client = testClient();
             Token token = testToken(client.slug());
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 config.addClient(client);
                 config.addToken(token);
                 config.addToken(token);
@@ -311,7 +314,7 @@ class ConfigDbTest {
         void shouldDeleteTokensBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 Stream.of("mnm-1", "mnm-2")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
@@ -334,7 +337,7 @@ class ConfigDbTest {
         void shouldGetAllTokensBySlug(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
@@ -367,7 +370,7 @@ class ConfigDbTest {
         void shouldGetAllTokens(@TempDir Path tempDir) {
             final Path dbFile = testConfigDatabase(tempDir);
 
-            try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
                 Stream.of("mnm-1", "mnm-2", "mnm-3")
                     .forEach(slug -> config.addClient(testClient(slug)));
 
