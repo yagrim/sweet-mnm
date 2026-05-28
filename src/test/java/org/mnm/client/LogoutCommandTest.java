@@ -65,7 +65,7 @@ class LogoutCommandTest {
             """);
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
-            testDatabase.assertThatTable("token")
+            testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(3, "mnm-2", "token-3"))
                 .hasRows(1);
         }
@@ -84,7 +84,7 @@ class LogoutCommandTest {
             """);
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
-            testDatabase.assertThatTable("token").hasRows(3);
+            testDatabase.assertThatTable("tokens").hasRows(3);
         }
     }
 

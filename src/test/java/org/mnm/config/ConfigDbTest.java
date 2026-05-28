@@ -19,6 +19,8 @@ import static org.mnm.config.ConfigDbTest.Clients.testConfigDatabase;
 
 class ConfigDbTest {
 
+    private static final String CLIENTS_TABLE_NAME = "clients";
+    private static final String TOKENS_TABLE_NAME = "tokens";
 
     @Test
     void shouldInitialize(@TempDir Path tempDir) throws SQLException {
@@ -28,9 +30,9 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "token");
-            testDatabase.assertThatTable("clients").isEmpty();
-            testDatabase.assertThatTable("token").isEmpty();
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME);
+            testDatabase.assertThatTable(CLIENTS_TABLE_NAME).isEmpty();
+            testDatabase.assertThatTable(TOKENS_TABLE_NAME).isEmpty();
         }
     }
 
@@ -49,9 +51,9 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder("clients", "token");
-            testDatabase.assertThatTable("clients").isEmpty();
-            testDatabase.assertThatTable("token").isEmpty();
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME);
+            testDatabase.assertThatTable(CLIENTS_TABLE_NAME).isEmpty();
+            testDatabase.assertThatTable(TOKENS_TABLE_NAME).isEmpty();
         }
     }
 
@@ -69,7 +71,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("clients")
+                testDatabase.assertThatTable(CLIENTS_TABLE_NAME)
                     .containsClient(testClient("mnm"))
                     .hasRows(1);
             }
@@ -90,7 +92,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("clients")
+                testDatabase.assertThatTable(CLIENTS_TABLE_NAME)
                     .containsClient(client1)
                     .containsClient(client2)
                     .containsClient(client3)
@@ -170,7 +172,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("clients")
+                testDatabase.assertThatTable(CLIENTS_TABLE_NAME)
                     .containsClient(new Client(slug, initClient.version(), INSTALLING, initClient.path()));
             }
         }
@@ -184,7 +186,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("clients").hasRows(0);
+                testDatabase.assertThatTable(CLIENTS_TABLE_NAME).hasRows(0);
             }
         }
 
@@ -228,7 +230,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("token")
+                testDatabase.assertThatTable(TOKENS_TABLE_NAME)
                     .containsToken(new Token(1, token.slug(), token.token()))
                     .hasRows(1);
             }
@@ -265,7 +267,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("token")
+                testDatabase.assertThatTable(TOKENS_TABLE_NAME)
                     .containsToken(new Token(1, token.slug(), "new-token"))
                     .hasRows(1);
             }
@@ -282,7 +284,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("token")
+                testDatabase.assertThatTable(TOKENS_TABLE_NAME)
                     .hasRows(0);
             }
         }
@@ -302,7 +304,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("token")
+                testDatabase.assertThatTable(TOKENS_TABLE_NAME)
                     .containsToken(new Token(1, token.slug(), token.token()))
                     .containsToken(new Token(2, token.slug(), token.token()))
                     .containsToken(new Token(3, token.slug(), token.token()))
@@ -328,7 +330,7 @@ class ConfigDbTest {
             }
 
             try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-                testDatabase.assertThatTable("token")
+                testDatabase.assertThatTable(TOKENS_TABLE_NAME)
                     .hasRows(1);
             }
         }
