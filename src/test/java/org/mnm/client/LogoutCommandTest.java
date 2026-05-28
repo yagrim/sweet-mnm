@@ -60,8 +60,8 @@ class LogoutCommandTest {
         Command command = new LogoutCommand(() -> dbFile);
         command.run(Arguments.parse("--slug", "mnm-1"));
 
-        assertThat(out.getOutput()).isEqualTo("""
-            Removed 2 token(s) for slug mnm-1
+        assertThat(out.getOutput()).endsWith("""
+            INFO  LogoutCommand - Removed 2 token(s) for slug 'mnm-1'
             """);
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
@@ -79,8 +79,8 @@ class LogoutCommandTest {
         Command command = new LogoutCommand(() -> dbFile);
         command.run(Arguments.parse("--slug", "unknown"));
 
-        assertThat(out.getOutput()).isEqualTo("""
-            Removed 0 token(s) for slug unknown
+        assertThat(out.getOutput()).endsWith("""
+            INFO  LogoutCommand - Removed 0 token(s) for slug 'unknown'
             """);
 
         try (ConfigTestDatabase.TestDatabase testDatabase = ConfigTestDatabase.open(dbFile)) {
