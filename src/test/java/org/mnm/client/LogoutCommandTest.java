@@ -98,7 +98,7 @@ class LogoutCommandTest {
     }
 
     private static void initTokens(Path dbFile) {
-        try (ConfigDb config = ConfigDb.open(dbFile).initialize()) {
+        try (ConfigDb config = ConfigDb.open(dbFile)) {
             Client client1 = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
             config.addClient(client1);

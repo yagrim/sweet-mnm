@@ -31,8 +31,6 @@ public class RunCommand implements Command {
     @Override
     public void run(Arguments args) {
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            configDb.initialize();
-
             runner.accept(RunnerOptions.parse(args), configDb);
         }
     }
