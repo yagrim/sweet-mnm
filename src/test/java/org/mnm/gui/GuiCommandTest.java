@@ -2,18 +2,18 @@ package org.mnm.gui;
 
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.client.InstallerOptions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +34,6 @@ class GuiCommandTest {
     void shouldPassTrueWhenAClientExists(@TempDir Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.initialize();
             configDb.addClient(new Client("sample", "1.0.0", Client.Status.COMPLETED, tempDir));
         }
 
@@ -72,10 +71,12 @@ class GuiCommandTest {
 
     @Test
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
-        var tabs = GuiCommand.createTabbedPanel(null, true, (_, _) -> {
-        }, args -> {
-        }, slug -> {
-        });
+        var tabs = GuiCommand.createTabbedPanel(null, true,
+            (_, _) -> {
+            }, args -> {
+            }, slug -> {
+            }, _ -> {
+            });
 
         assertThat(tabs.getTabCount()).isEqualTo(2);
         assertThat(tabs.getTitleAt(0)).isEqualTo("Main");
@@ -123,15 +124,16 @@ class GuiCommandTest {
         CountDownLatch release = new CountDownLatch(1);
         var installButton = new javax.swing.JButton("Install");
 
-        GuiCommand.runInstallAction(installButton, (username, password) -> {
-            started.countDown();
-            try {
-                release.await(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        }, "alice@example.com", "secret");
+        GuiCommand.runInstallAction(installButton,
+            (username, password) -> {
+                started.countDown();
+                try {
+                    release.await(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }, "alice@example.com", "secret");
 
         assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
         assertThat(installButton.isEnabled()).isFalse();
@@ -145,8 +147,11 @@ class GuiCommandTest {
     @Test
     void shouldInvokeRepairActionWithMnmSlugWhenRepairIsClicked() {
         AtomicReference<String> repairedSlug = new AtomicReference<>();
-        var panel = GuiCommand.createButtonsPanel(null, true, (_, _) -> {
-        }, repairedSlug::set);
+        var panel = GuiCommand.createButtonsPanel(null, true,
+            (_, _) -> {
+            }, repairedSlug::set, _ -> {
+            }, _ -> {
+            });
 
         findButton(panel, "Repair").doClick();
 
@@ -157,16 +162,19 @@ class GuiCommandTest {
     void shouldDisableRepairButtonWhileRepairActionRuns() throws Exception {
         CountDownLatch started = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        var panel = GuiCommand.createButtonsPanel(null, true, (_, _) -> {
-        }, slug -> {
-            started.countDown();
-            try {
-                release.await(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        });
+        var panel = GuiCommand.createButtonsPanel(null, true,
+            (_, _) -> {
+            }, slug -> {
+                started.countDown();
+                try {
+                    release.await(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }, _ -> {
+            }, _ -> {
+            });
         var repairButton = findButton(panel, "Repair");
 
         repairButton.doClick();
@@ -183,9 +191,11 @@ class GuiCommandTest {
     @Test
     void shouldInvokeRunActionWithMnmSlugWhenPlayIsClicked() {
         AtomicReference<String> playedSlug = new AtomicReference<>();
-        var panel = GuiCommand.createButtonsPanel(null, true, (_, _) -> {
-        }, args -> playedSlug.set(args.get("slug")), slug -> {
-        });
+        var panel = GuiCommand.createButtonsPanel(null, true,
+            (_, _) -> {
+            }, _ -> {
+            }, _ -> {
+            }, args -> playedSlug.set(args.get("slug")));
 
         findButton(panel, "Play").doClick();
 

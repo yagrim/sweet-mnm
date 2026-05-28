@@ -21,6 +21,8 @@ import static org.mnm.config.Environment.API_BASE_URL;
 
 public class GuiCommand implements Command {
 
+    private static final String DEFAULT_SLUG = "mnm";
+
     @FunctionalInterface
     interface GuiStarter {
         void start(boolean hasClients);
@@ -32,20 +34,27 @@ public class GuiCommand implements Command {
     }
 
     @FunctionalInterface
-    interface RunAction {
-        void run(Arguments args);
-    }
-
-    @FunctionalInterface
     interface RepairAction {
         void repair(String slug);
     }
 
+    @FunctionalInterface
+    interface LogoutAction {
+        void logout(String slug);
+    }
+
+    @FunctionalInterface
+    interface RunAction {
+        void run(Arguments args);
+    }
+
     private final Supplier<Path> configDbLocator;
     private final GuiStarter guiStarter;
+
     private final InstallAction installAction;
     private final RunAction runAction;
     private final RepairAction repairAction;
+    private final LogoutAction logoutAction;
 
     public GuiCommand() {
         this(new ConfigDbLocator());
@@ -56,6 +65,7 @@ public class GuiCommand implements Command {
         this.installAction = (username, password) -> installClient(configDbLocator, username, password);
         this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.logoutAction = slug -> repairClient(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
     }
 
@@ -65,6 +75,7 @@ public class GuiCommand implements Command {
         this.installAction = (username, password) -> installClient(configDbLocator, username, password);
         this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.logoutAction = slug -> repairClient(configDbLocator, slug);
     }
 
     @Override
@@ -98,7 +109,6 @@ public class GuiCommand implements Command {
 
     private boolean hasAvailableClient() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            configDb.initialize();
             return !configDb.getClients().isEmpty();
         }
     }
@@ -107,7 +117,7 @@ public class GuiCommand implements Command {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final JFrame frame = new JFrame("Sweet GUI");
-                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, installAction, runAction, repairAction);
+                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, installAction, repairAction, logoutAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs, BorderLayout.CENTER);
@@ -126,24 +136,32 @@ public class GuiCommand implements Command {
 
     static JPanel createButtonsPanel(JFrame frame, boolean hasClients) {
         return createButtonsPanel(frame, hasClients, (username, password) -> {
-        }, args -> {
-        }, slug -> {
+        }, _ -> {
+        }, _ -> {
         });
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, InstallAction installAction, RepairAction repairAction) {
-        return createButtonsPanel(frame, hasClients, installAction, args -> {
-        }, repairAction);
+    static JPanel createButtonsPanel(JFrame frame, boolean hasClients,
+                                     InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction) {
+        return createButtonsPanel(frame, hasClients, installAction, repairAction, logoutAction, args -> {
+        });
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, InstallAction installAction, RunAction runAction, RepairAction repairAction) {
+    static JPanel createButtonsPanel(JFrame frame, boolean hasClients,
+                                     InstallAction installAction,
+                                     RepairAction repairAction,
+                                     LogoutAction logoutAction,
+                                     RunAction runAction
+    ) {
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
         final JButton playButton = new JButton("Play");
+        final JButton logoutButton = new JButton("Logout");
 
         installButton.addActionListener(_ -> showInstallDialog(frame, installButton, installAction));
         repairButton.addActionListener(_ -> runRepairAction(repairButton, repairAction));
-        playButton.addActionListener(_ -> runAction.run(Arguments.parse("--slug", "mnm")));
+        playButton.addActionListener(_ -> runAction.run(Arguments.parse("--slug", DEFAULT_SLUG)));
+        playButton.addActionListener(_ -> logoutAction(logoutButton, logoutAction));
 
         installButton.setEnabled(!hasClients);
         repairButton.setEnabled(hasClients);
@@ -152,6 +170,7 @@ public class GuiCommand implements Command {
         final JPanel firstRow = new JPanel(new GridLayout(1, 2, 8, 0));
         firstRow.add(installButton);
         firstRow.add(repairButton);
+        firstRow.add(logoutButton);
 
         final JPanel secondRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         secondRow.add(playButton);
@@ -164,9 +183,11 @@ public class GuiCommand implements Command {
         return buttons;
     }
 
-    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients, InstallAction installAction, RunAction runAction, RepairAction repairAction) {
+    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients,
+                                         InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction, RunAction runAction) {
+
         final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Main", createButtonsPanel(frame, hasClients, installAction, runAction, repairAction));
+        tabs.addTab("Main", createButtonsPanel(frame, hasClients, installAction, repairAction, logoutAction, runAction));
         tabs.addTab("Options", createOptionsPanel());
         return tabs;
     }
@@ -181,13 +202,6 @@ public class GuiCommand implements Command {
         return panel;
     }
 
-    private static void runRepairAction(JButton repairButton, RepairAction repairAction) {
-        repairButton.setEnabled(false);
-        CompletableFuture
-            .runAsync(() -> repairAction.repair("mnm"))
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> repairButton.setEnabled(true)));
-    }
-
     static JPanel createInstallDialogPanel() {
         final JTextField emailField = new JTextField(20);
         final JPasswordField passwordField = new JPasswordField(20);
@@ -198,6 +212,17 @@ public class GuiCommand implements Command {
         panel.add(new JLabel("Password"));
         panel.add(passwordField);
         return panel;
+    }
+
+    private static void runRepairAction(JButton button, RepairAction repairAction) {
+        button.setEnabled(false);
+        CompletableFuture
+            .runAsync(() -> repairAction.repair(DEFAULT_SLUG))
+            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> button.setEnabled(true)));
+    }
+
+    private static void logoutAction(JButton button, LogoutAction logoutAction) {
+        logoutAction.logout(DEFAULT_SLUG);
     }
 
     private static void showInstallDialog(JFrame owner, JButton installButton, InstallAction installAction) {
@@ -227,7 +252,7 @@ public class GuiCommand implements Command {
     }
 
     private static void installClient(Supplier<Path> configDbLocator, String username, String password) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get()).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             InstallerOptions options = InstallerOptions.forInstall(username, password);
             new ClientInstaller(configDb)
@@ -238,13 +263,19 @@ public class GuiCommand implements Command {
     }
 
     private static void repairClient(Supplier<Path> configDbLocator, String slug) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get()).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             InstallerOptions options = InstallerOptions.forRepair(slug);
             new ClientInstaller(configDb)
                 .install(options, Path.of(System.getProperty("user.dir")), API_BASE_URL);
 
             showMessageDialogSync("Repair completed !!");
+        }
+    }
+
+    private static void logout(Supplier<Path> configDbLocator, String slug) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+            configDb.deleteTokens(slug);
         }
     }
 
@@ -260,7 +291,7 @@ public class GuiCommand implements Command {
     }
 
     private static void runClient(Supplier<Path> configDbLocator, Arguments args) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get()).initialize()) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             new ClientRunner(configDb)
                 .run(RunnerOptions.parse(args));
