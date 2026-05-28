@@ -3,6 +3,9 @@ package org.mnm.client;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
@@ -11,6 +14,8 @@ import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 public class LogoutCommand implements Command {
+
+    private static final Logger logger = LoggerFactory.getLogger(LogoutCommand.class);
 
     private final Supplier<Path> databaseFileLocator;
 
@@ -29,7 +34,7 @@ public class LogoutCommand implements Command {
             configDb.initialize();
 
             int deletedTokens = configDb.deleteTokens(slug);
-            System.out.printf("Removed %d token(s) for slug %s%n", deletedTokens, slug);
+            logger.info("Removed {} token(s) for slug '{}'", deletedTokens, slug);
         }
     }
 
