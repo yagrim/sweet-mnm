@@ -15,6 +15,7 @@ import org.mnm.client.InstallerOptions;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.tools.PanicException;
 
 import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.config.Environment.API_BASE_URL;
@@ -25,7 +26,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(boolean hasClients);
+        void start(boolean hasClient, boolean hasToken);
     }
 
     @FunctionalInterface
@@ -65,7 +66,7 @@ public class GuiCommand implements Command {
         this.installAction = (username, password) -> installClient(configDbLocator, username, password);
         this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
-        this.logoutAction = slug -> repairClient(configDbLocator, slug);
+        this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
     }
 
@@ -75,12 +76,12 @@ public class GuiCommand implements Command {
         this.installAction = (username, password) -> installClient(configDbLocator, username, password);
         this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
-        this.logoutAction = slug -> repairClient(configDbLocator, slug);
+        this.logoutAction = slug -> logout(configDbLocator, slug);
     }
 
     @Override
     public void run(Arguments args) {
-        guiStarter.start(hasAvailableClient());
+        guiStarter.start(hasAvailableClient(), hasAvailableToken());
     }
 
     @Override
@@ -109,15 +110,21 @@ public class GuiCommand implements Command {
 
     private boolean hasAvailableClient() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            return !configDb.getClients().isEmpty();
+            return configDb.getClient(DEFAULT_SLUG) != null;
         }
     }
 
-    private void startSwingInterface(boolean hasClients) {
+    private boolean hasAvailableToken() {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+            return !configDb.getTokens(DEFAULT_SLUG).isEmpty();
+        }
+    }
+
+    private void startSwingInterface(boolean hasClients, boolean hasToken) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final JFrame frame = new JFrame("Sweet GUI");
-                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, installAction, repairAction, logoutAction, runAction);
+                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs, BorderLayout.CENTER);
@@ -134,38 +141,47 @@ public class GuiCommand implements Command {
         }
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients) {
-        return createButtonsPanel(frame, hasClients, (username, password) -> {
+    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, boolean hasToken) {
+        return createButtonsPanel(frame, hasClients, hasToken, (username, password) -> {
         }, _ -> {
         }, _ -> {
         });
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients,
+    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, boolean hasToken,
                                      InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction) {
-        return createButtonsPanel(frame, hasClients, installAction, repairAction, logoutAction, args -> {
+        return createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, args -> {
         });
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients,
+    static JPanel createButtonsPanel(JFrame frame, boolean hasClient, boolean hasToken,
                                      InstallAction installAction,
                                      RepairAction repairAction,
                                      LogoutAction logoutAction,
                                      RunAction runAction
     ) {
+        // TODO XXX create ButtonHandler to be passed down so we
+        //   can easily enable disable the needed ones from every action
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
         final JButton playButton = new JButton("Play");
         final JButton logoutButton = new JButton("Logout");
 
+        float fontSize = 20f;
+        setSize(installButton, fontSize);
+        setSize(repairButton, fontSize);
+        setSize(playButton, fontSize);
+        setSize(logoutButton, fontSize);
+
         installButton.addActionListener(_ -> showInstallDialog(frame, installButton, installAction));
         repairButton.addActionListener(_ -> runRepairAction(repairButton, repairAction));
-        playButton.addActionListener(_ -> runAction.run(Arguments.parse("--slug", DEFAULT_SLUG)));
-        playButton.addActionListener(_ -> logoutAction(logoutButton, logoutAction));
+        logoutButton.addActionListener(_ -> logoutAction(logoutButton, logoutAction));
+        playButton.addActionListener(_ -> runAction(runAction));
 
-        installButton.setEnabled(!hasClients);
-        repairButton.setEnabled(hasClients);
-        playButton.setEnabled(hasClients);
+        installButton.setEnabled(!hasClient || !hasToken);
+        repairButton.setEnabled(hasClient && hasToken);
+        logoutButton.setEnabled(hasToken);
+        playButton.setEnabled(hasClient && hasToken);
 
         final JPanel firstRow = new JPanel(new GridLayout(1, 2, 8, 0));
         firstRow.add(installButton);
@@ -180,15 +196,21 @@ public class GuiCommand implements Command {
         buttons.add(firstRow);
         buttons.add(Box.createVerticalStrut(8));
         buttons.add(secondRow);
+        buttons.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         return buttons;
     }
 
-    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients,
+    private static void setSize(JComponent component, float size) {
+        component.setFont(component.getFont().deriveFont(size));
+    }
+
+    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients, boolean hasToken,
                                          InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction, RunAction runAction) {
 
         final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Main", createButtonsPanel(frame, hasClients, installAction, repairAction, logoutAction, runAction));
+        tabs.addTab("Clientma", createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction));
         tabs.addTab("Options", createOptionsPanel());
+        setSize(tabs, 15f);
         return tabs;
     }
 
@@ -214,15 +236,53 @@ public class GuiCommand implements Command {
         return panel;
     }
 
-    private static void runRepairAction(JButton button, RepairAction repairAction) {
-        button.setEnabled(false);
+    static void runInstallAction(JButton installButton, InstallAction installAction, String username, String password) {
+        installButton.setEnabled(false);
         CompletableFuture
-            .runAsync(() -> repairAction.repair(DEFAULT_SLUG))
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> button.setEnabled(true)));
+            .runAsync(() -> {
+                try {
+                    installAction.install(username, password);
+                } catch (PanicException e) {
+                    System.out.println(e.getMessage());
+                    showMessageDialogSync("Error: " + e.getMessage());
+                }
+            })
+            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+                installButton.setEnabled(true);
+            }));
     }
 
-    private static void logoutAction(JButton button, LogoutAction logoutAction) {
-        logoutAction.logout(DEFAULT_SLUG);
+    private static void runRepairAction(JButton repair, RepairAction repairAction) {
+        repair.setEnabled(false);
+        CompletableFuture
+            .runAsync(() -> {
+                try {
+                    repairAction.repair(DEFAULT_SLUG);
+                } catch (PanicException e) {
+                    System.out.println(e.getMessage());
+                    showMessageDialogSync("Error: " + e.getMessage());
+                }
+            })
+            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+                repair.setEnabled(true);
+            }));
+    }
+
+    private static void logoutAction(JButton logoutButton, LogoutAction logoutAction) {
+        try {
+            logoutAction.logout(DEFAULT_SLUG);
+        } catch (PanicException e) {
+            showMessageDialogSync("Error: " + e.getMessage());
+        }
+    }
+
+    private static void runAction(RunAction runAction) {
+        // TODO XXX unify exception capture
+        try {
+            runAction.run(Arguments.parse("--slug", DEFAULT_SLUG));
+        } catch (PanicException e) {
+            showMessageDialogSync("Error: " + e.getMessage());
+        }
     }
 
     private static void showInstallDialog(JFrame owner, JButton installButton, InstallAction installAction) {
@@ -242,13 +302,6 @@ public class GuiCommand implements Command {
             final String password = new String(passwordField.getPassword());
             runInstallAction(installButton, installAction, username, password);
         }
-    }
-
-    static void runInstallAction(JButton installButton, InstallAction installAction, String username, String password) {
-        installButton.setEnabled(false);
-        CompletableFuture
-            .runAsync(() -> installAction.install(username, password))
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> installButton.setEnabled(true)));
     }
 
     private static void installClient(Supplier<Path> configDbLocator, String username, String password) {
@@ -279,6 +332,14 @@ public class GuiCommand implements Command {
         }
     }
 
+    private static void runClient(Supplier<Path> configDbLocator, Arguments args) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+
+            new ClientRunner(configDb)
+                .run(RunnerOptions.parse(args));
+        }
+    }
+
     private static void showMessageDialogSync(String message) {
         try {
             SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(null, message));
@@ -287,14 +348,6 @@ public class GuiCommand implements Command {
             throw new IllegalStateException("Interrupted while showing dialog", e);
         } catch (InvocationTargetException e) {
             throw new IllegalStateException("Failed to show dialog", e.getCause());
-        }
-    }
-
-    private static void runClient(Supplier<Path> configDbLocator, Arguments args) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-
-            new ClientRunner(configDb)
-                .run(RunnerOptions.parse(args));
         }
     }
 
