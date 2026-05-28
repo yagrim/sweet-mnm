@@ -139,7 +139,7 @@ class ClientInstallerTest {
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
-            testDatabase.assertThatTable("token")
+            testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))
                 .containsToken(new Token(2, TEST_SLUG, refreshToken))
                 .containsToken(new Token(3, TEST_SLUG, VALID_TOKEN))
@@ -176,7 +176,7 @@ class ClientInstallerTest {
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
-            testDatabase.assertThatTable("token")
+            testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, refreshToken))
                 .containsToken(new Token(2, TEST_SLUG, VALID_TOKEN))
                 .containsToken(new Token(3, TEST_SLUG, VALID_TOKEN))
@@ -335,12 +335,12 @@ class ClientInstallerTest {
     private static void assertDatabaseContainsClientAndToken(Path dbFile, Path tempDir) throws SQLException {
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "token");
+                .containsExactlyInAnyOrder("clients", "tokens");
 
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
                 .hasRows(1);
-            testDatabase.assertThatTable("token")
+            testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))
                 .hasRows(1);
         }

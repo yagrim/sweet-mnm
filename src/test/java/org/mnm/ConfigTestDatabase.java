@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
+
 import org.mnm.config.Client;
 import org.mnm.config.Token;
 
@@ -94,7 +95,7 @@ public class ConfigTestDatabase {
             }
 
             public TableAsserter containsToken(Token expected) {
-                try (PreparedStatement st = connection.prepareStatement("select * from %s where id = ? and slug = ? and token = ?;".formatted(tableName));) {
+                try (PreparedStatement st = connection.prepareStatement("select * from %s where id = ? and slug = ? and token = ?;".formatted(tableName))) {
                     st.setInt(1, expected.id());
                     st.setString(2, expected.slug());
                     st.setString(3, expected.token());

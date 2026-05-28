@@ -34,7 +34,7 @@ public class ConfigDb implements AutoCloseable {
         """;
 
     private static String TOKENS = """
-        CREATE TABLE token (
+        CREATE TABLE tokens (
             id INTEGER PRIMARY KEY,
             slug text NOT NULL,
             token text,
@@ -82,7 +82,7 @@ public class ConfigDb implements AutoCloseable {
             if (!tableNames.contains("clients")) {
                 createTableSchema(connection, CLIENTS);
             }
-            if (!tableNames.contains("token")) {
+            if (!tableNames.contains("tokens")) {
                 createTableSchema(connection, TOKENS);
             }
             return this;
@@ -123,7 +123,7 @@ public class ConfigDb implements AutoCloseable {
         }
     }
 
-    private static final String INSERT_TOKEN_QUERY = "INSERT INTO token (slug, token) VALUES (?, ?)";
+    private static final String INSERT_TOKEN_QUERY = "INSERT INTO tokens (slug, token) VALUES (?, ?)";
 
     public int addToken(Token token) {
         try (PreparedStatement ps = connection.prepareStatement(INSERT_TOKEN_QUERY)) {
@@ -164,15 +164,15 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public List<Token> getTokens(String slug) {
-        return select("token", "slug = '%s'".formatted(slug), Mappers::mapToken);
+        return select("tokens", "slug = '%s'".formatted(slug), Mappers::mapToken);
     }
 
     public List<Token> getTokens() {
-        return select("token", null, Mappers::mapToken);
+        return select("tokens", null, Mappers::mapToken);
     }
 
     public Token getToken(int id) {
-        try (PreparedStatement ps = connection.prepareStatement("select * from token where id = ? order by id")) {
+        try (PreparedStatement ps = connection.prepareStatement("select * from tokens where id = ? order by id")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -224,7 +224,7 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public void updateToken(Integer id, String token) {
-        try (PreparedStatement ps = connection.prepareStatement("update token set token = ? where id = ?")) {
+        try (PreparedStatement ps = connection.prepareStatement("update tokens set token = ? where id = ?")) {
             ps.setString(1, token);
             ps.setInt(2, id);
             ps.execute();
@@ -234,7 +234,7 @@ public class ConfigDb implements AutoCloseable {
     }
 
     public int deleteTokens(String slug) {
-        try (PreparedStatement ps = connection.prepareStatement("delete from token where slug = ?")) {
+        try (PreparedStatement ps = connection.prepareStatement("delete from tokens where slug = ?")) {
             ps.setString(1, slug);
             return ps.executeUpdate();
         } catch (SQLException e) {
