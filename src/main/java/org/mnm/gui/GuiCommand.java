@@ -19,6 +19,7 @@ import org.mnm.tools.PanicException;
 
 import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.gui.GuiComponents.setFontSize;
 
 public class GuiCommand implements Command {
 
@@ -160,28 +161,20 @@ public class GuiCommand implements Command {
                                      LogoutAction logoutAction,
                                      RunAction runAction
     ) {
-        // TODO XXX create ButtonHandler to be passed down so we
-        //   can easily enable disable the needed ones from every action
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
         final JButton playButton = new JButton("Play");
         final JButton logoutButton = new JButton("Logout");
 
-        float fontSize = 20f;
-        setSize(installButton, fontSize);
-        setSize(repairButton, fontSize);
-        setSize(playButton, fontSize);
-        setSize(logoutButton, fontSize);
+        final ClientButtonsHandler buttonsHandler = new ClientButtonsHandler(installButton, repairButton, playButton, logoutButton);
+        buttonsHandler.setHasClient(hasClient);
+        buttonsHandler.setHasToken(hasToken);
+        buttonsHandler.refresh();
 
-        installButton.addActionListener(_ -> showInstallDialog(frame, installButton, installAction));
-        repairButton.addActionListener(_ -> runRepairAction(repairButton, repairAction));
-        logoutButton.addActionListener(_ -> logoutAction(logoutButton, logoutAction));
+        installButton.addActionListener(_ -> showInstallDialog(frame, buttonsHandler, installAction));
+        repairButton.addActionListener(_ -> runRepairAction(buttonsHandler, repairAction));
+        logoutButton.addActionListener(_ -> logoutAction(buttonsHandler, logoutAction));
         playButton.addActionListener(_ -> runAction(runAction));
-
-        installButton.setEnabled(!hasClient || !hasToken);
-        repairButton.setEnabled(hasClient && hasToken);
-        logoutButton.setEnabled(hasToken);
-        playButton.setEnabled(hasClient && hasToken);
 
         final JPanel firstRow = new JPanel(new GridLayout(1, 2, 8, 0));
         firstRow.add(installButton);
@@ -200,17 +193,13 @@ public class GuiCommand implements Command {
         return buttons;
     }
 
-    private static void setSize(JComponent component, float size) {
-        component.setFont(component.getFont().deriveFont(size));
-    }
-
     static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients, boolean hasToken,
                                          InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction, RunAction runAction) {
 
         final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Clientma", createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction));
+        tabs.addTab("Client", createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction));
         tabs.addTab("Options", createOptionsPanel());
-        setSize(tabs, 15f);
+        setFontSize(tabs, 15f);
         return tabs;
     }
 
@@ -224,20 +213,8 @@ public class GuiCommand implements Command {
         return panel;
     }
 
-    static JPanel createInstallDialogPanel() {
-        final JTextField emailField = new JTextField(20);
-        final JPasswordField passwordField = new JPasswordField(20);
-
-        final JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
-        panel.add(new JLabel("Email"));
-        panel.add(emailField);
-        panel.add(new JLabel("Password"));
-        panel.add(passwordField);
-        return panel;
-    }
-
-    static void runInstallAction(JButton installButton, InstallAction installAction, String username, String password) {
-        installButton.setEnabled(false);
+    static void runInstallAction(ClientButtonsHandler buttons, InstallAction installAction, String username, String password) {
+        buttons.repairStart();
         CompletableFuture
             .runAsync(() -> {
                 try {
@@ -248,12 +225,12 @@ public class GuiCommand implements Command {
                 }
             })
             .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
-                installButton.setEnabled(true);
+                buttons.repairDone();
             }));
     }
 
-    private static void runRepairAction(JButton repair, RepairAction repairAction) {
-        repair.setEnabled(false);
+    private static void runRepairAction(ClientButtonsHandler buttons, RepairAction repairAction) {
+        buttons.installationStart();
         CompletableFuture
             .runAsync(() -> {
                 try {
@@ -264,11 +241,11 @@ public class GuiCommand implements Command {
                 }
             })
             .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
-                repair.setEnabled(true);
+                buttons.installationDone();
             }));
     }
 
-    private static void logoutAction(JButton logoutButton, LogoutAction logoutAction) {
+    private static void logoutAction(ClientButtonsHandler buttons, LogoutAction logoutAction) {
         try {
             logoutAction.logout(DEFAULT_SLUG);
         } catch (PanicException e) {
@@ -285,23 +262,21 @@ public class GuiCommand implements Command {
         }
     }
 
-    private static void showInstallDialog(JFrame owner, JButton installButton, InstallAction installAction) {
-        final JPanel panel = createInstallDialogPanel();
-        final int result = JOptionPane.showConfirmDialog(
-            owner,
-            panel,
-            "Install client",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.PLAIN_MESSAGE
-        );
+    private static void showInstallDialog(JFrame owner, ClientButtonsHandler buttons, InstallAction installAction) {
+        final CredentialsPanel credentialsPanel = new CredentialsPanel();
+//        final int result = JOptionPane.showConfirmDialog(
+//            owner,
+//            panel,
+//            "Install client",
+//            JOptionPane.OK_CANCEL_OPTION,
+//            JOptionPane.PLAIN_MESSAGE
+//        );
 
-        if (result == JOptionPane.OK_OPTION) {
-            final JTextField emailField = findTextField(panel);
-            final JPasswordField passwordField = findPasswordField(panel);
-            final String username = emailField.getText();
-            final String password = new String(passwordField.getPassword());
-            runInstallAction(installButton, installAction, username, password);
-        }
+//        if (result == JOptionPane.OK_OPTION) {
+        final String username = credentialsPanel.getUsername();
+        final String password = credentialsPanel.getPassword();
+        runInstallAction(buttons, installAction, username, password);
+//        }
     }
 
     private static void installClient(Supplier<Path> configDbLocator, String username, String password) {
@@ -351,33 +326,4 @@ public class GuiCommand implements Command {
         }
     }
 
-    static JTextField findTextField(JComponent component) {
-        if (component instanceof JTextField field && !(field instanceof JPasswordField)) {
-            return field;
-        }
-        for (var child : component.getComponents()) {
-            if (child instanceof JComponent childComponent) {
-                JTextField found = findTextField(childComponent);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    static JPasswordField findPasswordField(JComponent component) {
-        if (component instanceof JPasswordField field) {
-            return field;
-        }
-        for (var child : component.getComponents()) {
-            if (child instanceof JComponent childComponent) {
-                JPasswordField found = findPasswordField(childComponent);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
 }
