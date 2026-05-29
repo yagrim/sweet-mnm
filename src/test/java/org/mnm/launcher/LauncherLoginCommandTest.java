@@ -24,11 +24,11 @@ import static org.mnm.LauncherTestDatabase.withSettings;
 
 @ExtendWith(SystemOutCaptureExtension.class)
 @WireMockTest(httpsEnabled = true)
-class LoginCommandTest extends LinuxOnlyCommand {
+class LauncherLoginCommandTest extends LinuxOnlyCommand {
 
     @Test
     void shouldReturnHelp() {
-        final Command command = new LoginCommand(null);
+        final Command command = new LauncherLoginCommand(null);
 
         assertThat(command.help()).isEqualTo("""
             Login with your username and password (updates launcher database)
@@ -53,7 +53,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
         stubAccountLogin(uuid);
 
         final TestDatabase testDb = withSettings(tempDir);
-        final Command command = new LoginCommand(() -> testDb.path());
+        final Command command = new LauncherLoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
@@ -80,7 +80,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
         stubAccountLogin(uuid);
 
         final TestDatabase testDb = withSettings(tempDir);
-        final Command command = new LoginCommand(() -> testDb.path());
+        final Command command = new LauncherLoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
@@ -103,7 +103,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
     @Test
     void shouldPanicWhenUsernameIsNotSet(@TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
-        final Command command = new LoginCommand(() -> testDb.path());
+        final Command command = new LauncherLoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
@@ -120,7 +120,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
     @Test
     void shouldPanicWhenPasswordIsNotSet(@TempDir Path tempDir) {
         final TestDatabase testDb = withSettings(tempDir);
-        final Command command = new LoginCommand(() -> testDb.path());
+        final Command command = new LauncherLoginCommand(() -> testDb.path());
 
         testDb.assertThatToken().isEqualTo(INITIAL_TOKEN);
 
@@ -136,7 +136,7 @@ class LoginCommandTest extends LinuxOnlyCommand {
 
     @Override
     protected Command buildCommand() {
-        return new LoginCommand(null);
+        return new LauncherLoginCommand(null);
     }
 
 }

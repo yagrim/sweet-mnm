@@ -89,7 +89,7 @@ class RepairCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
         final AtomicBoolean installerCalled = new AtomicBoolean(false);
 
-        Command command = new RepairCommand(() -> dbFile, (_, _) -> installerCalled.set(true));
+        Command command = new RepairCommand(() -> dbFile, (_, _, _) -> installerCalled.set(true));
         Arguments arguments = Arguments.parse("--slug", "mnm");
 
         command.run(arguments);

@@ -12,11 +12,11 @@ import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
-public class LoginCommand implements Command {
+public class LauncherLoginCommand implements Command {
 
     private final Supplier<Path> databaseFileLocator;
 
-    public LoginCommand(Supplier<Path> locator) {
+    public LauncherLoginCommand(Supplier<Path> locator) {
         this.databaseFileLocator = locator;
     }
 

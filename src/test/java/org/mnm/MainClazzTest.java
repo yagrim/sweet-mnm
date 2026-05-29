@@ -189,6 +189,7 @@ class MainClazzTest {
               launcher-login    Login with your username and password (updates launcher database)
               launcher-logout   Removes token from the launcher database
               launcher-token    Shows official launcher current token
+              login             Logins with credentials to generate and store a token
               logout            Removes stored tokens for a client slug
               repair            Checks an installation and updates if necessary
               run               Runs configured client
