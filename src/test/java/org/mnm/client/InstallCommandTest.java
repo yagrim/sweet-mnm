@@ -102,7 +102,7 @@ class InstallCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
         final AtomicBoolean installerCalled = new AtomicBoolean(false);
 
-        Command command = new InstallCommand(() -> dbFile, (_, _) -> installerCalled.set(true));
+        Command command = new InstallCommand(() -> dbFile, (_, _, _) -> installerCalled.set(true));
         Arguments arguments = Arguments.parse("--username", "username", "--password", "password");
 
         command.run(arguments);

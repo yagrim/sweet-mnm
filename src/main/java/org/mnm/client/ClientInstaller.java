@@ -20,7 +20,7 @@ import org.mnm.tools.JwtParser;
 import org.mnm.tools.StringUtils;
 import org.mnm.tools.Zstd;
 
-import static org.mnm.config.Client.Status.*;
+import static org.mnm.config.Client.Status.COMPLETED;
 import static org.mnm.tools.FileUtils.fileExists;
 import static org.mnm.tools.FileUtils.getAllFiles;
 import static org.mnm.tools.ProcessUtils.panic;
@@ -33,6 +33,13 @@ public class ClientInstaller {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientInstaller.class);
 
+    @FunctionalInterface
+    interface Installer {
+        // TODO having to pass status seems a smell.
+        // Instead, maybe have an OPS table to audit what was the last operation
+        void install(InstallerOptions options, ConfigDb configDb, Client.Status status);
+    }
+
     private final ConfigDb configDb;
 
     public ClientInstaller(ConfigDb configDb) {
@@ -40,7 +47,8 @@ public class ClientInstaller {
     }
 
     public InstallationResult install(InstallerOptions options,
-                                      Path workDir, String apiBaseUrl) {
+                                      Path workDir, String apiBaseUrl,
+                                      Client.Status status) {
 
         Client currentClient;
         Session session;
@@ -71,14 +79,8 @@ public class ClientInstaller {
         final String slug = session.getSlug();
         final Installation installation = new Installation(installDir, slug);
 
-        if (currentClient == null) {
-            Client client = new Client(slug, session.getVersion(), INSTALLING, installDir);
-            configDb.addClient(client);
-            configDb.addToken(new Token(session.getSlug(), session.getToken()));
-        } else {
-            configDb.updateClientStatus(slug, REPAIRING);
-            refreshSessionToken(currentClient, session);
-        }
+        new LoginService(configDb)
+            .storeToken(session, currentClient, installDir, status);
 
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();
@@ -139,36 +141,14 @@ public class ClientInstaller {
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 
-    private void validateTokens(List<Token> tokens) {
+    public void validateTokens(List<Token> tokens) {
         Optional<Token> activeToken = findToken(tokens, false);
         if (!activeToken.isPresent()) {
             panic("All token(s) expired: run 'install --username ...' to create a new one");
         }
     }
 
-    private void refreshSessionToken(Client currentClient, Session session) {
-        final List<Token> tokens = configDb.getTokens(currentClient.slug());
-        final Optional<Token> expiredToken = findToken(tokens, true);
-
-        Token tokenToUpdate;
-        if (expiredToken.isPresent()) {
-            tokenToUpdate = expiredToken.get();
-            logger.debug("Updating expired token: {}", tokenToUpdate.id());
-            configDb.updateToken(tokenToUpdate.id(), session.getToken());
-        } else {
-            // TODO test
-            if (tokens.isEmpty()) {
-                // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
-                configDb.addToken(new Token(session.getSlug(), session.getToken()));
-            } else {
-                tokenToUpdate = tokens.get(0);
-                logger.debug("Refreshing token: {}", tokenToUpdate.id());
-                configDb.updateToken(tokenToUpdate.id(), session.getToken());
-            }
-        }
-    }
-
-    private Optional<Token> findToken(List<Token> tokens, boolean isExpired) {
+    private static Optional<Token> findToken(List<Token> tokens, boolean isExpired) {
         return tokens.stream()
             .filter(s -> JwtParser.parse(s.token()).isExpired() == isExpired)
             .findFirst();

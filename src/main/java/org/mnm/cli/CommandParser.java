@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
+import org.mnm.client.LoginCommand;
 import org.mnm.client.LogoutCommand;
 import org.mnm.client.RepairCommand;
 import org.mnm.client.RunCommand;
@@ -13,9 +14,9 @@ import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.Environment;
+import org.mnm.launcher.LauncherLoginCommand;
 import org.mnm.launcher.LauncherLogoutCommand;
 import org.mnm.launcher.LauncherTokenCommand;
-import org.mnm.launcher.LoginCommand;
 
 public class CommandParser {
 
@@ -50,13 +51,14 @@ public class CommandParser {
         final var commands = List.of(
             new ClientsCommand(configDbSupplier),
             new InstallCommand(configDbSupplier),
+            new LoginCommand(configDbSupplier),
             new LogoutCommand(configDbSupplier),
             new RepairCommand(configDbSupplier),
             new RunCommand(configDbSupplier),
             new TokenCommand(configDbSupplier),
             new TokensCommand(configDbSupplier),
 
-            new LoginCommand(launcherDbSupplier),
+            new LauncherLoginCommand(launcherDbSupplier),
             new LauncherLogoutCommand(launcherDbSupplier),
             new LauncherTokenCommand(launcherDbSupplier),
 

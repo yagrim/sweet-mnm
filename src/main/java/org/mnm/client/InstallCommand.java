@@ -1,23 +1,25 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.client.ClientInstaller.Installer;
 import org.mnm.config.ConfigDb;
+
+import static org.mnm.config.Client.Status.INSTALLING;
 
 public class InstallCommand implements Command {
 
     private final Supplier<Path> configFileLocator;
-    private final BiConsumer<InstallerOptions, ConfigDb> installer;
+    private final Installer installer;
 
     public InstallCommand(Supplier<Path> configFileLocator) {
         this(configFileLocator, Factories::installer);
     }
 
-    InstallCommand(Supplier<Path> configFileLocator, BiConsumer<InstallerOptions, ConfigDb> installer) {
+    InstallCommand(Supplier<Path> configFileLocator, Installer installer) {
         this.configFileLocator = configFileLocator;
         this.installer = installer;
     }
@@ -28,7 +30,7 @@ public class InstallCommand implements Command {
         options.validateInstall();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            installer.accept(options, configDb);
+            installer.install(options, configDb, INSTALLING);
         }
 
         System.out.println("Installation completed");
@@ -50,7 +52,7 @@ public class InstallCommand implements Command {
             %s
             
             Usage:
-              sweet %2$s --username <username> --password <password>
+              sweet %s --username <username> --password <password>
             
             Options:
               --username      MnM account username (required when --slug is not set)

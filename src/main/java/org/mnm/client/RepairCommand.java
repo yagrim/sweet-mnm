@@ -1,23 +1,26 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.client.ClientInstaller.Installer;
+import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+
+import static org.mnm.config.Client.Status.REPAIRING;
 
 public class RepairCommand implements Command {
 
     private final Supplier<Path> configFileLocator;
-    private final BiConsumer<InstallerOptions, ConfigDb> installer;
+    private final Installer installer;
 
     public RepairCommand(Supplier<Path> configFileLocator) {
         this(configFileLocator, Factories::installer);
     }
 
-    RepairCommand(Supplier<Path> configFileLocator, BiConsumer<InstallerOptions, ConfigDb> installer) {
+    RepairCommand(Supplier<Path> configFileLocator, Installer installer) {
         this.configFileLocator = configFileLocator;
         this.installer = installer;
     }
@@ -28,7 +31,7 @@ public class RepairCommand implements Command {
         options.validateRepair();
 
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            installer.accept(options, configDb);
+            installer.install(options, configDb, REPAIRING);
         }
 
         System.out.println("Repair completed");

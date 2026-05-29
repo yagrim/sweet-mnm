@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 
@@ -48,7 +49,7 @@ public class TestUtils {
     public static String testToken(Instant expiration) {
         return "%s.%s.123".formatted(
             base64Url("{\"alg\":\"none\"}"),
-            base64Url("{\"exp\":%s}".formatted(expiration.getEpochSecond())));
+            base64Url("{\"exp\":%s,\"jti\":\"%s\"}".formatted(expiration.getEpochSecond(), UUID.randomUUID())));
     }
 
     public static String validToken() {
