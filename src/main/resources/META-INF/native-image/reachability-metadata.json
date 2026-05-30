@@ -189,6 +189,16 @@
       "type": "com.sun.swing.internal.plaf.metal.resources.metal"
     },
     {
+      "type": "java.awt.Toolkit",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "getDefaultToolkit",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "java.awt.AlphaComposite",
       "jniAccessible": true,
       "fields": [
