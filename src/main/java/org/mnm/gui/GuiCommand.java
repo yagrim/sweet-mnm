@@ -23,8 +23,7 @@ import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
 import static org.mnm.config.Client.Status.REPAIRING;
-import static org.mnm.config.Environment.API_BASE_URL;
-import static org.mnm.config.Environment.getWorkDir;
+import static org.mnm.config.Environment.*;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
@@ -73,6 +72,13 @@ public class GuiCommand implements Command {
 
     public GuiCommand() {
         this(new ConfigDbLocator());
+
+        if (NATIVE_IMAGE) {
+            // Workaround for AWT Native image error
+            // Caused by: java.lang.Error: java.home property not set
+            //	at java.desktop@25.0.2/sun.awt.FontConfiguration.findFontConfigFile(FontConfiguration.java:166)
+            System.setProperty("java.home", "");
+        }
     }
 
     GuiCommand(Supplier<Path> configDbLocator) {
