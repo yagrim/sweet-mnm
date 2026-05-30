@@ -39,6 +39,15 @@ class ClientButtonsHandler {
         refresh();
     }
 
+    private void setAppearance() {
+        float fontSize = 20f;
+        setFontSize(install, fontSize);
+        setFontSize(repair, fontSize);
+        setFontSize(play, fontSize);
+        setFontSize(login, fontSize);
+        setFontSize(logout, fontSize);
+    }
+
     public void refresh() {
         boolean hasClient = hasClient();
         boolean isCompleted = client.status() == Client.Status.COMPLETED;
@@ -88,13 +97,10 @@ class ClientButtonsHandler {
         refresh();
     }
 
-    private void setAppearance() {
-        float fontSize = 20f;
-        setFontSize(install, fontSize);
-        setFontSize(repair, fontSize);
-        setFontSize(play, fontSize);
-        setFontSize(login, fontSize);
-        setFontSize(logout, fontSize);
+    public void refreshToken() {
+        install.setEnabled(false);
+        repair.setEnabled(false);
+        play.setEnabled(false);
+        logout.setEnabled(true);
     }
-
 }

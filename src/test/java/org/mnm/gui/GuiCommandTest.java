@@ -32,9 +32,11 @@ class GuiCommandTest {
         Path dbFile = tempDir.resolve("config.db");
         AtomicReference<Client> clientRef = new AtomicReference<>();
         AtomicBoolean hasTokens = new AtomicBoolean(false);
-        Command command = new GuiCommand(() -> dbFile, (client, hasToken) -> {
-            clientRef.set(client);
-            hasTokens.set(hasToken);
+        Command command = new GuiCommand(() -> dbFile,
+            (client, hasToken) -> {
+                clientRef.set(client);
+                hasTokens.set(hasToken);
+            }, (_, _) -> {
         });
 
         command.run(Arguments.parse());
@@ -55,6 +57,7 @@ class GuiCommandTest {
         Command command = new GuiCommand(() -> dbFile, (client, hasToken) -> {
             clientRef.set(client);
             hasTokens.set(hasToken);
+        }, (_, _) -> {
         });
 
         command.run(Arguments.parse());
@@ -64,7 +67,7 @@ class GuiCommandTest {
 
     @Test
     void shouldDisableRepairAndPlayWhenNoClientsExist() {
-        var panel = GuiCommand.createButtonsPanel(null, null, false);
+        var panel = GuiCommand.createClientPanel(null, null, false);
 
         assertThat(findButton(panel, "Install")).isNotNull();
         assertThat(findButton(panel, "Repair")).isNotNull();
@@ -77,7 +80,7 @@ class GuiCommandTest {
     @Test
     void shouldDisableInstallWhenAClientExists() {
         Client client = testClient();
-        var panel = GuiCommand.createButtonsPanel(null, client, false);
+        var panel = GuiCommand.createClientPanel(null, client, false);
 
         assertThat(findButton(panel, "Install")).isNotNull();
         assertThat(findButton(panel, "Repair")).isNotNull();
@@ -161,7 +164,7 @@ class GuiCommandTest {
         AtomicReference<String> repairedSlug = new AtomicReference<>();
         Client client = testClient();
 
-        var panel = GuiCommand.createButtonsPanel(null, client, false,
+        var panel = GuiCommand.createClientPanel(null, client, false,
             slug -> {
                 repairedSlug.set(slug);
                 return testClient();
@@ -180,7 +183,7 @@ class GuiCommandTest {
         CountDownLatch release = new CountDownLatch(1);
         Client client = testClient();
 
-        var panel = GuiCommand.createButtonsPanel(null, client, false,
+        var panel = GuiCommand.createClientPanel(null, client, false,
             slug -> {
                 started.countDown();
                 try {
@@ -210,7 +213,7 @@ class GuiCommandTest {
         AtomicReference<String> playedSlug = new AtomicReference<>();
         Client client = testClient();
 
-        var panel = GuiCommand.createButtonsPanel(null, client, false,
+        var panel = GuiCommand.createClientPanel(null, client, false,
             _ -> null,
             (_, _) -> null,
             _ -> {
