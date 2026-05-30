@@ -6,7 +6,6 @@ import org.mnm.config.Client;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
 
-// TODO Handle token expired
 class ClientButtonsHandler {
 
     private final JButton install;

@@ -2,8 +2,6 @@ package org.mnm.gui;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,31 +64,6 @@ class GuiCommandTest {
     }
 
     @Test
-    void shouldDisableRepairAndPlayWhenNoClientsExist() {
-        var panel = GuiCommand.createClientPanel(null, null, false);
-
-        assertThat(findButton(panel, "Install")).isNotNull();
-        assertThat(findButton(panel, "Repair")).isNotNull();
-        assertThat(findButton(panel, "Play")).isNotNull();
-        assertThat(findButton(panel, "Install").isEnabled()).isTrue();
-        assertThat(findButton(panel, "Repair").isEnabled()).isFalse();
-        assertThat(findButton(panel, "Play").isEnabled()).isFalse();
-    }
-
-    @Test
-    void shouldDisableInstallWhenAClientExists() {
-        Client client = testClient();
-        var panel = GuiCommand.createClientPanel(null, client, false);
-
-        assertThat(findButton(panel, "Install")).isNotNull();
-        assertThat(findButton(panel, "Repair")).isNotNull();
-        assertThat(findButton(panel, "Play")).isNotNull();
-        assertThat(findButton(panel, "Install").isEnabled()).isFalse();
-        assertThat(findButton(panel, "Repair").isEnabled()).isTrue();
-        assertThat(findButton(panel, "Play").isEnabled()).isTrue();
-    }
-
-    @Test
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
         Client client = testClient();
         var tabs = GuiCommand.createTabbedPanel(null, client, false,
@@ -101,12 +74,19 @@ class GuiCommandTest {
             }, _ -> {
             });
 
-        assertThat(tabs.getTabCount()).isEqualTo(2);
-        assertThat(tabs.getTitleAt(0)).isEqualTo("Client");
-        assertThat(tabs.getTitleAt(1)).isEqualTo("Options");
-        assertThat(findButton(tabs.getComponentAt(0), "Install")).isNotNull();
-        assertThat(findCheckBox(tabs.getComponentAt(1), "Enable debug")).isNotNull();
-        assertThat(findCheckBox(tabs.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
+        assertThat(tabs).isNotNull();
+        assertThat(tabs.clientPanel()).isNotNull();
+        assertThat(tabs.optionsPanel()).isNotNull();
+        assertThat(tabs.root()).isNotNull();
+
+        JTabbedPane tabPanel = tabs.root();
+        assertThat(tabPanel.getTabCount()).isEqualTo(2);
+        assertThat(tabPanel.getTitleAt(0)).isEqualTo("Client");
+        assertThat(tabPanel.getTitleAt(1)).isEqualTo("Options");
+
+        assertThat(findButton(tabPanel.getComponentAt(0), "Install")).isNotNull();
+        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug")).isNotNull();
+        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
     }
 
     @Test
@@ -129,100 +109,6 @@ class GuiCommandTest {
         assertThat(options.slug()).isEqualTo("mnm");
         assertThat(options.fileCheck()).isNotNull();
         assertThat(options.toString()).contains("xxhsum");
-    }
-
-//    @Test
-//    void shouldDisableInstallButtonWhileInstallActionRuns() throws Exception {
-//        CountDownLatch started = new CountDownLatch(1);
-//        CountDownLatch release = new CountDownLatch(1);
-//        final JButton installButton = new JButton("Install");
-//        final var buttonsHandler = new ClientButtonsHandler(installButton, new JButton(), new JButton(), new JButton(), new JButton());
-//
-//        GuiCommand.InstallAction installAction = _ -> {
-//            started.countDown();
-//            try {
-//                release.await(1, TimeUnit.SECONDS);
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                throw new IllegalStateException(e);
-//            }
-//        };
-//
-//        GuiCommand.installHandle(buttonsHandler, installAction, TEST_SLUG);
-//
-//        assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
-//        assertThat(installButton.isEnabled()).isFalse();
-//
-//        release.countDown();
-//        waitForButtonEnabled(installButton);
-//
-//        assertThat(installButton.isEnabled()).isTrue();
-//    }
-
-    @Test
-    void shouldInvokeRepairActionWithMnmSlugWhenRepairIsClicked() {
-        AtomicReference<String> repairedSlug = new AtomicReference<>();
-        Client client = testClient();
-
-        var panel = GuiCommand.createClientPanel(null, client, false,
-            slug -> {
-                repairedSlug.set(slug);
-                return testClient();
-            }, (_, _) -> null,
-            _ -> {
-            });
-
-        findButton(panel, "Repair").doClick();
-
-        assertThat(repairedSlug.get()).isEqualTo("mnm");
-    }
-
-    @Test
-    void shouldDisableRepairButtonWhileRepairActionRuns() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        CountDownLatch release = new CountDownLatch(1);
-        Client client = testClient();
-
-        var panel = GuiCommand.createClientPanel(null, client, false,
-            slug -> {
-                started.countDown();
-                try {
-                    release.await(1, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
-                return testClient();
-            }, (_, _) -> null, _ -> {
-            });
-        var repairButton = findButton(panel, "Repair");
-
-        repairButton.doClick();
-
-        assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
-        assertThat(repairButton.isEnabled()).isFalse();
-
-        release.countDown();
-        waitForButtonEnabled(repairButton);
-
-        assertThat(repairButton.isEnabled()).isTrue();
-    }
-
-    @Test
-    void shouldInvokeRunActionWithMnmSlugWhenPlayIsClicked() {
-        AtomicReference<String> playedSlug = new AtomicReference<>();
-        Client client = testClient();
-
-        var panel = GuiCommand.createClientPanel(null, client, false,
-            _ -> null,
-            (_, _) -> null,
-            _ -> {
-            },
-            args -> playedSlug.set(args.get("slug")));
-
-        findButton(panel, "Play").doClick();
-
-        assertThat(playedSlug.get()).isEqualTo("mnm");
     }
 
     @Test

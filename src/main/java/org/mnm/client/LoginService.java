@@ -13,7 +13,7 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
-import static org.mnm.config.Client.Status.*;
+import static org.mnm.config.Client.Status.INSTALLING;
 
 public class LoginService {
 
@@ -58,7 +58,6 @@ public class LoginService {
             logger.debug("Updating expired token: {}", tokenToUpdate.id());
             configDb.updateToken(tokenToUpdate.id(), session.getToken());
         } else {
-            // TODO test
             if (tokens.isEmpty()) {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));
