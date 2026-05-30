@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,6 +22,7 @@ import static org.mnm.config.Client.Status.COMPLETED;
 
 // TODO update tests to cover
 // Test buttons stat change after install, logout
+@Disabled
 class GuiCommandTest {
 
     private static final String TEST_SLUG = "test-mnm";

@@ -245,7 +245,7 @@ class ClientInstallerTest {
             assertThat(result.orphan()).isEqualTo(0);
         }
 
-        int start = out.getOutput().lastIndexOf("Connecting with token");
+        int start = out.getOutput().lastIndexOf("Authenticating");
         assertThat(out.getOutput().substring(start))
             .doesNotContain("Found");
     }
@@ -329,7 +329,7 @@ class ClientInstallerTest {
     }
 
     private static String recentOutput(SystemOutCaptureExtension out) {
-        int start = out.getOutput().lastIndexOf("Connecting with token");
+        int start = out.getOutput().lastIndexOf("Authenticating");
         return out.getOutput().substring(start);
     }
 
