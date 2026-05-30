@@ -2,6 +2,8 @@ package org.mnm.gui;
 
 import javax.swing.*;
 
+import org.mnm.config.Client;
+
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 // TODO Handle token expired
@@ -10,21 +12,25 @@ class ClientButtonsHandler {
     private final JButton install;
     private final JButton repair;
     private final JButton play;
+
+    private final JButton login;
     private final JButton logout;
 
-    private boolean hasClient;
+    private Client client;
     private boolean hasToken;
 
-    public ClientButtonsHandler(JButton install, JButton repair, JButton play, JButton logout) {
+    public ClientButtonsHandler(JButton install, JButton repair, JButton play,
+                                JButton login, JButton logout) {
         this.install = install;
         this.repair = repair;
         this.play = play;
+        this.login = login;
         this.logout = logout;
         setAppearance();
     }
 
-    public void setHasClient(boolean hasClient) {
-        this.hasClient = hasClient;
+    public void setClient(Client client) {
+        this.client = client;
         refresh();
     }
 
@@ -34,29 +40,50 @@ class ClientButtonsHandler {
     }
 
     public void refresh() {
-        install.setEnabled(!hasClient || !hasToken);
-        repair.setEnabled(hasClient && hasToken);
+        boolean hasClient = hasClient();
+        boolean isCompleted = client.status() == Client.Status.COMPLETED;
+        install.setEnabled(hasClient && hasToken && !isCompleted);
+        // && client status is completed
+        repair.setEnabled(hasClient && hasToken && isCompleted);
+        login.setEnabled(!hasToken);
         logout.setEnabled(hasToken);
         play.setEnabled(hasClient && hasToken);
     }
 
+    private boolean hasClient() {
+        return client != null;
+    }
+
     void installationStart() {
         install.setEnabled(false);
+        repair.setEnabled(false);
+        logout.setEnabled(false);
+        play.setEnabled(false);
     }
 
     void installationDone() {
-        install.setEnabled(true);
+        refresh();
     }
 
     void repairStart() {
-        repair.setEnabled(false);
+        installationStart();
     }
 
     void repairDone() {
-        repair.setEnabled(true);
+        refresh();
     }
 
-    void logout() {
+    void loginStart() {
+        login.setEnabled(false);
+    }
+
+    void loginDone(Client client) {
+        setClient(client);
+        hasToken = true;
+        refresh();
+    }
+
+    void logoutDone() {
         hasToken = false;
         refresh();
     }
@@ -66,6 +93,7 @@ class ClientButtonsHandler {
         setFontSize(install, fontSize);
         setFontSize(repair, fontSize);
         setFontSize(play, fontSize);
+        setFontSize(login, fontSize);
         setFontSize(logout, fontSize);
     }
 

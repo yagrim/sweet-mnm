@@ -6,7 +6,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.mnm.config.Environment;
 import org.mnm.manifest.ManifestHandler;
 import org.mnm.tools.Downloader;
 
@@ -27,7 +26,7 @@ public class Session {
     }
 
     public static Session login(String username, String password, String baseUrl) {
-        System.out.println("Connecting with " + username + "...");
+        System.out.println("Authenticating with account " + username + "...");
         if (isEmpty(username) || isEmpty(password)) {
             panic("Username or password is empty");
         }
@@ -42,7 +41,7 @@ public class Session {
     }
 
     public static Session login(String token, String baseUrl) {
-        System.out.println("Connecting with token ...");
+        System.out.println("Authenticating with token ...");
         if (isEmpty(token)) {
             panic("Token is empty");
         }

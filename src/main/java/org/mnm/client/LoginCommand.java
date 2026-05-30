@@ -11,6 +11,8 @@ import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Environment;
 
+import static org.mnm.config.Environment.getWorkDir;
+
 public class LoginCommand implements Command {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCommand.class);
@@ -29,8 +31,7 @@ public class LoginCommand implements Command {
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
             String slug = new LoginService(configDb)
-                .login(credentials.username(), credentials.password(),
-                    Path.of(System.getProperty("user.dir")), Environment.API_BASE_URL);
+                .login(credentials.username(), credentials.password(), getWorkDir(), Environment.API_BASE_URL);
 
             logger.info("Stored token for slug '{}'", slug);
         }

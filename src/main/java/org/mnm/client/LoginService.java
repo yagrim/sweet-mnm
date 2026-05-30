@@ -15,7 +15,7 @@ import org.mnm.tools.JwtParser;
 
 import static org.mnm.config.Client.Status.*;
 
-class LoginService {
+public class LoginService {
 
     private final Logger logger = LoggerFactory.getLogger(LoginService.class);
 

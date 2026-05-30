@@ -12,13 +12,19 @@ import org.mnm.cli.Command;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
+import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.OS;
 import org.mnm.tools.PanicException;
 
 import static org.mnm.GeneralOptions.toggleDebug;
+import static org.mnm.config.Client.Status.INSTALLING;
+import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 public class GuiCommand implements Command {
@@ -27,17 +33,17 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(boolean hasClient, boolean hasToken);
-    }
-
-    @FunctionalInterface
-    interface InstallAction {
-        void install(String username, String password);
+        void start(Client client, boolean hasToken);
     }
 
     @FunctionalInterface
     interface RepairAction {
-        void repair(String slug);
+        Client repair(String slug);
+    }
+
+    @FunctionalInterface
+    interface LoginAction {
+        Client login(String username, String password);
     }
 
     @FunctionalInterface
@@ -53,36 +59,41 @@ public class GuiCommand implements Command {
     private final Supplier<Path> configDbLocator;
     private final GuiStarter guiStarter;
 
-    private final InstallAction installAction;
     private final RunAction runAction;
     private final RepairAction repairAction;
+    private final LoginAction loginAction;
     private final LogoutAction logoutAction;
 
     public GuiCommand() {
         this(new ConfigDbLocator());
     }
 
+    // TODO handle Panic popup, "can't here Cannot call invokeAndWait from the event dispatcher thread"
+    // } catch (PanicException e) {
+    //  showMessageDialogSync("Error: " + e.getMessage());
+    // }
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
-        this.installAction = (username, password) -> installClient(configDbLocator, username, password);
-        this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.runAction = args -> runClient(configDbLocator, args);
+        this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
+
         this.guiStarter = this::startSwingInterface;
     }
 
     GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter) {
         this.configDbLocator = configDbLocator;
         this.guiStarter = guiStarter;
-        this.installAction = (username, password) -> installClient(configDbLocator, username, password);
-        this.runAction = args -> runClient(configDbLocator, args);
         this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.runAction = args -> runClient(configDbLocator, args);
+        this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
     }
 
     @Override
     public void run(Arguments args) {
-        guiStarter.start(hasAvailableClient(), hasAvailableToken());
+        guiStarter.start(getClient(), hasAvailableToken());
     }
 
     @Override
@@ -109,9 +120,9 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
-    private boolean hasAvailableClient() {
+    private Client getClient() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            return configDb.getClient(DEFAULT_SLUG) != null;
+            return configDb.getClient(DEFAULT_SLUG);
         }
     }
 
@@ -121,11 +132,11 @@ public class GuiCommand implements Command {
         }
     }
 
-    private void startSwingInterface(boolean hasClients, boolean hasToken) {
+    private void startSwingInterface(Client client, boolean hasToken) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final JFrame frame = new JFrame("Sweet GUI");
-                final JTabbedPane tabs = createTabbedPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction);
+                final JTabbedPane tabs = createTabbedPanel(frame, client, hasToken, repairAction, loginAction, logoutAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs, BorderLayout.CENTER);
@@ -142,41 +153,45 @@ public class GuiCommand implements Command {
         }
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, boolean hasToken) {
-        return createButtonsPanel(frame, hasClients, hasToken, (username, password) -> {
-        }, _ -> {
-        }, _ -> {
+    static JPanel createButtonsPanel(JFrame frame, Client client, boolean hasToken) {
+        return createButtonsPanel(frame, client, hasToken,
+            _ -> null,
+            (_, _) -> null,
+            _ -> {
+            });
+    }
+
+    static JPanel createButtonsPanel(JFrame frame, Client client, boolean hasToken,
+                                     RepairAction repairAction, LoginAction loginAction, LogoutAction logoutAction) {
+        return createButtonsPanel(frame, client, hasToken, repairAction, loginAction, logoutAction, args -> {
         });
     }
 
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClients, boolean hasToken,
-                                     InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction) {
-        return createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, args -> {
-        });
-    }
-
-    static JPanel createButtonsPanel(JFrame frame, boolean hasClient, boolean hasToken,
-                                     InstallAction installAction,
+    static JPanel createButtonsPanel(JFrame frame, Client client, boolean hasToken,
                                      RepairAction repairAction,
+                                     LoginAction loginAction,
                                      LogoutAction logoutAction,
                                      RunAction runAction
     ) {
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
         final JButton playButton = new JButton("Play");
+        final JButton loginButton = new JButton("Login");
         final JButton logoutButton = new JButton("Logout");
 
-        final ClientButtonsHandler buttonsHandler = new ClientButtonsHandler(installButton, repairButton, playButton, logoutButton);
-        buttonsHandler.setHasClient(hasClient);
+        final ClientButtonsHandler buttonsHandler = new ClientButtonsHandler(installButton, repairButton, playButton, loginButton, logoutButton);
+        buttonsHandler.setClient(client);
         buttonsHandler.setHasToken(hasToken);
         buttonsHandler.refresh();
 
-        installButton.addActionListener(_ -> showInstallDialog(frame, buttonsHandler, installAction));
-        repairButton.addActionListener(_ -> runRepairAction(buttonsHandler, repairAction));
-        logoutButton.addActionListener(_ -> logoutAction(buttonsHandler, logoutAction));
+        installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction));
+        repairButton.addActionListener(_ -> handleRepair(buttonsHandler, repairAction));
         playButton.addActionListener(_ -> runAction(runAction));
+        loginButton.addActionListener(_ -> handleLogin(buttonsHandler, frame, loginAction));
+        logoutButton.addActionListener(_ -> handleLogout(buttonsHandler, logoutAction));
 
         final JPanel firstRow = new JPanel(new GridLayout(1, 2, 8, 0));
+        firstRow.add(loginButton);
         firstRow.add(installButton);
         firstRow.add(repairButton);
         firstRow.add(logoutButton);
@@ -193,11 +208,12 @@ public class GuiCommand implements Command {
         return buttons;
     }
 
-    static JTabbedPane createTabbedPanel(JFrame frame, boolean hasClients, boolean hasToken,
-                                         InstallAction installAction, RepairAction repairAction, LogoutAction logoutAction, RunAction runAction) {
+    static JTabbedPane createTabbedPanel(JFrame frame, Client client, boolean hasToken,
+                                         RepairAction repairAction,
+                                         LoginAction loginAction, LogoutAction logoutAction, RunAction runAction) {
 
         final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Client", createButtonsPanel(frame, hasClients, hasToken, installAction, repairAction, logoutAction, runAction));
+        tabs.addTab("Client", createButtonsPanel(frame, client, hasToken, repairAction, loginAction, logoutAction, runAction));
         tabs.addTab("Options", createOptionsPanel());
         setFontSize(tabs, 15f);
         return tabs;
@@ -213,91 +229,84 @@ public class GuiCommand implements Command {
         return panel;
     }
 
-    static void runInstallAction(ClientButtonsHandler buttons, InstallAction installAction, String username, String password) {
-        buttons.repairStart();
-        CompletableFuture
-            .runAsync(() -> {
-                try {
-                    installAction.install(username, password);
-                } catch (PanicException e) {
-                    System.out.println(e.getMessage());
-                    showMessageDialogSync("Error: " + e.getMessage());
-                }
-            })
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
-                buttons.repairDone();
-            }));
-    }
-
-    private static void runRepairAction(ClientButtonsHandler buttons, RepairAction repairAction) {
+    private static void handleInstall(ClientButtonsHandler buttons, RepairAction installAction) {
         buttons.installationStart();
         CompletableFuture
-            .runAsync(() -> {
-                try {
-                    repairAction.repair(DEFAULT_SLUG);
-                } catch (PanicException e) {
-                    System.out.println(e.getMessage());
-                    showMessageDialogSync("Error: " + e.getMessage());
-                }
-            })
+            .runAsync(() -> buttons.setClient(installAction.repair(DEFAULT_SLUG)))
             .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
                 buttons.installationDone();
             }));
     }
 
-    private static void logoutAction(ClientButtonsHandler buttons, LogoutAction logoutAction) {
-        try {
-            logoutAction.logout(DEFAULT_SLUG);
-        } catch (PanicException e) {
-            showMessageDialogSync("Error: " + e.getMessage());
+    private static void handleRepair(ClientButtonsHandler buttons, RepairAction repairAction) {
+        buttons.repairStart();
+        CompletableFuture
+            .runAsync(() -> buttons.setClient(repairAction.repair(DEFAULT_SLUG)))
+            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+                buttons.repairDone();
+            }));
+    }
+
+    private static void handleLogin(ClientButtonsHandler buttons, JFrame parent, LoginAction loginAction) {
+        buttons.loginStart();
+
+        final CredentialsPanel credentialsPanel = new CredentialsPanel();
+        final int result = credentialsPanel.show(parent);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                final Client client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
+                buttons.loginDone(client);
+            } catch (Exception e) {
+                buttons.refresh();
+                showMessageDialogSync("Error: " + e.getMessage(), JOptionPane.INFORMATION_MESSAGE);
+            }
         }
+    }
+
+    private static void handleLogout(ClientButtonsHandler buttons, LogoutAction logoutAction) {
+        logoutAction.logout(DEFAULT_SLUG);
+        buttons.logoutDone();
     }
 
     private static void runAction(RunAction runAction) {
-        // TODO XXX unify exception capture
         try {
             runAction.run(Arguments.parse("--slug", DEFAULT_SLUG));
         } catch (PanicException e) {
-            showMessageDialogSync("Error: " + e.getMessage());
+            showMessageDialogSync("Error: " + e.getMessage(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private static void showInstallDialog(JFrame owner, ClientButtonsHandler buttons, InstallAction installAction) {
-        final CredentialsPanel credentialsPanel = new CredentialsPanel();
-//        final int result = JOptionPane.showConfirmDialog(
-//            owner,
-//            panel,
-//            "Install client",
-//            JOptionPane.OK_CANCEL_OPTION,
-//            JOptionPane.PLAIN_MESSAGE
-//        );
-
-//        if (result == JOptionPane.OK_OPTION) {
-        final String username = credentialsPanel.getUsername();
-        final String password = credentialsPanel.getPassword();
-        runInstallAction(buttons, installAction, username, password);
-//        }
-    }
-
-    private static void installClient(Supplier<Path> configDbLocator, String username, String password) {
+    private static Client installClient(Supplier<Path> configDbLocator, String slug) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
-            InstallerOptions options = InstallerOptions.forInstall(username, password);
+            final InstallerOptions options = OS.isWindows() ? InstallerOptions.forRepairWindows(slug) : InstallerOptions.forRepair(slug);
             new ClientInstaller(configDb)
-                .install(options, Path.of(System.getProperty("user.dir")), API_BASE_URL);
+                .install(options, getWorkDir(), API_BASE_URL, INSTALLING);
 
-            showMessageDialogSync("Install completed !!");
+            showMessageDialogSync("Installation completed !!", JOptionPane.INFORMATION_MESSAGE);
+            return configDb.getClient(slug);
         }
     }
 
-    private static void repairClient(Supplier<Path> configDbLocator, String slug) {
+    private static Client repairClient(Supplier<Path> configDbLocator, String slug) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
-            InstallerOptions options = InstallerOptions.forRepair(slug);
+            final InstallerOptions options = OS.isWindows() ? InstallerOptions.forRepairWindows(slug) : InstallerOptions.forRepair(slug);
             new ClientInstaller(configDb)
-                .install(options, Path.of(System.getProperty("user.dir")), API_BASE_URL);
+                .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
 
-            showMessageDialogSync("Repair completed !!");
+            showMessageDialogSync("Repair completed !!", JOptionPane.INFORMATION_MESSAGE);
+            return configDb.getClient(slug);
+        }
+    }
+
+    private static Client login(Supplier<Path> configDbLocator, String username, String password) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+            String slug = new LoginService(configDb)
+                .login(username, password, getWorkDir(), API_BASE_URL);
+
+            return configDb.getClient(slug);
         }
     }
 
@@ -315,9 +324,14 @@ public class GuiCommand implements Command {
         }
     }
 
-    private static void showMessageDialogSync(String message) {
+    private static void showMessageDialogSync(String message, int type) {
         try {
-            SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(null, message));
+            if (SwingUtilities.isEventDispatchThread()) {
+                JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                String title = type == JOptionPane.ERROR_MESSAGE ? "Error" : "Info";
+                SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(null, message, title, type));
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while showing dialog", e);
