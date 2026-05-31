@@ -54,7 +54,7 @@ tasks.named('test') {
     def className = descriptor.className.tokenize('.').last()
     println("Running test: ${className}.${descriptor.name}")
   }
-//  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
 }
 
 jar {
@@ -71,7 +71,7 @@ application {
   applicationName = 'sweet'
   applicationDefaultJvmArgs = [
     '--enable-native-access=ALL-UNNAMED',
-//            '-Xmx256m'
+//    '-Xmx256m'
   ]
   executableDir = ''
   mainClass = 'org.mnm.MainClazz'

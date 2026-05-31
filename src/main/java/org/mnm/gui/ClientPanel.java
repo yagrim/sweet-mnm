@@ -41,7 +41,7 @@ class ClientPanel extends JPanel {
         final ClientButtonsHandler buttonsHandler = new ClientButtonsHandler(installButton, repairButton, playButton, loginButton, logoutButton);
         buttonsHandler.setClient(client);
         buttonsHandler.setHasToken(hasToken);
-        buttonsHandler.refresh();
+        buttonsHandler.disableAll();
         this.buttonsHandler = buttonsHandler;
 
         installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction));
@@ -59,7 +59,6 @@ class ClientPanel extends JPanel {
         final JPanel secondRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         secondRow.add(playButton);
 
-//        final JPanel buttons = new JPanel();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(firstRow);
         this.add(Box.createVerticalStrut(8));

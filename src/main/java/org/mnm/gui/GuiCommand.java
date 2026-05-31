@@ -5,6 +5,7 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.mnm.api.Session;
@@ -119,15 +120,15 @@ public class GuiCommand implements Command {
     @Override
     public String help() {
         return """
-                %s
-                
-                Usage:
-                  sweet %s
-                
-                Options:
-                  --debug  Enables debug messages
-                  --help   Shows this help
-                """.formatted(description(), name());
+            %s
+            
+            Usage:
+              sweet %s
+            
+            Options:
+              --debug  Enables debug messages
+              --help   Shows this help
+            """.formatted(description(), name());
     }
 
     private Client getClient() {
@@ -159,7 +160,12 @@ public class GuiCommand implements Command {
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
 
-                postInitAction.run(client, tabs.clientPanel().getButtonsHandler());
+                // Prevent UI locking for some seconds
+                CompletableFuture
+                    .runAsync(() -> postInitAction.run(client, tabs.clientPanel().getButtonsHandler()))
+                    .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+                        tabs.clientPanel.getButtonsHandler().refresh();
+                    }));
             });
 
         } catch (InterruptedException e) {
@@ -212,7 +218,7 @@ public class GuiCommand implements Command {
 
             final InstallerOptions options = OS.isWindows() ? InstallerOptions.forRepairWindows(slug) : InstallerOptions.forRepair(slug);
             new ClientInstaller(configDb)
-                    .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
+                .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
 
             return configDb.getClient(slug);
         }
@@ -221,7 +227,7 @@ public class GuiCommand implements Command {
     private static Client login(Supplier<Path> configDbLocator, String username, String password) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
             String slug = new LoginService(configDb)
-                    .login(username, password, getWorkDir(), API_BASE_URL);
+                .login(username, password, getWorkDir(), API_BASE_URL);
 
             return configDb.getClient(slug);
         }
@@ -237,7 +243,7 @@ public class GuiCommand implements Command {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             new ClientRunner(configDb)
-                    .run(RunnerOptions.parse(args));
+                .run(RunnerOptions.parse(args));
         }
     }
 
