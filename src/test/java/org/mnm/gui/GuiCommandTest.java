@@ -19,30 +19,44 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.ApiServerStubs.TEST_SLUG;
+import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons stat change after install, logout
 class GuiCommandTest {
 
-    private static final String TEST_SLUG = "test-mnm";
+    // Fails in Linux CI with "No X11 DISPLAY variable was set"
+    // Windows fails cleanup because db file is locked
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldStartGuiClientIsNotFound(@TempDir(cleanup = NEVER) Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        GuiCommand command = new GuiCommand(() -> dbFile);
+
+        command.run(Arguments.parse());
+
+        // TODO validate buttons
+        command.close();
+    }
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    void shouldStartGui(@TempDir Path tempDir) {
+    void shouldStartGui(@TempDir(cleanup = NEVER) Path tempDir) {
         final Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(testClient());
-            configDb.addToken(new Token(TEST_SLUG, validToken()));
+            configDb.addToken(new Token(DEFAULT_SLUG, validToken()));
         }
 
-        Command command = new GuiCommand(() -> dbFile);
+        GuiCommand command = new GuiCommand(() -> dbFile);
 
         command.run(Arguments.parse());
-//        assertThat(clientRef.get()).isNotNull();
-//        assertThat(hasTokens.get()).isTrue();
+
+        // TODO validate buttons
+        command.close();
     }
 
     @Disabled
@@ -128,7 +142,7 @@ class GuiCommandTest {
     }
 
     private static Client testClient() {
-        return new Client(TEST_SLUG, "1.2.3", COMPLETED, Path.of("."));
+        return new Client(DEFAULT_SLUG, "1.2.3", COMPLETED, Path.of("."));
     }
 
     private static JButton findButton(java.awt.Component component, String text) {

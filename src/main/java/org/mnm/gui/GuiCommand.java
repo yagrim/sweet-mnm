@@ -2,6 +2,7 @@ package org.mnm.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
@@ -143,6 +144,8 @@ public class GuiCommand implements Command {
         }
     }
 
+    private JFrame frame;
+
     private void startSwingInterface(Client client, boolean hasToken) {
         try {
             // For message windows
@@ -150,7 +153,7 @@ public class GuiCommand implements Command {
             UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, 15));
 
             SwingUtilities.invokeAndWait(() -> {
-                final JFrame frame = new JFrame("Sweet GUI");
+                this.frame = new JFrame("Sweet GUI");
                 final Tabs tabs = createTabbedPanel(frame, client, hasToken, repairAction, loginAction, logoutAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -167,13 +170,16 @@ public class GuiCommand implements Command {
                         tabs.clientPanel.getButtonsHandler().refresh();
                     }));
             });
-
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while starting the GUI", e);
         } catch (InvocationTargetException e) {
             throw new IllegalStateException("Failed to start the GUI", e.getCause());
         }
+    }
+
+    void close() {
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
     private void postInitialization(Supplier<Path> configDbLocator, Client client, ClientButtonsHandler buttons) {

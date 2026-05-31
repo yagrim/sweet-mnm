@@ -49,7 +49,7 @@ class ClientButtonsHandler {
 
     public void refresh() {
         boolean hasClient = hasClient();
-        boolean isCompleted = client.status() == Client.Status.COMPLETED;
+        boolean isCompleted = client != null && client.status() == Client.Status.COMPLETED;
         install.setEnabled(hasClient && hasToken && !isCompleted);
         // && client status is completed
         repair.setEnabled(hasClient && hasToken && isCompleted);

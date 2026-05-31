@@ -16,6 +16,7 @@ jobs:
     env:
       BINARY_LOCATION: build/native/nativeCompile/
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
@@ -111,4 +112,4 @@ jobs:
         with:
           name: reachability-metadata-${{ matrix.artifact_os }}-${{ steps.arch.outputs.arch }}.zip
           path: config-dir
-          if-no-files-found: warn
+          if-no-files-found: ignore

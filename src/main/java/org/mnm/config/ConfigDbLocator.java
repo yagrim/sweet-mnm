@@ -9,7 +9,7 @@ public class ConfigDbLocator implements Supplier<Path> {
     public Path get() {
         final Path base = OS.isWindows()
             ? Path.of(System.getenv("LOCALAPPDATA"))
-            : Environment.getWorkDir().resolve(".local/share");
+            : Environment.getHomeDir().resolve(".local/share");
 
         return base
             .resolve("com.monstersandmemories.sweet")
