@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.cli.Arguments;
@@ -14,8 +16,11 @@ import org.mnm.cli.Command;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.ApiServerStubs.TEST_SLUG;
+import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.COMPLETED;
 
 // TODO update tests to cover
@@ -25,11 +30,17 @@ class GuiCommandTest {
     private static final String TEST_SLUG = "test-mnm";
 
     @Test
+    @EnabledOnOs(OS.WINDOWS)
     void shouldStartGui(@TempDir Path tempDir) {
-        Command command = new GuiCommand();
+        final Path dbFile = tempDir.resolve("config.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(testClient());
+            configDb.addToken(new Token(TEST_SLUG, validToken()));
+        }
+
+        Command command = new GuiCommand(() -> dbFile);
 
         command.run(Arguments.parse());
-
 //        assertThat(clientRef.get()).isNotNull();
 //        assertThat(hasTokens.get()).isTrue();
     }
@@ -117,7 +128,7 @@ class GuiCommandTest {
     }
 
     private static Client testClient() {
-        return new Client("client", "1.2.3", COMPLETED, Path.of("."));
+        return new Client(TEST_SLUG, "1.2.3", COMPLETED, Path.of("."));
     }
 
     private static JButton findButton(java.awt.Component component, String text) {

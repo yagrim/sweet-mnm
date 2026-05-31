@@ -106,3 +106,9 @@ jobs:
           name: binary-${{ matrix.artifact_os }}-${{ steps.arch.outputs.arch }}.zip
           path: ${{ env.BINARY_LOCATION }}
           if-no-files-found: warn
+      - name: Upload reachability metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: reachability-metadata-${{ matrix.artifact_os }}-${{ steps.arch.outputs.arch }}.zip
+          path: config-dir
+          if-no-files-found: warn
