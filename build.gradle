@@ -86,7 +86,19 @@ graalvmNative {
         '--enable-native-access=ALL-UNNAMED',
         '--enable-url-protocols=https',
         '--gc=serial',
+        '--initialize-at-run-time=sun.java2d.d3d.D3DRenderQueue',
+        '--initialize-at-run-time=sun.java2d.d3d.D3DGraphicsDevice',
+        '--initialize-at-run-time=sun.java2d.d3d.D3DSurfaceData',
+        '--initialize-at-run-time=sun.java2d.d3d',
+        '--initialize-at-run-time=sun.awt.FontConfiguration',
+        '--initialize-at-run-time=sun.awt.Win32FontManager',
+        '--initialize-at-run-time=sun.font.SunFontManager',
+        '--initialize-at-run-time=sun.font.FontManagerFactory',
+        '--initialize-at-run-time=sun.font.FontDesignMetrics',
+        '--initialize-at-run-time=sun.font.PlatformFontInfo',
         '--initialize-at-build-time=org.mnm.config.Environment',
+
+        '--initialize-at-run-time==sun.java2d.d3d',
         '-Dsweet_native=true',
 //        '-R:MaxHeapSize=256m'
       )

@@ -20,6 +20,7 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
@@ -75,11 +76,20 @@ public class GuiCommand implements Command {
     public GuiCommand() {
         this(new ConfigDbLocator());
 
+        // Not sure what format to use. TODO read: https://docs.oracle.com/javase/8/docs/technotes/guides/intl/fontconfig.html
+//        System.setProperty("sun.awt.fontconfig", "C:\\Users\\User\\home\\graalvm-jdk-25.0.3+9.1\\lib\\fontconfig.bfc");
+//        System.setProperty("sun.awt.fontconfig", "C:\\Users\\User\\home\\graalvm-jdk-25.0.3+9.1\\lib\\fontconfig.properties.src");
+        System.setProperty("sun.awt.fontconfig", Environment.getWorkDir().resolve("font-config", "fontconfig.properties").toAbsolutePath().toString());
+
         if (NATIVE_IMAGE) {
             // Workaround for AWT Native image error
             // Caused by: java.lang.Error: java.home property not set
             //	at java.desktop@25.0.2/sun.awt.FontConfiguration.findFontConfigFile(FontConfiguration.java:166)
+            // TODO XXX test if
+//            String value = Path.of(ProcessHandle.current().info().command().orElseThrow()).getParent().getParent().toString();
+//            System.out.println("JAVA_HOME:" + value);
             System.setProperty("java.home", "");
+            System.setProperty("sun.awt.fontconfig", "C:\\Users\\User\\home\\graalvm-jdk-25.0.3+9.1\\lib\\fontconfig.properties.src");
         }
     }
 
