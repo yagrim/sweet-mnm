@@ -127,3 +127,14 @@ tasks.named('run', JavaExec) {
   args 'gui'
   jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
 }
+
+if (os.isWindows()) {
+  tasks.named('nativeCompile') {
+    doLast {
+      copy {
+        from('src/main/resources/fontconfig.properties')
+        into(layout.buildDirectory.dir('native/nativeCompile'))
+      }
+    }
+  }
+}
