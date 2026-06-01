@@ -26,6 +26,7 @@ import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons stat change after install, logout
+@Disabled
 class GuiCommandTest {
 
     // Fails in Linux CI with "No X11 DISPLAY variable was set"
