@@ -20,7 +20,7 @@ public class Environment {
 
     // TODO test
     public static Path getWorkDir() {
-        return Path.of(System.getProperty("user.dir"));
+        return Path.of(System.getProperty("user.dir")).toAbsolutePath();
     }
 
 }

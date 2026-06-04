@@ -22,7 +22,8 @@ public class RestClient {
     public HttpJsonResponse post(String url, Map<String, Object> body) {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(buildUrl(baseUrl, url))
-            .header("Content-Type", "application/json")
+//            .header("Content-Type", "application/json")
+            .header("Content-Type", "application/json; charset=utf-8")
             .POST(HttpRequest.BodyPublishers.ofString(JsonParser.toJson(body)))
             .build();
 
@@ -45,8 +46,8 @@ public class RestClient {
     }
 
     private static HttpJsonResponse send(HttpRequest request) {
-        try {
-            HttpResponse<byte[]> response = HttpClient.newHttpClient()
+        try (HttpClient httpClient = HttpClient.newHttpClient()) {
+            HttpResponse<byte[]> response = httpClient
                 .send(request, BodyHandlers.ofByteArray());
             return new HttpJsonResponse(response.statusCode(), toMap(response));
         } catch (IOException | InterruptedException e) {

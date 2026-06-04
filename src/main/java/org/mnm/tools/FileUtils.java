@@ -1,11 +1,14 @@
 package org.mnm.tools;
 
+import org.mnm.gui.GuiCommand;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +68,21 @@ public class FileUtils {
             return inputStream.readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    public static Path installClasspathResource(String resource) {
+        try (InputStream inputStream = GuiCommand.class.getClassLoader().getResourceAsStream(resource)) {
+            if (inputStream == null) {
+                ProcessUtils.panic(resource + " not found on the classpath");
+            }
+            Path fontconfig = Files.createTempFile("fontconfig-", ".properties");
+            Files.copy(inputStream, fontconfig, StandardCopyOption.REPLACE_EXISTING);
+            fontconfig.toFile().deleteOnExit();
+            return fontconfig.toAbsolutePath();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load " + resource + " from the classpath", e);
         }
     }
 }

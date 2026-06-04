@@ -28,10 +28,17 @@ public class LoginService {
     public String login(String username, String password,
                         Path workDir, String apiBaseUrl) {
 
+        logger.debug("1");
         final Session session = Session.login(username, password, apiBaseUrl);
+        logger.debug("2");
+        logger.debug("Session: {}", session);
         final Client client = configDb.getClient(session.getSlug());
+        logger.debug("3");
+        logger.debug("client: {}", client);
 
-        return storeToken(session, client, workDir, INSTALLING).slug();
+        String slug = storeToken(session, client, workDir, INSTALLING).slug();
+        logger.debug("token stored for slug: {}", slug);
+        return slug;
     }
 
     public Client storeToken(Session session, Client client, Path workDir, Client.Status status) {

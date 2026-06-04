@@ -26,7 +26,7 @@ public class Session {
     }
 
     public static Session login(String username, String password, String baseUrl) {
-        System.out.println("Authenticating with account " + username + "...");
+        logger.debug("Authenticating with account: {}", username);
         if (isEmpty(username) || isEmpty(password)) {
             panic("Username or password is empty");
         }

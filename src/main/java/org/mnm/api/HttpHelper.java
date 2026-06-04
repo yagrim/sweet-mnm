@@ -1,8 +1,13 @@
 package org.mnm.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 
 public class HttpHelper {
+
+    private static final Logger logger = LoggerFactory.getLogger(HttpHelper.class);
 
     // Known errors:
     // 200, {"error":"Malformed Request","statusCode":1}
@@ -10,10 +15,12 @@ public class HttpHelper {
     // 429, {"error":"Too many requests","message":"Rate limit exceeded. Maximum 5 requests per 60 seconds."}
     static Map<String, Object> parseResponse(RestClient.HttpJsonResponse response) {
         int statusCode = response.statusCode();
+        logger.debug("status: {}", statusCode);
         if (statusCode != 200) {
             throw exception(response);
         }
         Map<String, Object> body = response.body();
+        logger.debug("body: {}", body);
         Long status = (Long) body.get("status");
         if (status != 0) {
             throw exception(response);

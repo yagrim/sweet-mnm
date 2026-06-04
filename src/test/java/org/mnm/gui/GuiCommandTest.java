@@ -5,11 +5,12 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -26,8 +27,16 @@ import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons stat change after install, logout
-@Disabled
 class GuiCommandTest {
+
+    @Test
+    void shouldExposeCommandMetadata() {
+        Command command = new GuiCommand();
+
+        assertThat(command.name()).isEqualTo("gui");
+        assertThat(command.description()).isEqualTo("Opens a simple Swing interface");
+        assertThat(command.help()).contains("sweet gui");
+    }
 
     // Fails in Linux CI with "No X11 DISPLAY variable was set"
     // Windows fails cleanup because db file is locked
@@ -60,12 +69,15 @@ class GuiCommandTest {
         command.close();
     }
 
-    @Disabled
-    @Test
-    void shouldPassTrueWhenAClientExists(@TempDir Path tempDir) {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldPassClientAndTokensFromDbToGuiStarter(boolean token, @TempDir(cleanup = NEVER) Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client("sample", "1.0.0", COMPLETED, tempDir));
+            configDb.addClient(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
+            if (token) {
+                configDb.addToken(new Token(DEFAULT_SLUG, "12345678"));
+            }
         }
 
         AtomicReference<Client> clientRef = new AtomicReference<>();
@@ -78,37 +90,11 @@ class GuiCommandTest {
 
         command.run(Arguments.parse());
 
-        assertThat(clientRef.get()).isNotNull();
+        assertThat(clientRef.get()).isEqualTo(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
+        assertThat(hasTokens.get()).isEqualTo(token);
     }
 
-    @Disabled
-    @Test
-    void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
-        Client client = testClient();
-        var tabs = GuiCommand.createTabbedPanel(null, client, false,
-            _ -> null,
-            (_, _) -> {
-                return null;
-            }, _ -> {
-            }, _ -> {
-            });
-
-        assertThat(tabs).isNotNull();
-        assertThat(tabs.clientPanel()).isNotNull();
-        assertThat(tabs.optionsPanel()).isNotNull();
-        assertThat(tabs.root()).isNotNull();
-
-        JTabbedPane tabPanel = tabs.root();
-        assertThat(tabPanel.getTabCount()).isEqualTo(2);
-        assertThat(tabPanel.getTitleAt(0)).isEqualTo("Client");
-        assertThat(tabPanel.getTitleAt(1)).isEqualTo("Options");
-
-        assertThat(findButton(tabPanel.getComponentAt(0), "Install")).isNotNull();
-        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug")).isNotNull();
-        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
-    }
-
-    @Disabled
+    //    @Disabled
     @Test
     void shouldBuildInstallOptionsWithUsernameAndPasswordOnly() {
         InstallerOptions options = InstallerOptions.forInstall("alice@example.com", "secret");
@@ -120,7 +106,7 @@ class GuiCommandTest {
         assertThat(options.toString()).contains("xxhsum");
     }
 
-    @Disabled
+    //    @Disabled
     @Test
     void shouldBuildRepairOptionsWithSlugOnly() {
         InstallerOptions options = InstallerOptions.forRepair("mnm");
@@ -132,48 +118,8 @@ class GuiCommandTest {
         assertThat(options.toString()).contains("xxhsum");
     }
 
-    @Disabled
-    @Test
-    void shouldExposeCommandMetadata() {
-        Command command = new GuiCommand();
-
-        assertThat(command.name()).isEqualTo("gui");
-        assertThat(command.description()).isEqualTo("Opens a simple Swing interface");
-        assertThat(command.help()).contains("sweet gui");
-    }
-
-    private static Client testClient() {
+    static Client testClient() {
         return new Client(DEFAULT_SLUG, "1.2.3", COMPLETED, Path.of("."));
-    }
-
-    private static JButton findButton(java.awt.Component component, String text) {
-        if (component instanceof JButton button && text.equals(button.getText())) {
-            return button;
-        }
-        if (component instanceof java.awt.Container container) {
-            for (java.awt.Component child : container.getComponents()) {
-                JButton found = findButton(child, text);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static JCheckBox findCheckBox(java.awt.Component component, String text) {
-        if (component instanceof javax.swing.JCheckBox checkBox && text.equals(checkBox.getText())) {
-            return checkBox;
-        }
-        if (component instanceof java.awt.Container container) {
-            for (java.awt.Component child : container.getComponents()) {
-                javax.swing.JCheckBox found = findCheckBox(child, text);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
     }
 
     private static void waitForButtonEnabled(JButton button) throws InterruptedException {

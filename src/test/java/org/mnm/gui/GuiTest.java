@@ -1,0 +1,70 @@
+package org.mnm.gui;
+
+import javax.swing.*;
+
+import org.junit.jupiter.api.Test;
+
+import org.mnm.config.Client;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.gui.GuiCommandTest.testClient;
+
+class GuiTest {
+
+    @Test
+    void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
+        Client client = testClient();
+
+        var tabs = GUI.createTabbedPanel(null, client, false,
+            _ -> null,
+            (_, _) -> {
+                return null;
+            }, _ -> {
+            }, _ -> {
+            });
+
+        assertThat(tabs).isNotNull();
+        assertThat(tabs.clientPanel()).isNotNull();
+        assertThat(tabs.optionsPanel()).isNotNull();
+        assertThat(tabs.root()).isNotNull();
+
+        JTabbedPane tabPanel = tabs.root();
+        assertThat(tabPanel.getTabCount()).isEqualTo(2);
+        assertThat(tabPanel.getTitleAt(0)).isEqualTo("Client");
+        assertThat(tabPanel.getTitleAt(1)).isEqualTo("Options");
+
+        assertThat(findButton(tabPanel.getComponentAt(0), "Install")).isNotNull();
+        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug")).isNotNull();
+        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
+    }
+
+    private static JButton findButton(java.awt.Component component, String text) {
+        if (component instanceof JButton button && text.equals(button.getText())) {
+            return button;
+        }
+        if (component instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                JButton found = findButton(child, text);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static JCheckBox findCheckBox(java.awt.Component component, String text) {
+        if (component instanceof javax.swing.JCheckBox checkBox && text.equals(checkBox.getText())) {
+            return checkBox;
+        }
+        if (component instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                javax.swing.JCheckBox found = findCheckBox(child, text);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+}

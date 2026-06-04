@@ -1380,6 +1380,13 @@
       ]
     },
     {
+      "type": "java.util.HashMap",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "java.lang.Enum",
       "jniAccessible": true,
       "methods": [
@@ -1393,7 +1400,29 @@
       "type": "java.lang.Record"
     },
     {
-      "type": "java.lang.String"
+      "type": "sun.nio.ch.UnixDomainSocketsUtil",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.nio.charset.StandardCharsets",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.nio.charset.Charset",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.lang.String",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
     },
     {
       "type": "java.lang.System",
