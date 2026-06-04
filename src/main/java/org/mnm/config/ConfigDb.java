@@ -134,7 +134,9 @@ public class ConfigDb implements AutoCloseable {
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1);
+                    int id = rs.getInt(1);
+                    logger.debug("Inserted new token: {}, {}", id, token.slug());
+                    return id;
                 } else {
                     throw new IllegalStateException("No generated key found");
                 }
@@ -153,7 +155,9 @@ public class ConfigDb implements AutoCloseable {
             ps.setString(1, slug);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapClient(rs);
+                    Client client = mapClient(rs);
+                    logger.debug("Client: {}", client);
+                    return client;
                 } else {
                     return null;
                 }

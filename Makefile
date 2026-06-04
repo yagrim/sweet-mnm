@@ -2,6 +2,7 @@
 
 PREFIX := $(HOME)/.local/bin
 APPDIR := $(PREFIX)/sweet-mnm
+APPBINDIR := $(PREFIX)/sweet-mnm/native
 
 # Detect OS and choose correct Gradle wrapper
 ifeq ($(OS),Windows_NT)
@@ -40,4 +41,8 @@ native:
 	@$(GRADLEW) nativeCompile
 
 native-install: install native
-	@cp build/native/nativeCompile/sweet $(PREFIX)
+	@mkdir -p $(PREFIX)
+	@rm $(PREFIX)/sweet
+	@rm -rf $(APPBINDIR)
+	@cp -r build/native/nativeCompile/ $(APPBINDIR)
+	@ln -sf $(APPBINDIR)/sweet $(PREFIX)/sweet

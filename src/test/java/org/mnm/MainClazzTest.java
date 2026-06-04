@@ -185,6 +185,7 @@ class MainClazzTest {
             
             Available commands:
               clients           Lists configured clients
+              gui               Opens a simple Swing interface
               install           Installs MnM client in the current location
               launcher-login    Login with your username and password (updates launcher database)
               launcher-logout   Removes token from the launcher database

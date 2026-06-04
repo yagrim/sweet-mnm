@@ -12,6 +12,18 @@ public record InstallerOptions(String username,
                                FileCheck fileCheck
 ) {
 
+    public static InstallerOptions forInstall(String username, String password) {
+        return new InstallerOptions(username, password, null, FileCheck.xxhsum);
+    }
+
+    public static InstallerOptions forRepair(String slug) {
+        return new InstallerOptions(null, null, slug, FileCheck.xxhsum);
+    }
+
+    public static InstallerOptions forRepairWindows(String slug) {
+        return new InstallerOptions(null, null, slug, FileCheck.inmemory);
+    }
+
     public static InstallerOptions parse(Arguments args) {
         return new InstallerOptions(
             args.get("username"),

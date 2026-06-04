@@ -54,7 +54,7 @@ tasks.named('test') {
     def className = descriptor.className.tokenize('.').last()
     println("Running test: ${className}.${descriptor.name}")
   }
-//    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+//  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
 }
 
 jar {
@@ -71,7 +71,7 @@ application {
   applicationName = 'sweet'
   applicationDefaultJvmArgs = [
     '--enable-native-access=ALL-UNNAMED',
-//            '-Xmx256m'
+//    '-Xmx256m'
   ]
   executableDir = ''
   mainClass = 'org.mnm.MainClazz'
@@ -81,11 +81,24 @@ graalvmNative {
   binaries {
     named("main") {
       imageName = application.applicationName
+
       buildArgs.addAll(
         '--enable-native-access=ALL-UNNAMED',
         '--enable-url-protocols=https',
         '--gc=serial',
-//                    '-R:MaxHeapSize=256m'
+        '--initialize-at-run-time=sun.java2d.d3d.D3DRenderQueue',
+        '--initialize-at-run-time=sun.java2d.d3d.D3DGraphicsDevice',
+        '--initialize-at-run-time=sun.java2d.d3d.D3DSurfaceData',
+        '--initialize-at-run-time=sun.java2d.d3d',
+        '--initialize-at-run-time=sun.awt.FontConfiguration',
+        '--initialize-at-run-time=sun.awt.Win32FontManager',
+        '--initialize-at-run-time=sun.font.SunFontManager',
+        '--initialize-at-run-time=sun.font.FontManagerFactory',
+        '--initialize-at-run-time=sun.font.FontDesignMetrics',
+        '--initialize-at-run-time=sun.font.PlatformFontInfo',
+        '--initialize-at-build-time=org.mnm.config.Environment',
+        '-Dsweet_native=true',
+//        '-R:MaxHeapSize=256m'
       )
       resources {
         includedPatterns.addAll('logback.xml', 'version.txt')
@@ -106,4 +119,20 @@ tasks.register("setVersion") {
 
 tasks.named("classes") {
   dependsOn(tasks.named("setVersion"))
+}
+
+tasks.named('run', JavaExec) {
+  args 'gui'
+  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+}
+
+if (os.isWindows()) {
+  tasks.named('nativeCompile') {
+    doLast {
+      copy {
+        from('src/main/resources/distribution')
+        into(layout.buildDirectory.dir('native/nativeCompile'))
+      }
+    }
+  }
 }

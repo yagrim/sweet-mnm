@@ -1,4 +1,5 @@
 downloads/**
+config-dir/**
 
 # Gradle
 .gradle

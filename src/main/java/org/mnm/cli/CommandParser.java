@@ -15,6 +15,7 @@ import org.mnm.client.TokensCommand;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.Environment;
 import org.mnm.launcher.LauncherLoginCommand;
+import org.mnm.gui.GuiCommand;
 import org.mnm.launcher.LauncherLogoutCommand;
 import org.mnm.launcher.LauncherTokenCommand;
 
@@ -50,6 +51,7 @@ public class CommandParser {
 
         final var commands = List.of(
             new ClientsCommand(configDbSupplier),
+            new GuiCommand(),
             new InstallCommand(configDbSupplier),
             new LoginCommand(configDbSupplier),
             new LogoutCommand(configDbSupplier),

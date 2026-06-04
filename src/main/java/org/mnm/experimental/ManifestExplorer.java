@@ -1,4 +1,4 @@
-package org.mnm;
+package org.mnm.experimental;
 
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.mnm.config.Environment;
 import org.mnm.manifest.Manifest;
 import org.mnm.manifest.ManifestHandler;
 
