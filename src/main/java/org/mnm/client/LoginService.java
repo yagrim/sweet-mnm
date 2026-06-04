@@ -28,17 +28,9 @@ public class LoginService {
     public String login(String username, String password,
                         Path workDir, String apiBaseUrl) {
 
-        logger.debug("1");
         final Session session = Session.login(username, password, apiBaseUrl);
-        logger.debug("2");
-        logger.debug("Session: {}", session);
         final Client client = configDb.getClient(session.getSlug());
-        logger.debug("3");
-        logger.debug("client: {}", client);
-
-        String slug = storeToken(session, client, workDir, INSTALLING).slug();
-        logger.debug("token stored for slug: {}", slug);
-        return slug;
+        return storeToken(session, client, workDir, INSTALLING).slug();
     }
 
     public Client storeToken(Session session, Client client, Path workDir, Client.Status status) {
@@ -62,16 +54,16 @@ public class LoginService {
         Token tokenToUpdate;
         if (expiredToken.isPresent()) {
             tokenToUpdate = expiredToken.get();
-            logger.debug("Updating expired token: {}", tokenToUpdate.id());
             configDb.updateToken(tokenToUpdate.id(), session.getToken());
+            logger.debug("Updated expired token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
         } else {
             if (tokens.isEmpty()) {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));
             } else {
                 tokenToUpdate = tokens.get(0);
-                logger.debug("Refreshing token: {}", tokenToUpdate.id());
                 configDb.updateToken(tokenToUpdate.id(), session.getToken());
+                logger.debug("Replaced valid token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
             }
         }
     }

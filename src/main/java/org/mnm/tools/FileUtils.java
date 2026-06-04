@@ -1,7 +1,5 @@
 package org.mnm.tools;
 
-import org.mnm.gui.GuiCommand;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mnm.gui.GuiCommand;
 
 
 public class FileUtils {
@@ -70,7 +70,6 @@ public class FileUtils {
             throw new RuntimeException(e);
         }
     }
-
 
     public static Path installClasspathResource(String resource) {
         try (InputStream inputStream = GuiCommand.class.getClassLoader().getResourceAsStream(resource)) {

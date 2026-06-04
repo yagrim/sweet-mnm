@@ -22,7 +22,6 @@ public class RestClient {
     public HttpJsonResponse post(String url, Map<String, Object> body) {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(buildUrl(baseUrl, url))
-//            .header("Content-Type", "application/json")
             .header("Content-Type", "application/json; charset=utf-8")
             .POST(HttpRequest.BodyPublishers.ofString(JsonParser.toJson(body)))
             .build();

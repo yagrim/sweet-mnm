@@ -13,12 +13,10 @@ public class Environment {
         .resolve("com.monstersandmemories.launcher")
         .resolve("launcher.db");
 
-    // TODO test
     public static Path getHomeDir() {
         return Path.of(System.getProperty("user.home"));
     }
 
-    // TODO test
     public static Path getWorkDir() {
         return Path.of(System.getProperty("user.dir")).toAbsolutePath();
     }

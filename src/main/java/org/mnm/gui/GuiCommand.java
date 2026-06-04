@@ -32,7 +32,6 @@ import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.config.Environment.*;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mnm.gui.GUI.createTabbedPanel;
-import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 

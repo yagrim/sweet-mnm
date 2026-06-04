@@ -199,6 +199,7 @@ public class ClientInstaller {
             final Path destination = installation.getInstallPath(file.path());
             FileUtils.createDirectories(destination);
 
+            logger.debug("Assembling: {}", destination);
             Zstd.Section[] sections = file.getBundlesList()
                 .stream()
                 .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))

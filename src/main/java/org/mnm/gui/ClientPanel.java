@@ -4,12 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.cli.Arguments;
 import org.mnm.config.Client;
 import org.mnm.tools.PanicException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
