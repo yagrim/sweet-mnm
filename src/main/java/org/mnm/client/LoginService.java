@@ -30,7 +30,6 @@ public class LoginService {
 
         final Session session = Session.login(username, password, apiBaseUrl);
         final Client client = configDb.getClient(session.getSlug());
-
         return storeToken(session, client, workDir, INSTALLING).slug();
     }
 
@@ -55,16 +54,16 @@ public class LoginService {
         Token tokenToUpdate;
         if (expiredToken.isPresent()) {
             tokenToUpdate = expiredToken.get();
-            logger.debug("Updating expired token: {}", tokenToUpdate.id());
             configDb.updateToken(tokenToUpdate.id(), session.getToken());
+            logger.debug("Updated expired token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
         } else {
             if (tokens.isEmpty()) {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));
             } else {
                 tokenToUpdate = tokens.get(0);
-                logger.debug("Refreshing token: {}", tokenToUpdate.id());
                 configDb.updateToken(tokenToUpdate.id(), session.getToken());
+                logger.debug("Replaced valid token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
             }
         }
     }

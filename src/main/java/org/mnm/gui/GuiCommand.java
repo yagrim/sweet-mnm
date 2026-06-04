@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -23,14 +26,21 @@ import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
+import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.config.Environment.*;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
-import static org.mnm.gui.GuiComponents.setFontSize;
+import static org.mnm.gui.GUI.createTabbedPanel;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
+import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
+
+    private static final Logger logger = LoggerFactory.getLogger(GuiCommand.class);
+
+    // https://docs.oracle.com/javase/8/docs/technotes/guides/intl/fontconfig.html
+    private static final String FONTCONFIG_PROTON = "fontconfig-proton.properties";
 
     @FunctionalInterface
     interface GuiStarter {
@@ -74,12 +84,27 @@ public class GuiCommand implements Command {
 
     public GuiCommand() {
         this(new ConfigDbLocator());
+    }
+
+    // Commands should not initialize in constructor because debug is configured after it
+    private static void initialize() {
+
+        logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
 
         if (NATIVE_IMAGE) {
-            // Workaround for AWT Native image error
-            // Caused by: java.lang.Error: java.home property not set
-            //	at java.desktop@25.0.2/sun.awt.FontConfiguration.findFontConfigFile(FontConfiguration.java:166)
             System.setProperty("java.home", "");
+            if (OS.isWindows()) {
+                final Path fontconfig = getWorkDir().resolve(FONTCONFIG_PROTON).toAbsolutePath();
+                if (!fontconfig.toFile().exists()) {
+                    ProcessUtils.panic(FONTCONFIG_PROTON + " not found");
+                }
+                logger.debug("Setting sun.awt.fontconfig: {}", fontconfig);
+                System.setProperty("sun.awt.fontconfig", fontconfig.toString());
+            }
+        } else {
+            final Path fontconfig = installClasspathResource("distribution/" + FONTCONFIG_PROTON);
+            logger.debug("Installing fontconfig into: {}", fontconfig);
+            System.setProperty("sun.awt.fontconfig", fontconfig.toString());
         }
     }
 
@@ -87,7 +112,12 @@ public class GuiCommand implements Command {
         this.configDbLocator = configDbLocator;
         this.repairAction = slug -> repairClient(configDbLocator, slug);
         this.runAction = args -> runClient(configDbLocator, args);
-        this.loginAction = (username, password) -> login(configDbLocator, username, password);
+        this.loginAction = (username, password) -> {
+            logger.debug("action credentials: {}, {}", username, password);
+            Client login = login(configDbLocator, username, password);
+            logger.debug("action client: {}", login);
+            return login;
+        };
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
         this.postInitAction = (client, buttons) -> postInitialization(configDbLocator, client, buttons);
@@ -105,6 +135,7 @@ public class GuiCommand implements Command {
 
     @Override
     public void run(Arguments args) {
+        initialize();
         guiStarter.start(getClient(), hasAvailableToken());
     }
 
@@ -185,6 +216,7 @@ public class GuiCommand implements Command {
     private void postInitialization(Supplier<Path> configDbLocator, Client client, ClientButtonsHandler buttons) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
             if (client != null) {
+                logger.debug("No client found in config db");
                 List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
                 if (!tokens.isEmpty()) {
                     final String token = tokens.get(0).token();
@@ -200,20 +232,6 @@ public class GuiCommand implements Command {
                 }
             }
         }
-    }
-
-    static Tabs createTabbedPanel(JFrame frame, Client client, boolean hasToken,
-                                  RepairAction repairAction,
-                                  LoginAction loginAction, LogoutAction logoutAction, RunAction runAction) {
-
-        final ClientPanel clientPanel = new ClientPanel(frame);
-        final OptionsPanel optionsPanel = new OptionsPanel();
-
-        final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Client", clientPanel.create(client, hasToken, repairAction, loginAction, logoutAction, runAction));
-        tabs.addTab("Options", optionsPanel.create());
-        setFontSize(tabs, 15f);
-        return new Tabs(clientPanel, optionsPanel, tabs);
     }
 
     record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {

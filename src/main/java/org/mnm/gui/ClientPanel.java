@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.cli.Arguments;
 import org.mnm.config.Client;
 import org.mnm.tools.PanicException;
@@ -87,6 +90,8 @@ class ClientPanel extends JPanel {
             }));
     }
 
+    private static final Logger logger = LoggerFactory.getLogger(ClientPanel.class);
+
     private static void handleLogin(ClientButtonsHandler buttons, JFrame parent, GuiCommand.LoginAction loginAction) {
         buttons.loginStart();
 
@@ -95,11 +100,14 @@ class ClientPanel extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
+                logger.debug("username: {}", credentialsPanel.getUsername());
+                logger.debug("password: {}", credentialsPanel.getPassword());
                 final Client client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
                 buttons.loginDone(client);
             } catch (Exception e) {
                 buttons.refresh();
-                showInfoMessageDialogSync("Error: " + e.getMessage());
+                e.printStackTrace();
+                showErrorMessageDialogSync("Error: " + e.getMessage());
             }
         }
     }
@@ -113,6 +121,7 @@ class ClientPanel extends JPanel {
         try {
             runAction.run(Arguments.parse("--slug", DEFAULT_SLUG));
         } catch (PanicException e) {
+            e.printStackTrace();
             showErrorMessageDialogSync("Error: " + e.getMessage());
         }
     }

@@ -2,7 +2,12 @@ package org.mnm.api;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class HttpHelper {
+
+    private static final Logger logger = LoggerFactory.getLogger(HttpHelper.class);
 
     // Known errors:
     // 200, {"error":"Malformed Request","statusCode":1}
@@ -14,6 +19,7 @@ public class HttpHelper {
             throw exception(response);
         }
         Map<String, Object> body = response.body();
+        logger.debug("Http Response: {} - {}", statusCode, body);
         Long status = (Long) body.get("status");
         if (status != 0) {
             throw exception(response);
