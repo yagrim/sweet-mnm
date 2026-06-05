@@ -87,7 +87,10 @@ public class ClientInstaller {
         // We list files, so empty directories will still remain
         final List<Path> currentFiles = getAllFiles(installation.getInstallPath());
 
-        for (Manifest.File file : session.getManifestHandler(installation.getDownloadsPath()).getFiles()) {
+        final List<Manifest.File> files = session.getManifestHandler(installation.getDownloadsPath()).getFiles();
+        for (int i = 0; i < files.size(); i++) {
+            final Manifest.File file = files.get(i);
+            logger.info("Processing file({}/{}): {}", i+1, files.size(), file.path());
             final Path location = installation.getInstallPath(file.path());
             if (currentFiles.contains(location)) {
                 currentFiles.remove(location);
