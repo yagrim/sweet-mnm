@@ -7,8 +7,10 @@ import static org.mnm.GeneralOptions.toggleDebug;
 
 class OptionsPanel extends JPanel {
 
+    private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
+
     OptionsPanel() {
-        super(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        super();
     }
 
     JPanel create() {
@@ -16,9 +18,18 @@ class OptionsPanel extends JPanel {
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> toggleDebug(debugOption.isSelected()));
 
+        inMemoryHashingOption.setActionCommand("in-memory-hashing");
+        inMemoryHashingOption.setSelected(true);
 
         this.add(debugOption);
+        this.add(Box.createVerticalStrut(8));
+        this.add(inMemoryHashingOption);
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         return this;
+    }
+
+    boolean useInMemoryHashing() {
+        return inMemoryHashingOption.isSelected();
     }
 
 }

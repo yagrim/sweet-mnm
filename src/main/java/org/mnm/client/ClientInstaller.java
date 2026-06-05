@@ -90,7 +90,7 @@ public class ClientInstaller {
         final List<Manifest.File> files = session.getManifestHandler(installation.getDownloadsPath()).getFiles();
         for (int i = 0; i < files.size(); i++) {
             final Manifest.File file = files.get(i);
-            logger.info("Processing file({}/{}): {}", i+1, files.size(), file.path());
+            logger.info("Processing file({}/{}): {}", i + 1, files.size(), file.path());
             final Path location = installation.getInstallPath(file.path());
             if (currentFiles.contains(location)) {
                 currentFiles.remove(location);
@@ -98,18 +98,8 @@ public class ClientInstaller {
             if (!location.toFile().exists()) {
                 missing.add(file);
             } else {
-                if (location.toFile().length() != file.totalSize()) {
-                    logger.debug("Invalid: expected size {}, found {}", file.totalSize(), location.toFile().length());
+                if (!hasValidCrc(location, file, options.fileCheck())) {
                     invalid.add(file);
-                } else {
-                    final String calculatedCrc = switch (options.fileCheck()) {
-                        case inmemory -> HashFunctions.InMemory.xxh3(location);
-                        default -> HashFunctions.OS.xxh3(location);
-                    };
-                    if (!calculatedCrc.equals(file.fileHash())) {
-                        logger.debug("Invalid: expected hash {}, found {}", file.fileHash(), calculatedCrc);
-                        invalid.add(file);
-                    }
                 }
             }
         }
@@ -130,10 +120,10 @@ public class ClientInstaller {
 
         // Actual installation
         if (!invalid.isEmpty()) {
-            installFiles(invalid, session, installation);
+            installFiles(invalid, session, installation, options);
         }
         if (!missing.isEmpty()) {
-            installFiles(missing, session, installation);
+            installFiles(missing, session, installation, options);
         }
         if (!currentFiles.isEmpty()) {
             currentFiles.forEach(path -> path.toFile().delete());
@@ -145,6 +135,23 @@ public class ClientInstaller {
         System.gc();
 
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
+    }
+
+    private static boolean hasValidCrc(Path location, Manifest.File file, InstallerOptions.FileCheck fileCheck) {
+        if (location.toFile().length() != file.totalSize()) {
+            logger.debug("Invalid: expected size {}, found {}", file.totalSize(), location.toFile().length());
+            return false;
+        } else {
+            final String calculatedCrc = switch (fileCheck) {
+                case inmemory -> HashFunctions.InMemory.xxh3(location);
+                default -> HashFunctions.OS.xxh3(location);
+            };
+            if (!calculatedCrc.equals(file.fileHash())) {
+                logger.debug("Invalid: expected hash {}, found {}", file.fileHash(), calculatedCrc);
+                return false;
+            }
+        }
+        return true;
     }
 
     public void validateTokens(List<Token> tokens) {
@@ -164,12 +171,12 @@ public class ClientInstaller {
     }
 
     // We could have async workers to download and extract in parallel
-    private static void installFiles(List<Manifest.File> files, Session session, Installation installation) {
+    private static void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options) {
         for (Manifest.File file : files) {
             FileHelper.downloadChunks(file, session.getChunksUrl(), installation);
         }
         for (Manifest.File file : files) {
-            FileHelper.extract(file, installation);
+            FileHelper.extract(file, installation, options.fileCheck());
         }
     }
 
@@ -201,16 +208,20 @@ public class ClientInstaller {
             return input.substring(i);
         }
 
-        private static void extract(Manifest.File file, Installation installation) {
+        private static void extract(Manifest.File file, Installation installation, InstallerOptions.FileCheck fileCheck) {
             final Path destination = installation.getInstallPath(file.path());
             FileUtils.createDirectories(destination);
 
-            logger.debug("Assembling: {}", destination);
+            logger.debug("Assembling and extracting: {}", destination);
             Zstd.Section[] sections = file.getBundlesList()
                 .stream()
                 .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))
                 .toArray(Zstd.Section[]::new);
             Zstd.InMemory.decompress(destination, sections);
+
+            if (!hasValidCrc(destination, file, fileCheck)) {
+                panic("Could not validate file: " + destination);
+            }
         }
     }
 

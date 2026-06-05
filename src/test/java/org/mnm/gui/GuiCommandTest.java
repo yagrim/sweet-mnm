@@ -96,20 +96,8 @@ class GuiCommandTest {
 
     //    @Disabled
     @Test
-    void shouldBuildInstallOptionsWithUsernameAndPasswordOnly() {
-        InstallerOptions options = InstallerOptions.forInstall("alice@example.com", "secret");
-
-        assertThat(options.username()).isEqualTo("alice@example.com");
-        assertThat(options.password()).isEqualTo("secret");
-        assertThat(options.slug()).isNull();
-        assertThat(options.fileCheck()).isNotNull();
-        assertThat(options.toString()).contains("xxhsum");
-    }
-
-    //    @Disabled
-    @Test
     void shouldBuildRepairOptionsWithSlugOnly() {
-        InstallerOptions options = InstallerOptions.forRepair("mnm");
+        InstallerOptions options = InstallerOptions.forRepair("mnm", false);
 
         assertThat(options.username()).isNull();
         assertThat(options.password()).isNull();

@@ -16,10 +16,10 @@ class GuiTest {
         Client client = testClient();
 
         var tabs = GUI.createTabbedPanel(null, client, false,
-            _ -> null,
-            (_, _) -> {
+            (_, _) -> null,
+            _ -> {
+            }, (_, _) -> {
                 return null;
-            }, _ -> {
             }, _ -> {
             });
 
@@ -34,8 +34,16 @@ class GuiTest {
         assertThat(tabPanel.getTitleAt(1)).isEqualTo("Options");
 
         assertThat(findButton(tabPanel.getComponentAt(0), "Install")).isNotNull();
-        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug")).isNotNull();
-        assertThat(findCheckBox(tabPanel.getComponentAt(1), "Enable debug").getActionCommand()).isEqualTo("debug");
+        assertThat(tabPanel.getComponentAt(1)).isInstanceOf(javax.swing.JPanel.class);
+
+        javax.swing.JPanel optionsPanel = (javax.swing.JPanel) tabPanel.getComponentAt(1);
+        assertThat(optionsPanel.getLayout()).isInstanceOf(javax.swing.BoxLayout.class);
+        assertThat(((javax.swing.BoxLayout) optionsPanel.getLayout()).getAxis()).isEqualTo(javax.swing.BoxLayout.Y_AXIS);
+        assertThat(optionsPanel.getComponentCount()).isEqualTo(3);
+        assertThat(findCheckBox(optionsPanel, "Enable debug")).isNotNull();
+        assertThat(findCheckBox(optionsPanel, "Enable debug").getActionCommand()).isEqualTo("debug");
+        assertThat(findCheckBox(optionsPanel, "In-memory hashing")).isNotNull();
+        assertThat(findCheckBox(optionsPanel, "In-memory hashing").getActionCommand()).isEqualTo("in-memory-hashing");
     }
 
     private static JButton findButton(java.awt.Component component, String text) {

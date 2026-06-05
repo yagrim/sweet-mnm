@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,8 @@ class ClientPanel extends JPanel {
                   GuiCommand.RepairAction repairAction,
                   GuiCommand.LoginAction loginAction,
                   GuiCommand.LogoutAction logoutAction,
-                  GuiCommand.RunAction runAction) {
+                  GuiCommand.RunAction runAction,
+                  BooleanSupplier inMemoryHashing) {
 
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
@@ -47,8 +49,8 @@ class ClientPanel extends JPanel {
         buttonsHandler.disableAll();
         this.buttonsHandler = buttonsHandler;
 
-        installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction));
-        repairButton.addActionListener(_ -> handleRepair(buttonsHandler, repairAction));
+        installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction, inMemoryHashing));
+        repairButton.addActionListener(_ -> handleRepair(buttonsHandler, repairAction, inMemoryHashing));
         playButton.addActionListener(_ -> runAction(runAction));
         loginButton.addActionListener(_ -> handleLogin(buttonsHandler, parent, loginAction));
         logoutButton.addActionListener(_ -> handleLogout(buttonsHandler, logoutAction));
@@ -70,20 +72,20 @@ class ClientPanel extends JPanel {
         return this;
     }
 
-    private static void handleInstall(ClientButtonsHandler buttons, GuiCommand.RepairAction installAction) {
+    private static void handleInstall(ClientButtonsHandler buttons, GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
         buttons.installationStart();
         CompletableFuture
-            .runAsync(() -> buttons.setClient(installAction.repair(DEFAULT_SLUG)))
+            .runAsync(() -> buttons.setClient(installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean())))
             .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Installation completed");
                 buttons.installationDone();
             }));
     }
 
-    private static void handleRepair(ClientButtonsHandler buttons, GuiCommand.RepairAction repairAction) {
+    private static void handleRepair(ClientButtonsHandler buttons, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
         buttons.repairStart();
         CompletableFuture
-            .runAsync(() -> buttons.setClient(repairAction.repair(DEFAULT_SLUG)))
+            .runAsync(() -> buttons.setClient(repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean())))
             .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Repair completed");
                 buttons.repairDone();

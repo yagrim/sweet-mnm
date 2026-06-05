@@ -49,7 +49,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface RepairAction {
-        Client repair(String slug);
+        Client repair(String slug, boolean inMemoryHashing);
     }
 
     @FunctionalInterface
@@ -110,7 +110,7 @@ public class GuiCommand implements Command {
 
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
-        this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
         this.runAction = args -> runClient(configDbLocator, args);
         this.loginAction = (username, password) -> {
             logger.debug("action credentials: {}, {}", username, password);
@@ -125,7 +125,7 @@ public class GuiCommand implements Command {
 
     GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter, PostInitializationAction postInitAction) {
         this.configDbLocator = configDbLocator;
-        this.repairAction = slug -> repairClient(configDbLocator, slug);
+        this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
         this.runAction = args -> runClient(configDbLocator, args);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
@@ -185,7 +185,7 @@ public class GuiCommand implements Command {
 
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
-                final Tabs tabs = createTabbedPanel(frame, client, hasToken, repairAction, loginAction, logoutAction, runAction);
+                final Tabs tabs = createTabbedPanel(frame, client, hasToken, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
@@ -237,10 +237,10 @@ public class GuiCommand implements Command {
     record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
     }
 
-    private static Client repairClient(Supplier<Path> configDbLocator, String slug) {
+    private static Client repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
-            final InstallerOptions options = OS.isWindows() ? InstallerOptions.forRepairWindows(slug) : InstallerOptions.forRepair(slug);
+            final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
             new ClientInstaller(configDb)
                 .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
 
