@@ -4071,6 +4071,10 @@
     },
     {
       "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/error.png"
+    },
+    {
+      "module": "java.desktop",
       "glob": "javax/swing/plaf/metal/icons/ocean/info.png"
     },
     {
