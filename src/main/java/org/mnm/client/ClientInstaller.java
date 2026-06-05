@@ -138,6 +138,9 @@ public class ClientInstaller {
 
         configDb.updateClientStatus(slug, COMPLETED);
 
+        // Force to clean memory
+        System.gc();
+
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 

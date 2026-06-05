@@ -54,7 +54,9 @@ tasks.named('test') {
     def className = descriptor.className.tokenize('.').last()
     println("Running test: ${className}.${descriptor.name}")
   }
-//  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+  if (project.hasProperty('agent')) {
+    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+  }
 }
 
 jar {
@@ -71,7 +73,7 @@ application {
   applicationName = 'sweet'
   applicationDefaultJvmArgs = [
     '--enable-native-access=ALL-UNNAMED',
-//    '-Xmx256m'
+    '-Xmx2304m'
   ]
   executableDir = ''
   mainClass = 'org.mnm.MainClazz'
@@ -98,7 +100,7 @@ graalvmNative {
         '--initialize-at-run-time=sun.font.PlatformFontInfo',
         '--initialize-at-build-time=org.mnm.config.Environment',
         '-Dsweet_native=true',
-//        '-R:MaxHeapSize=256m'
+        '-R:MaxHeapSize=2304m'
       )
       resources {
         includedPatterns.addAll('logback.xml', 'version.txt')
@@ -123,7 +125,9 @@ tasks.named("classes") {
 
 tasks.named('run', JavaExec) {
   args 'gui'
-  jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+  if (project.hasProperty('agent')) {
+    jvmArgs("-agentlib:native-image-agent=config-output-dir=./config-dir/,config-write-period-secs=300,config-write-initial-delay-secs=5")
+  }
 }
 
 if (os.isWindows()) {
