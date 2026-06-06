@@ -70,7 +70,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(Client client, ClientButtonsHandler buttons);
+        void run(Client client, ClientButtonsHandler buttons, InfoPanel infoPanel);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -81,6 +81,8 @@ public class GuiCommand implements Command {
     private final RepairAction repairAction;
     private final LoginAction loginAction;
     private final LogoutAction logoutAction;
+
+    private JFrame frame;
 
     public GuiCommand() {
         this(new ConfigDbLocator());
@@ -120,7 +122,7 @@ public class GuiCommand implements Command {
         };
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (client, buttons) -> postInitialization(configDbLocator, client, buttons);
+        this.postInitAction = (client, buttons, intoPanel) -> postInitialization(configDbLocator, client, buttons, intoPanel);
     }
 
     GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter, PostInitializationAction postInitAction) {
@@ -163,6 +165,8 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
+    // TODO we need to wrap the client with a property to tell if it's up-to-date
+    // with that, we can later do the proper UI treatment
     private Client getClient() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
             return configDb.getClient(DEFAULT_SLUG);
@@ -171,11 +175,10 @@ public class GuiCommand implements Command {
 
     private boolean hasAvailableToken() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            return !configDb.getTokens(DEFAULT_SLUG).isEmpty();
+            List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
+            return !tokens.isEmpty() && !JwtParser.parse(tokens.get(0).token()).isExpired();
         }
     }
-
-    private JFrame frame;
 
     private void startSwingInterface(Client client, boolean hasToken) {
         try {
@@ -196,7 +199,10 @@ public class GuiCommand implements Command {
 
                 // Prevent UI locking for some seconds
                 CompletableFuture
-                    .runAsync(() -> postInitAction.run(client, tabs.clientPanel().getButtonsHandler()))
+                    .runAsync(() -> {
+                        ClientPanel clientPanel = tabs.clientPanel();
+                        postInitAction.run(client, clientPanel.getButtonsHandler(), clientPanel.getInfoPanel());
+                    })
                     .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
                         tabs.clientPanel.getButtonsHandler().refresh();
                     }));
@@ -213,22 +219,31 @@ public class GuiCommand implements Command {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void postInitialization(Supplier<Path> configDbLocator, Client client, ClientButtonsHandler buttons) {
+    private void postInitialization(Supplier<Path> configDbLocator, Client client,
+                                    ClientButtonsHandler buttons, InfoPanel infoPanel) {
+
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
             if (client != null) {
                 logger.debug("No client found in config db");
                 List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
                 if (!tokens.isEmpty()) {
                     final String token = tokens.get(0).token();
-                    if (JwtParser.parse(token).isExpired()) {
-                        showInfoMessageDialogSync("Token expired: run Logout and Login");
+                    final JwtParser.JwtClaims parse = JwtParser.parse(token);
+
+                    String message;
+                    if (parse.isExpired()) {
+                        message = "Token expired: run Logout, and then Login";
+                        showInfoMessageDialogSync(message);
                         buttons.refreshToken();
+                    } else if (!Session.login(token, API_BASE_URL).getVersion().equals(client.version())) {
+                        message = "Client update detected: run Install or Repair";
+                        showInfoMessageDialogSync(message);
                     } else {
-                        final Session session = Session.login(token, API_BASE_URL);
-                        if (!session.getVersion().equals(client.version())) {
-                            showInfoMessageDialogSync("Client update detected: run Install or Repair");
-                        }
+                        message = """
+                            Client is up-to-date
+                            Token expires at: %s""".formatted(parse.expirationTime());
                     }
+                    infoPanel.setText(message);
                 }
             }
         }
