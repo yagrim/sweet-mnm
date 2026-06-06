@@ -64,7 +64,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface RunAction {
-        void run(Arguments args);
+        void run(RunnerOptions options);
     }
 
     // Validations run after initializing the UI
@@ -111,7 +111,7 @@ public class GuiCommand implements Command {
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
-        this.runAction = args -> runClient(configDbLocator, args);
+        this.runAction = (options) -> runClient(configDbLocator, options);
         this.loginAction = (username, password) -> {
             logger.debug("action credentials: {}, {}", username, password);
             Client login = login(configDbLocator, username, password);
@@ -126,7 +126,7 @@ public class GuiCommand implements Command {
     GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter, PostInitializationAction postInitAction) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
-        this.runAction = args -> runClient(configDbLocator, args);
+        this.runAction = (options) -> runClient(configDbLocator, options);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = guiStarter;
@@ -263,11 +263,10 @@ public class GuiCommand implements Command {
         }
     }
 
-    private static void runClient(Supplier<Path> configDbLocator, Arguments args) {
+    private static void runClient(Supplier<Path> configDbLocator, RunnerOptions options) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-
             new ClientRunner(configDb)
-                .run(RunnerOptions.parse(args));
+                .run(options);
         }
     }
 

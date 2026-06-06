@@ -45,12 +45,13 @@ public class RunCommand implements Command {
             %s
             
             Usage:
-              sweet %s [--slug <slug>] [--id <id>] [--skip-version-check]
+              sweet %s [--slug <slug>] [--id <id>] [--skip-version-check] [--enable-mangohud]
             
             Options:
               --slug                 Client slug to run (optional)
               --id                   Token id to use when multiple tokens exist
               --skip-version-check   Skip client version validation
+              --enable-mangohud      Enable MangoHud if available
               --debug                Enables debug messages
               --help                 Shows this help
             """.formatted(description(), name());

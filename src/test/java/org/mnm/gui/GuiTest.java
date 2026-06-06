@@ -39,11 +39,13 @@ class GuiTest {
         javax.swing.JPanel optionsPanel = (javax.swing.JPanel) tabPanel.getComponentAt(1);
         assertThat(optionsPanel.getLayout()).isInstanceOf(javax.swing.BoxLayout.class);
         assertThat(((javax.swing.BoxLayout) optionsPanel.getLayout()).getAxis()).isEqualTo(javax.swing.BoxLayout.Y_AXIS);
-        assertThat(optionsPanel.getComponentCount()).isEqualTo(3);
+        assertThat(optionsPanel.getComponentCount()).isEqualTo(5);
         assertThat(findCheckBox(optionsPanel, "Enable debug")).isNotNull();
         assertThat(findCheckBox(optionsPanel, "Enable debug").getActionCommand()).isEqualTo("debug");
         assertThat(findCheckBox(optionsPanel, "In-memory hashing")).isNotNull();
         assertThat(findCheckBox(optionsPanel, "In-memory hashing").getActionCommand()).isEqualTo("in-memory-hashing");
+        assertThat(findCheckBox(optionsPanel, "Enable MangoHud")).isNotNull();
+        assertThat(findCheckBox(optionsPanel, "Enable MangoHud").getActionCommand()).isEqualTo("mangohud");
     }
 
     private static JButton findButton(java.awt.Component component, String text) {

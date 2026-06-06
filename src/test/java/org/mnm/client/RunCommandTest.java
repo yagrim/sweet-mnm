@@ -36,12 +36,13 @@ class RunCommandTest {
             Runs configured client
             
             Usage:
-              sweet run [--slug <slug>] [--id <id>] [--skip-version-check]
+              sweet run [--slug <slug>] [--id <id>] [--skip-version-check] [--enable-mangohud]
             
             Options:
               --slug                 Client slug to run (optional)
               --id                   Token id to use when multiple tokens exist
               --skip-version-check   Skip client version validation
+              --enable-mangohud      Enable MangoHud if available
               --debug                Enables debug messages
               --help                 Shows this help
             """);
@@ -64,8 +65,25 @@ class RunCommandTest {
         command.run(Arguments.parse());
 
         assertThat(runnerInvoked).isTrue();
-        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false));
+        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, false));
         assertThat(dbFile).exists();
+    }
+
+    @Test
+    void shouldParseMangoHudFlagIntoRunnerOptions(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final AtomicReference<RunnerOptions> receivedOptions = new AtomicReference<>();
+
+        Command command = new RunCommand(
+            () -> dbFile,
+            (runOptions, configDb) -> {
+                receivedOptions.set(runOptions);
+                assertThat(configDb.getClients()).isEmpty();
+            });
+
+        command.run(Arguments.parse("--enable-mangohud"));
+
+        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, true));
     }
 
 }

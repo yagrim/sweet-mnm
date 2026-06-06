@@ -21,7 +21,7 @@ class RunnerOptionsTest {
             RunnerOptions options = RunnerOptions.parse(arguments);
 
             assertThat(options)
-                .isEqualTo(new RunnerOptions(null, null, false));
+                .isEqualTo(new RunnerOptions(null, null, false, false));
         }
 
         @Test
@@ -29,12 +29,13 @@ class RunnerOptionsTest {
             Arguments arguments = Arguments.parse(
                 "--slug", "mnm",
                 "--id", "42",
-                "--skip-version-check");
+                "--skip-version-check",
+                "--enable-mangohud");
 
             RunnerOptions options = RunnerOptions.parse(arguments);
 
             assertThat(options)
-                .isEqualTo(new RunnerOptions("mnm", 42, true));
+                .isEqualTo(new RunnerOptions("mnm", 42, true, true));
         }
 
         @Test

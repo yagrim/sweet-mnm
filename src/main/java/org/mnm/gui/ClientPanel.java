@@ -4,11 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.mnm.cli.Arguments;
+import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.tools.PanicException;
 
@@ -35,7 +36,10 @@ class ClientPanel extends JPanel {
                   GuiCommand.LoginAction loginAction,
                   GuiCommand.LogoutAction logoutAction,
                   GuiCommand.RunAction runAction,
-                  BooleanSupplier inMemoryHashing) {
+                  BooleanSupplier inMemoryHashing,
+                  Supplier<RunnerOptions> optionsSupplier) {
+
+        this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
         final JButton installButton = new JButton("Install");
         final JButton repairButton = new JButton("Repair");
@@ -51,7 +55,7 @@ class ClientPanel extends JPanel {
 
         installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction, inMemoryHashing));
         repairButton.addActionListener(_ -> handleRepair(buttonsHandler, repairAction, inMemoryHashing));
-        playButton.addActionListener(_ -> runAction(runAction));
+        playButton.addActionListener(_ -> runAction(runAction, optionsSupplier));
         loginButton.addActionListener(_ -> handleLogin(buttonsHandler, parent, loginAction));
         logoutButton.addActionListener(_ -> handleLogout(buttonsHandler, logoutAction));
 
@@ -67,8 +71,9 @@ class ClientPanel extends JPanel {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(firstRow);
         this.add(Box.createVerticalStrut(8));
+        this.add(Box.createVerticalStrut(8));
         this.add(secondRow);
-        this.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
         return this;
     }
 
@@ -119,9 +124,10 @@ class ClientPanel extends JPanel {
         buttons.logoutDone();
     }
 
-    private static void runAction(GuiCommand.RunAction runAction) {
+    private static void runAction(GuiCommand.RunAction runAction, Supplier<RunnerOptions> optionsSupplier) {
         try {
-            runAction.run(Arguments.parse("--slug", DEFAULT_SLUG));
+            RunnerOptions options = new RunnerOptions(DEFAULT_SLUG, null, false, optionsSupplier.get().enableMangoHud());
+            runAction.run(options);
         } catch (PanicException e) {
             e.printStackTrace();
             showErrorMessageDialogSync("Error: " + e.getMessage());

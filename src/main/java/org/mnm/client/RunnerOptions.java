@@ -5,13 +5,14 @@ import org.mnm.cli.Arguments;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
-public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionCheck) {
+public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionCheck, boolean enableMangoHud) {
 
     public static RunnerOptions parse(Arguments args) {
         return new RunnerOptions(
             args.get("slug"),
             parseTokenId(args.get("id")),
-            args.getBoolean("skip-version-check")
+            args.getBoolean("skip-version-check"),
+            args.getBoolean("enable-mangohud")
         );
     }
 
