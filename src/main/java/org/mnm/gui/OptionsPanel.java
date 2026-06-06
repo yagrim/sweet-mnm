@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.*;
 
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.OS;
 
 import static org.mnm.GeneralOptions.toggleDebug;
 
@@ -28,6 +29,10 @@ class OptionsPanel extends JPanel {
         inMemoryHashingOption.setSelected(true);
 
         mangoHudOption.setActionCommand("mangohud");
+        if (OS.isWindows()) {
+            mangoHudOption.setEnabled(false);
+            mangoHudOption.setText("Enable MangoHud (Linux only)");
+        }
 
         this.add(debugOption);
         this.add(Box.createVerticalStrut(8));
