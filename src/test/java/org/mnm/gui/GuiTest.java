@@ -5,6 +5,7 @@ import javax.swing.*;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.config.Client;
+import org.mnm.config.OS;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.gui.GuiCommandTest.testClient;
@@ -44,8 +45,9 @@ class GuiTest {
         assertThat(findCheckBox(optionsPanel, "Enable debug").getActionCommand()).isEqualTo("debug");
         assertThat(findCheckBox(optionsPanel, "In-memory hashing")).isNotNull();
         assertThat(findCheckBox(optionsPanel, "In-memory hashing").getActionCommand()).isEqualTo("in-memory-hashing");
-        assertThat(findCheckBox(optionsPanel, "Enable MangoHud")).isNotNull();
-        assertThat(findCheckBox(optionsPanel, "Enable MangoHud").getActionCommand()).isEqualTo("mangohud");
+        String enableMangoHudLabel = OS.isWindows() ? "Enable MangoHud (Linux only)": "Enable MangoHud";
+        assertThat(findCheckBox(optionsPanel, enableMangoHudLabel)).isNotNull();
+        assertThat(findCheckBox(optionsPanel, enableMangoHudLabel).getActionCommand()).isEqualTo("mangohud");
     }
 
     private static JButton findButton(java.awt.Component component, String text) {
