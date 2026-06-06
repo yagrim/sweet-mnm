@@ -1,7 +1,6 @@
 package org.mnm.launcher;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.function.Supplier;
 
 import org.mnm.cli.Arguments;
@@ -10,7 +9,6 @@ import org.mnm.config.OS;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
-import static org.mnm.tools.Formatting.toInstant;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 public class LauncherTokenCommand implements Command {
@@ -46,8 +44,8 @@ public class LauncherTokenCommand implements Command {
 
         StringBuilder sb = new StringBuilder();
         sb.append("%-7s : %s%n".formatted("issuer", claims.issuer()));
-        sb.append("%-7s : %s%n".formatted("created", toInstant(claims.issuedAt())));
-        sb.append("%-7s : %s%n".formatted("expires", toInstant(claims.expiration())));
+        sb.append("%-7s : %s%n".formatted("created", claims.issuedAtTime()));
+        sb.append("%-7s : %s%n".formatted("expires", claims.expirationTime()));
         sb.append("%-7s : %s%n".formatted("email", claims.email()));
         return sb.toString();
     }
