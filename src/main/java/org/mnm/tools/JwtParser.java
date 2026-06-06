@@ -1,5 +1,6 @@
 package org.mnm.tools;
 
+import java.time.Instant;
 import java.util.Base64;
 
 import com.google.gson.JsonObject;
@@ -63,6 +64,10 @@ public class JwtParser {
             return getLong("iat");
         }
 
+        public Instant issuedAtTime() {
+            return toInstant(issuedAt());
+        }
+
         public long expiration() {
             return getLong("exp");
         }
@@ -72,6 +77,14 @@ public class JwtParser {
          */
         public long version() {
             return getInt("version");
+        }
+
+        public Instant expirationTime() {
+            return toInstant(expiration());
+        }
+
+        private static Instant toInstant(long value) {
+            return value > 0 ? Instant.ofEpochSecond(value) : null;
         }
 
         public boolean isExpired() {

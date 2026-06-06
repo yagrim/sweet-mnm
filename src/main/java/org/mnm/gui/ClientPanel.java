@@ -19,8 +19,13 @@ import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 
 class ClientPanel extends JPanel {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClientPanel.class);
+
+    private static final int SCALE = 8;
+
     private final JFrame parent;
     private ClientButtonsHandler buttonsHandler;
+    private InfoPanel infoPanel;
 
     ClientPanel(JFrame parent) {
         this.parent = parent;
@@ -28,6 +33,10 @@ class ClientPanel extends JPanel {
 
     ClientButtonsHandler getButtonsHandler() {
         return buttonsHandler;
+    }
+
+    public InfoPanel getInfoPanel() {
+        return infoPanel;
     }
 
     JPanel create(Client client,
@@ -59,20 +68,23 @@ class ClientPanel extends JPanel {
         loginButton.addActionListener(_ -> handleLogin(buttonsHandler, parent, loginAction));
         logoutButton.addActionListener(_ -> handleLogout(buttonsHandler, logoutAction));
 
-        final JPanel firstRow = new JPanel(new GridLayout(1, 2, 8, 0));
-        firstRow.add(loginButton);
-        firstRow.add(installButton);
-        firstRow.add(repairButton);
-        firstRow.add(logoutButton);
+        final JPanel clientPanel = new JPanel(new GridLayout(1, 2, SCALE, 0));
+        clientPanel.add(loginButton);
+        clientPanel.add(installButton);
+        clientPanel.add(repairButton);
+        clientPanel.add(logoutButton);
 
-        final JPanel secondRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        secondRow.add(playButton);
+        final JPanel playRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        playRow.add(playButton);
+
+        this.infoPanel = new InfoPanel(clientPanel.getPreferredSize().width, SCALE * 6, this.getBackground());
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        this.add(firstRow);
-        this.add(Box.createVerticalStrut(8));
-        this.add(Box.createVerticalStrut(8));
-        this.add(secondRow);
+        this.add(clientPanel);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(infoPanel, BorderLayout.CENTER);
+        this.add(Box.createVerticalStrut(SCALE * 3));
+        this.add(playRow);
 
         return this;
     }
@@ -96,8 +108,6 @@ class ClientPanel extends JPanel {
                 buttons.repairDone();
             }));
     }
-
-    private static final Logger logger = LoggerFactory.getLogger(ClientPanel.class);
 
     private static void handleLogin(ClientButtonsHandler buttons, JFrame parent, GuiCommand.LoginAction loginAction) {
         buttons.loginStart();
@@ -133,4 +143,5 @@ class ClientPanel extends JPanel {
             showErrorMessageDialogSync("Error: " + e.getMessage());
         }
     }
+
 }

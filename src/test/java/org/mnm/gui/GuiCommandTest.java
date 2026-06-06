@@ -21,6 +21,7 @@ import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
+import static org.mnm.TestUtils.testToken;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.COMPLETED;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
@@ -76,7 +77,7 @@ class GuiCommandTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
             if (token) {
-                configDb.addToken(new Token(DEFAULT_SLUG, "12345678"));
+                configDb.addToken(new Token(DEFAULT_SLUG, validToken()));
             }
         }
 
@@ -85,7 +86,7 @@ class GuiCommandTest {
         Command command = new GuiCommand(() -> dbFile, (client, hasToken) -> {
             clientRef.set(client);
             hasTokens.set(hasToken);
-        }, (_, _) -> {
+        }, (_, _, _) -> {
         });
 
         command.run(Arguments.parse());

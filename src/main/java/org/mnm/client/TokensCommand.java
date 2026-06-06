@@ -12,7 +12,6 @@ import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.JwtParser.JwtClaims;
 
-import static org.mnm.tools.Formatting.toInstant;
 import static org.mnm.tools.Formatting.width;
 import static org.mnm.tools.StringUtils.isEmpty;
 
@@ -35,7 +34,7 @@ public class TokensCommand implements Command {
             List<TokenMetadata> list = tokens.stream()
                 .map(session -> {
                     JwtClaims claims = JwtParser.parse(session.token());
-                    return new TokenMetadata(session.id(), session.slug(), claims.email(), toInstant(claims.expiration()).toString());
+                    return new TokenMetadata(session.id(), session.slug(), claims.email(), claims.expirationTime().toString());
                 })
                 .toList();
 
