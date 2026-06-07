@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.client.ClientInstaller.Installer;
-import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 
 import static org.mnm.config.Client.Status.REPAIRING;

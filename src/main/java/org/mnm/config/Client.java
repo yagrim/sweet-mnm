@@ -19,8 +19,18 @@ public record Client(
 
     /**
      * Installation state tracked for a client record.
+     * - ~ING: are explicit status change due to install/repair operations.
+     * - the rest: are implicit status changes due to login and version check.
      */
     public enum Status {
-        INSTALLING, REPAIRING, COMPLETED
+        NOT_INSTALLED,
+        UPDATED,
+        NEEDS_UPDATE,
+        INSTALLING,
+        REPAIRING;
+
+        public boolean isInProgress() {
+            return equals(INSTALLING) || equals(REPAIRING);
+        }
     }
 }

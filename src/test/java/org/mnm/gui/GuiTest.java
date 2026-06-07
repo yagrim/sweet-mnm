@@ -1,10 +1,10 @@
 package org.mnm.gui;
 
 import javax.swing.*;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import org.mnm.config.Client;
 import org.mnm.config.OS;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,14 +14,15 @@ class GuiTest {
 
     @Test
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
-        Client client = testClient();
+        var client = testClient();
+        var clientStatus = new ClientStatus(client, true, true, Instant.now());
 
-        var tabs = GUI.createTabbedPanel(null, client, false,
+        var tabs = GUI.createTabbedPanel(null, clientStatus,
             (_, _) -> null,
             _ -> {
-            }, (_, _) -> {
-                return null;
-            }, _ -> {
+            },
+            (_, _) -> null,
+            _ -> {
             });
 
         assertThat(tabs).isNotNull();
@@ -45,7 +46,7 @@ class GuiTest {
         assertThat(findCheckBox(optionsPanel, "Enable debug").getActionCommand()).isEqualTo("debug");
         assertThat(findCheckBox(optionsPanel, "In-memory hashing")).isNotNull();
         assertThat(findCheckBox(optionsPanel, "In-memory hashing").getActionCommand()).isEqualTo("in-memory-hashing");
-        String enableMangoHudLabel = OS.isWindows() ? "Enable MangoHud (Linux only)": "Enable MangoHud";
+        String enableMangoHudLabel = OS.isWindows() ? "Enable MangoHud (Linux only)" : "Enable MangoHud";
         assertThat(findCheckBox(optionsPanel, enableMangoHudLabel)).isNotNull();
         assertThat(findCheckBox(optionsPanel, enableMangoHudLabel).getActionCommand()).isEqualTo("mangohud");
     }

@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.cli.DevFlags;
 import org.mnm.config.OS;
 import org.mnm.launcher.TokenUpdater.Options;
 

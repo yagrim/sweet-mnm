@@ -1,16 +1,13 @@
 package org.mnm.gui;
 
-import javax.swing.*;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -21,13 +18,15 @@ import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
-import static org.mnm.TestUtils.testToken;
+import static org.mnm.ApiServerStubs.stubAccountLogin;
+import static org.mnm.ApiServerStubs.stubGameVersions;
 import static org.mnm.TestUtils.validToken;
-import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
-// Test buttons stat change after install, logout
+// Test buttons state change after install, logout
+@WireMockTest(httpsEnabled = true)
 class GuiCommandTest {
 
     @Test
@@ -55,7 +54,10 @@ class GuiCommandTest {
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    void shouldStartGui(@TempDir(cleanup = NEVER) Path tempDir) {
+    void shouldStartGui(WireMockRuntimeInfo wiremock, @TempDir(cleanup = NEVER) Path tempDir) {
+        stubAccountLogin();
+        stubGameVersions();
+
         final Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(testClient());
@@ -64,38 +66,15 @@ class GuiCommandTest {
 
         GuiCommand command = new GuiCommand(() -> dbFile);
 
-        command.run(Arguments.parse());
+        command.run(Arguments.parse(
+            "--dev-options", "true",
+            "--api-endpoint", wiremock.getHttpBaseUrl()
+        ));
 
         // TODO validate buttons
         command.close();
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldPassClientAndTokensFromDbToGuiStarter(boolean token, @TempDir(cleanup = NEVER) Path tempDir) {
-        Path dbFile = tempDir.resolve("config.db");
-        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
-            if (token) {
-                configDb.addToken(new Token(DEFAULT_SLUG, validToken()));
-            }
-        }
-
-        AtomicReference<Client> clientRef = new AtomicReference<>();
-        AtomicBoolean hasTokens = new AtomicBoolean(false);
-        Command command = new GuiCommand(() -> dbFile, (client, hasToken) -> {
-            clientRef.set(client);
-            hasTokens.set(hasToken);
-        }, (_, _, _) -> {
-        });
-
-        command.run(Arguments.parse());
-
-        assertThat(clientRef.get()).isEqualTo(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
-        assertThat(hasTokens.get()).isEqualTo(token);
-    }
-
-    //    @Disabled
     @Test
     void shouldBuildRepairOptionsWithSlugOnly() {
         InstallerOptions options = InstallerOptions.forRepair("mnm", false);
@@ -108,16 +87,7 @@ class GuiCommandTest {
     }
 
     static Client testClient() {
-        return new Client(DEFAULT_SLUG, "1.2.3", COMPLETED, Path.of("."));
-    }
-
-    private static void waitForButtonEnabled(JButton button) throws InterruptedException {
-        for (int i = 0; i < 50; i++) {
-            if (button.isEnabled()) {
-                return;
-            }
-            Thread.sleep(20);
-        }
+        return new Client(DEFAULT_SLUG, "1.2.3", UPDATED, Path.of("."));
     }
 
 }

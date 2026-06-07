@@ -39,8 +39,7 @@ class ClientPanel extends JPanel {
         return infoPanel;
     }
 
-    JPanel create(Client client,
-                  boolean hasToken,
+    JPanel create(ClientStatus clientStatus,
                   GuiCommand.RepairAction repairAction,
                   GuiCommand.LoginAction loginAction,
                   GuiCommand.LogoutAction logoutAction,
@@ -57,8 +56,8 @@ class ClientPanel extends JPanel {
         final JButton logoutButton = new JButton("Logout");
 
         final ClientButtonsHandler buttonsHandler = new ClientButtonsHandler(installButton, repairButton, playButton, loginButton, logoutButton);
-        buttonsHandler.setClient(client);
-        buttonsHandler.setHasToken(hasToken);
+        buttonsHandler.setClient(clientStatus.client(), clientStatus.clientUptoDate());
+        buttonsHandler.setHasToken(clientStatus.validToken());
         buttonsHandler.disableAll();
         this.buttonsHandler = buttonsHandler;
 
@@ -92,20 +91,20 @@ class ClientPanel extends JPanel {
     private static void handleInstall(ClientButtonsHandler buttons, GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
         buttons.installationStart();
         CompletableFuture
-            .runAsync(() -> buttons.setClient(installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean())))
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+            .supplyAsync(() -> installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
+            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Installation completed");
-                buttons.installationDone();
+                buttons.installationDone(client);
             }));
     }
 
     private static void handleRepair(ClientButtonsHandler buttons, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
         buttons.repairStart();
         CompletableFuture
-            .runAsync(() -> buttons.setClient(repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean())))
-            .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
+            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
+            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Repair completed");
-                buttons.repairDone();
+                buttons.repairDone(client);
             }));
     }
 
@@ -117,8 +116,6 @@ class ClientPanel extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                logger.debug("username: {}", credentialsPanel.getUsername());
-                logger.debug("password: {}", credentialsPanel.getPassword());
                 final Client client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
                 buttons.loginDone(client);
             } catch (Exception e) {

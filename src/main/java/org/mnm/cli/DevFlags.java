@@ -1,12 +1,11 @@
-package org.mnm.launcher;
+package org.mnm.cli;
 
-import org.mnm.cli.Arguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.mnm.tools.StringUtils.isEmpty;
 
-record DevFlags(boolean enabled, String apiEndpoint) {
+public record DevFlags(boolean enabled, String apiEndpoint) {
 
     private static final Logger logger = LoggerFactory.getLogger(DevFlags.class);
 
