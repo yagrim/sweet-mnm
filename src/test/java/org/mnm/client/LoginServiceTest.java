@@ -97,7 +97,8 @@ class LoginServiceTest {
             assertThat(slug).isEqualTo(TEST_SLUG);
 
             verify(configDb, Mockito.times(0)).addClient(any());
-            verify(configDb, Mockito.times(1)).updateClientStatus(eq(TEST_SLUG), eq(NEEDS_UPDATE));
+            verify(configDb, Mockito.times(0)).updateClientStatus(eq(TEST_SLUG), any());
+            verify(configDb, Mockito.times(1)).updateClient(eq(TEST_SLUG), eq("1.2.3"), eq(NEEDS_UPDATE), eq(tempDir));
             verify(configDb, Mockito.times(1)).addToken(eq(new Token(TEST_SLUG, VALID_TOKEN)));
             verify(configDb, Mockito.times(0)).updateToken(eq(1), eq(VALID_TOKEN));
         }

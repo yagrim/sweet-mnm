@@ -13,7 +13,8 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
-import static org.mnm.config.Client.Status.*;
+import static org.mnm.config.Client.Status.NEEDS_UPDATE;
+import static org.mnm.config.Client.Status.NOT_INSTALLED;
 
 public class LoginService {
 
@@ -45,7 +46,7 @@ public class LoginService {
             if (client.status().isInProgress()) {
                 configDb.updateClientStatus(session.getSlug(), status);
             } else if (!session.getVersion().equals(client.version())) {
-                configDb.updateClientStatus(session.getSlug(), NEEDS_UPDATE);
+                configDb.updateClient(session.getSlug(), session.getVersion(), NEEDS_UPDATE, client.path());
             }
             refreshSessionToken(client, session);
         }
