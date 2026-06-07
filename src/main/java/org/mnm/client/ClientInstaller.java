@@ -20,7 +20,7 @@ import org.mnm.tools.JwtParser;
 import org.mnm.tools.StringUtils;
 import org.mnm.tools.Zstd;
 
-import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.tools.FileUtils.fileExists;
 import static org.mnm.tools.FileUtils.getAllFiles;
 import static org.mnm.tools.ProcessUtils.panic;
@@ -129,7 +129,7 @@ public class ClientInstaller {
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
-        configDb.updateClientStatus(slug, COMPLETED);
+        configDb.updateClientStatus(slug, UPDATED);
 
         // Force to clean memory
         System.gc();

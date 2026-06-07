@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.ApiServerStubs.*;
 import static org.mnm.TestUtils.*;
 import static org.mnm.client.InstallerOptions.FileCheck.xxhsum;
-import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Client.Status.INSTALLING;
 
 
@@ -83,7 +83,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("missing-client.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, Path.of("")));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, Path.of("")));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
@@ -99,7 +99,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("expired-token.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, testInstallationPath(tempDir).toAbsolutePath()));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, testInstallationPath(tempDir).toAbsolutePath()));
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
 
             final ClientInstaller installer = new ClientInstaller(configDb);
@@ -121,7 +121,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, EXPIRED_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
@@ -138,7 +138,7 @@ class ClientInstallerTest {
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))
@@ -158,7 +158,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("refresh-expired-token.db");
 
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir));
+            configDb.addClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
@@ -175,7 +175,7 @@ class ClientInstallerTest {
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, refreshToken))
@@ -339,7 +339,7 @@ class ClientInstallerTest {
                 .containsExactlyInAnyOrder("clients", "tokens");
 
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client(TEST_SLUG, TEST_VERSION, COMPLETED, tempDir))
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
                 .hasRows(1);
             testDatabase.assertThatTable("tokens")
                 .containsToken(new Token(1, TEST_SLUG, VALID_TOKEN))

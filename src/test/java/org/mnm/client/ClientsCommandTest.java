@@ -84,6 +84,6 @@ class ClientsCommandTest {
     }
 
     private static Client testClient(String slug) {
-        return new Client(slug, "v1.0.0", Client.Status.COMPLETED, Path.of("/install/" + slug));
+        return new Client(slug, "v1.0.0", Client.Status.UPDATED, Path.of("/install/" + slug));
     }
 }

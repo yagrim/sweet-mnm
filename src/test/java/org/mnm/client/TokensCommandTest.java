@@ -104,11 +104,11 @@ class TokensCommandTest {
 
     private static void initTokens(Path dbFile) {
         try (ConfigDb config = ConfigDb.open(dbFile)) {
-            Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
+            Client client = new Client("mnm-1", "v1.0.0", Client.Status.UPDATED, Path.of("/install/path"));
             config.addClient(client);
             config.addToken(new Token(client.slug(), TEST_TOKEN));
             config.addToken(new Token(client.slug(), TEST_TOKEN));
-            Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
+            Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.UPDATED, Path.of("/install/path"));
             config.addClient(client2);
             config.addToken(new Token(client2.slug(), TEST_TOKEN));
         }

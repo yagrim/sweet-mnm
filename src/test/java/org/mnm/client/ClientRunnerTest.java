@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
-import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 
@@ -48,8 +48,8 @@ class ClientRunnerTest {
         final ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients())
             .thenReturn(List.of(
-                new Client(SLUG_1, "v1.0.0", COMPLETED, Path.of("install-1")),
-                new Client(SLUG_2, "v1.0.0", COMPLETED, Path.of("install-2"))));
+                new Client(SLUG_1, "v1.0.0", UPDATED, Path.of("install-1")),
+                new Client(SLUG_2, "v1.0.0", UPDATED, Path.of("install-2"))));
 
         ClientRunner runner = new ClientRunner(configDb);
 
@@ -62,7 +62,7 @@ class ClientRunnerTest {
     void shouldPanicWhenNoTokenIsConfigured() {
         final ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients())
-            .thenReturn(List.of(new Client(SLUG, "v1.0.0", COMPLETED, Path.of("install"))));
+            .thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, Path.of("install"))));
         Mockito.when(configDb.getTokens(SLUG)).thenReturn(java.util.List.of());
 
         ClientRunner runner = new ClientRunner(configDb);
@@ -76,7 +76,7 @@ class ClientRunnerTest {
     void shouldPanicWhenMultipleTokensExistWithoutId() {
         final ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients())
-            .thenReturn(List.of(new Client(SLUG, "v1.0.0", COMPLETED, Path.of("install"))));
+            .thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, Path.of("install"))));
         Mockito.when(configDb.getTokens(SLUG))
             .thenReturn(List.of(new Token(1, SLUG, validToken()), new Token(2, SLUG, validToken())));
 
@@ -91,7 +91,7 @@ class ClientRunnerTest {
     void shouldPanicWhenTokenIdDoesNotMatchSlug() {
         final ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClient(SLUG_2))
-            .thenReturn(new Client(SLUG_2, "v1.0.0", COMPLETED, Path.of("install-2")));
+            .thenReturn(new Client(SLUG_2, "v1.0.0", UPDATED, Path.of("install-2")));
         Mockito.when(configDb.getToken(1))
             .thenReturn(new Token(1, SLUG_1, validToken()));
 
@@ -119,7 +119,7 @@ class ClientRunnerTest {
     void shouldPanicWhenTokenIsExpired() {
         ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients())
-            .thenReturn(List.of(new Client(SLUG, "v1.0.0", COMPLETED, Path.of("install"))));
+            .thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, Path.of("install"))));
         Mockito.when(configDb.getTokens(SLUG))
             .thenReturn(List.of(new Token(1, SLUG, expiredToken())));
 
@@ -134,7 +134,7 @@ class ClientRunnerTest {
     void shouldCheckVersionBeforeRunning(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
-        Client client = new Client(SLUG, "v1.0.0", COMPLETED, installPath);
+        Client client = new Client(SLUG, "v1.0.0", UPDATED, installPath);
 
         ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients()).thenReturn(List.of(client));
@@ -220,7 +220,7 @@ class ClientRunnerTest {
     }
 
     private RunResult runClient(Path installPath, String token, boolean isWindows, RunnerOptions options) {
-        Client client = new Client(SLUG, "v1.0.0", COMPLETED, installPath);
+        Client client = new Client(SLUG, "v1.0.0", UPDATED, installPath);
 
         ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients()).thenReturn(List.of(client));

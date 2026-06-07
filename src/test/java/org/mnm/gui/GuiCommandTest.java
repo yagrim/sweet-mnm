@@ -2,7 +2,7 @@ package org.mnm.gui;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
@@ -18,16 +18,17 @@ import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
+import org.mnm.tools.JwtParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
-import static org.mnm.TestUtils.testToken;
+import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
-import static org.mnm.config.Client.Status.COMPLETED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
-// Test buttons stat change after install, logout
+// Test buttons state change after install, logout
 class GuiCommandTest {
 
     @Test
@@ -72,30 +73,33 @@ class GuiCommandTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    void shouldPassClientAndTokensFromDbToGuiStarter(boolean token, @TempDir(cleanup = NEVER) Path tempDir) {
+    void shouldPassClientStatusToGuiStarter(boolean token, @TempDir(cleanup = NEVER) Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
+        Instant expirationTime = null;
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
+            configDb.addClient(new Client(DEFAULT_SLUG, "1.0.0", UPDATED, tempDir));
             if (token) {
-                configDb.addToken(new Token(DEFAULT_SLUG, validToken()));
+                String expiredToken = expiredToken();
+                expirationTime = JwtParser.parse(expiredToken).expirationTime();
+                configDb.addToken(new Token(DEFAULT_SLUG, expiredToken));
             }
         }
 
-        AtomicReference<Client> clientRef = new AtomicReference<>();
-        AtomicBoolean hasTokens = new AtomicBoolean(false);
-        Command command = new GuiCommand(() -> dbFile, (client, hasToken) -> {
-            clientRef.set(client);
-            hasTokens.set(hasToken);
+        AtomicReference<GuiCommand.ClientStatus> clientRef = new AtomicReference<>();
+        Command command = new GuiCommand(() -> dbFile, clientStatus -> {
+            clientRef.set(clientStatus);
         }, (_, _, _) -> {
         });
 
         command.run(Arguments.parse());
 
-        assertThat(clientRef.get()).isEqualTo(new Client(DEFAULT_SLUG, "1.0.0", COMPLETED, tempDir));
-        assertThat(hasTokens.get()).isEqualTo(token);
+        var clientStatus = clientRef.get();
+        assertThat(clientStatus.client()).isEqualTo(new Client(DEFAULT_SLUG, "1.0.0", UPDATED, tempDir));
+        assertThat(clientStatus.clientUptoDate()).isFalse();
+        assertThat(clientStatus.validToken()).isFalse();
+        assertThat(clientStatus.expiresAt()).isNull();
     }
 
-    //    @Disabled
     @Test
     void shouldBuildRepairOptionsWithSlugOnly() {
         InstallerOptions options = InstallerOptions.forRepair("mnm", false);
@@ -108,7 +112,7 @@ class GuiCommandTest {
     }
 
     static Client testClient() {
-        return new Client(DEFAULT_SLUG, "1.2.3", COMPLETED, Path.of("."));
+        return new Client(DEFAULT_SLUG, "1.2.3", UPDATED, Path.of("."));
     }
 
     private static void waitForButtonEnabled(JButton button) throws InterruptedException {

@@ -13,7 +13,7 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
-import static org.mnm.config.Client.Status.INSTALLING;
+import static org.mnm.config.Client.Status.*;
 
 public class LoginService {
 
@@ -30,18 +30,23 @@ public class LoginService {
 
         final Session session = Session.login(username, password, apiBaseUrl);
         final Client client = configDb.getClient(session.getSlug());
-        return storeToken(session, client, workDir, INSTALLING).slug();
+        return storeToken(session, client, workDir, null).slug();
     }
 
+    // status only used when REPAIRING or INSTALLING
     public Client storeToken(Session session, Client client, Path workDir, Client.Status status) {
         if (client == null) {
             // Installing works, since no installation has been completed yet
-            Client client1 = new Client(session.getSlug(), session.getVersion(), INSTALLING, workDir);
-            configDb.addClient(client1);
+            Client newClient = new Client(session.getSlug(), session.getVersion(), NOT_INSTALLED, workDir);
+            configDb.addClient(newClient);
             configDb.addToken(new Token(session.getSlug(), session.getToken()));
-            return client1;
+            return newClient;
         } else {
-            configDb.updateClientStatus(session.getSlug(), status);
+            if (status.isInProgress()) {
+                configDb.updateClientStatus(session.getSlug(), status);
+            } else if (!session.getVersion().equals(client.version())) {
+                configDb.updateClientStatus(session.getSlug(), NEEDS_UPDATE);
+            }
             refreshSessionToken(client, session);
         }
         return client;
@@ -57,6 +62,9 @@ public class LoginService {
             configDb.updateToken(tokenToUpdate.id(), session.getToken());
             logger.debug("Updated expired token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
         } else {
+            if (tokens.size() > 1) {
+                logger.debug("WARNING: Found multiple valid tokens: {}", tokens.size());
+            }
             if (tokens.isEmpty()) {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));

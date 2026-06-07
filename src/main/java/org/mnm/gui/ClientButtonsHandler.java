@@ -4,6 +4,8 @@ import javax.swing.*;
 
 import org.mnm.config.Client;
 
+import static org.mnm.config.Client.Status.NOT_INSTALLED;
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 class ClientButtonsHandler {
@@ -16,6 +18,7 @@ class ClientButtonsHandler {
     private final JButton logout;
 
     private Client client;
+    private boolean upToDate;
     private boolean hasToken;
 
     public ClientButtonsHandler(JButton install, JButton repair, JButton play,
@@ -28,14 +31,15 @@ class ClientButtonsHandler {
         setAppearance();
     }
 
-    public void setClient(Client client) {
+    // Used for initialization, no need to refresh
+    public void setClient(Client client, boolean upToDate) {
         this.client = client;
-        refresh();
+        this.upToDate = upToDate;
     }
 
+    // Used for initialization, no need to refresh
     public void setHasToken(boolean hasToken) {
         this.hasToken = hasToken;
-        refresh();
     }
 
     private void setAppearance() {
@@ -48,18 +52,16 @@ class ClientButtonsHandler {
     }
 
     public void refresh() {
-        boolean hasClient = hasClient();
-        boolean isCompleted = client != null && client.status() == Client.Status.COMPLETED;
-        install.setEnabled(hasClient && hasToken && !isCompleted);
-        // && client status is completed
-        repair.setEnabled(hasClient && hasToken && isCompleted);
+        boolean isCompleted = clientStatusIs(UPDATED);
+        install.setEnabled(hasToken && !isCompleted);
+        repair.setEnabled(hasToken && !clientStatusIs(NOT_INSTALLED) && (isCompleted || !upToDate));
         login.setEnabled(!hasToken);
         logout.setEnabled(hasToken);
-        play.setEnabled(hasClient && hasToken);
+        play.setEnabled(hasToken && upToDate && isCompleted);
     }
 
-    private boolean hasClient() {
-        return client != null;
+    private boolean clientStatusIs(Client.Status status) {
+        return client != null && client.status() == status;
     }
 
     void installationStart() {
@@ -69,7 +71,9 @@ class ClientButtonsHandler {
         play.setEnabled(false);
     }
 
-    void installationDone() {
+    void installationDone(Client client) {
+        this.client = client;
+        this.upToDate = true;
         refresh();
     }
 
@@ -77,7 +81,9 @@ class ClientButtonsHandler {
         installationStart();
     }
 
-    void repairDone() {
+    void repairDone(Client client) {
+        this.client = client;
+        this.upToDate = true;
         refresh();
     }
 
@@ -86,8 +92,10 @@ class ClientButtonsHandler {
     }
 
     void loginDone(Client client) {
-        setClient(client);
-        hasToken = true;
+        this.client = client;
+        // TODO we could use client.status to set upToDate, during login operation we have checked the version
+        this.upToDate = false;
+        this.hasToken = true;
         refresh();
     }
 
@@ -110,4 +118,5 @@ class ClientButtonsHandler {
         login.setEnabled(false);
         logout.setEnabled(false);
     }
+
 }

@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -23,6 +24,7 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
@@ -44,7 +46,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(Client client, boolean hasToken);
+        void start(ClientStatus clientStatus);
     }
 
     @FunctionalInterface
@@ -70,7 +72,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(Client client, ClientButtonsHandler buttons, InfoPanel infoPanel);
+        void run(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -88,41 +90,14 @@ public class GuiCommand implements Command {
         this(new ConfigDbLocator());
     }
 
-    // Commands should not initialize in constructor because debug is configured after it
-    private static void initialize() {
-
-        logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
-
-        if (NATIVE_IMAGE) {
-            System.setProperty("java.home", "");
-            if (OS.isWindows()) {
-                final Path fontconfig = getWorkDir().resolve(FONTCONFIG_PROTON).toAbsolutePath();
-                if (!fontconfig.toFile().exists()) {
-                    ProcessUtils.panic(FONTCONFIG_PROTON + " not found");
-                }
-                logger.debug("Setting sun.awt.fontconfig: {}", fontconfig);
-                System.setProperty("sun.awt.fontconfig", fontconfig.toString());
-            }
-        } else {
-            final Path fontconfig = installClasspathResource("distribution/" + FONTCONFIG_PROTON);
-            logger.debug("Installing fontconfig into: {}", fontconfig);
-            System.setProperty("sun.awt.fontconfig", fontconfig.toString());
-        }
-    }
-
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
         this.runAction = (options) -> runClient(configDbLocator, options);
-        this.loginAction = (username, password) -> {
-            logger.debug("action credentials: {}, {}", username, password);
-            Client login = login(configDbLocator, username, password);
-            logger.debug("action client: {}", login);
-            return login;
-        };
+        this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (client, buttons, intoPanel) -> postInitialization(configDbLocator, client, buttons, intoPanel);
+        this.postInitAction = (clientStatus, buttons, intoPanel) -> postInitialization(clientStatus, buttons, intoPanel);
     }
 
     GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter, PostInitializationAction postInitAction) {
@@ -138,7 +113,7 @@ public class GuiCommand implements Command {
     @Override
     public void run(Arguments args) {
         initialize();
-        guiStarter.start(getClient(), hasAvailableToken());
+        guiStarter.start(getClientStatus());
     }
 
     @Override
@@ -165,22 +140,58 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
+    // We extract the information we need, but do not store token for security
+    record ClientStatus(Client client, boolean clientUptoDate,
+                        boolean validToken, Instant expiresAt) {
+    }
+
     // TODO we need to wrap the client with a property to tell if it's up-to-date
     // with that, we can later do the proper UI treatment
-    private Client getClient() {
+    private ClientStatus getClientStatus() {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            return configDb.getClient(DEFAULT_SLUG);
+            Client client = configDb.getClient(DEFAULT_SLUG);
+            if (client != null) {
+                List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
+                if (!tokens.isEmpty()) {
+                    Token token = tokens.get(0);
+                    JwtParser.JwtClaims tokenClaims = JwtParser.parse(token.token());
+                    if (!tokenClaims.isExpired()) {
+                        Session session = Session.login(token.token(), Environment.API_BASE_URL);
+                        boolean upToDateClient = session.getVersion().equals(client.version());
+                        return new ClientStatus(client, true, upToDateClient, tokenClaims.expirationTime());
+                    } else {
+                        return new ClientStatus(null, false, false, null);
+                    }
+                } else {
+                    // Technically it could be up-to-date, but we can't query API without a token
+                    return new ClientStatus(null, false, false, null);
+                }
+            }
+            return new ClientStatus(null, false, false, null);
         }
     }
 
-    private boolean hasAvailableToken() {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
-            return !tokens.isEmpty() && !JwtParser.parse(tokens.get(0).token()).isExpired();
+    // Commands should not initialize in constructor because debug is configured after it
+    private static void initialize() {
+        logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
+        if (NATIVE_IMAGE) {
+            System.setProperty("java.home", "");
+            if (OS.isWindows()) {
+                final Path fontconfig = getWorkDir().resolve(FONTCONFIG_PROTON).toAbsolutePath();
+                if (!fontconfig.toFile().exists()) {
+                    ProcessUtils.panic(FONTCONFIG_PROTON + " not found");
+                }
+                logger.debug("Setting sun.awt.fontconfig: {}", fontconfig);
+                System.setProperty("sun.awt.fontconfig", fontconfig.toString());
+            }
+        } else {
+            final Path fontconfig = installClasspathResource("distribution/" + FONTCONFIG_PROTON);
+            logger.debug("Installing fontconfig into: {}", fontconfig);
+            System.setProperty("sun.awt.fontconfig", fontconfig.toString());
         }
     }
 
-    private void startSwingInterface(Client client, boolean hasToken) {
+    private void startSwingInterface(ClientStatus clientStatus) {
         try {
             // For message windows
             UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
@@ -188,7 +199,7 @@ public class GuiCommand implements Command {
 
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
-                final Tabs tabs = createTabbedPanel(frame, client, hasToken, loginAction, logoutAction, repairAction, runAction);
+                final Tabs tabs = createTabbedPanel(frame, clientStatus, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
@@ -201,7 +212,7 @@ public class GuiCommand implements Command {
                 CompletableFuture
                     .runAsync(() -> {
                         ClientPanel clientPanel = tabs.clientPanel();
-                        postInitAction.run(client, clientPanel.getButtonsHandler(), clientPanel.getInfoPanel());
+                        postInitAction.run(clientStatus, clientPanel.getButtonsHandler(), clientPanel.getInfoPanel());
                     })
                     .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
                         tabs.clientPanel.getButtonsHandler().refresh();
@@ -219,32 +230,31 @@ public class GuiCommand implements Command {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void postInitialization(Supplier<Path> configDbLocator, Client client,
-                                    ClientButtonsHandler buttons, InfoPanel infoPanel) {
+    private void postInitialization(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel) {
 
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            if (client != null) {
-                logger.debug("No client found in config db");
-                List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
-                if (!tokens.isEmpty()) {
-                    final String token = tokens.get(0).token();
-                    final JwtParser.JwtClaims parse = JwtParser.parse(token);
-
-                    String message;
-                    if (parse.isExpired()) {
-                        message = "Token expired: run Logout, and then Login";
-                        showInfoMessageDialogSync(message);
-                        buttons.refreshToken();
-                    } else if (!Session.login(token, API_BASE_URL).getVersion().equals(client.version())) {
-                        message = "Client update detected: run Install or Repair";
-                        showInfoMessageDialogSync(message);
-                    } else {
-                        message = """
-                            Client is up-to-date
-                            Token expires at: %s""".formatted(parse.expirationTime());
-                    }
-                    infoPanel.setText(message);
+        if (clientStatus.client != null) {
+            logger.debug("No client found in config db");
+            Client.Status status = clientStatus.client().status();
+            if (status.isInProgress()) {
+                String message = """
+                    Last operation was interrupted: Re-run Install
+                    Token expires at: %s""".formatted(clientStatus.expiresAt());
+                infoPanel.setText(message);
+            } else if (clientStatus.validToken) {
+                String message;
+                if (!clientStatus.validToken) {
+                    message = "Token expired: run Logout, and then Login";
+                    showInfoMessageDialogSync(message);
+                    buttons.refreshToken();
+                } else if (!clientStatus.clientUptoDate) {
+                    message = "Client update detected: run Install or Repair";
+                    showInfoMessageDialogSync(message);
+                } else {
+                    message = """
+                        Client is up-to-date
+                        Token expires at: %s""".formatted(clientStatus.expiresAt());
                 }
+                infoPanel.setText(message);
             }
         }
     }

@@ -142,7 +142,7 @@ class TokenCommandTest {
 
     private static void initClientToken(Path dbFile) {
         try (ConfigDb config = ConfigDb.open(dbFile)) {
-            Client client = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
+            Client client = new Client("mnm-1", "v1.0.0", Client.Status.UPDATED, Path.of("/install/path"));
             config.addClient(client);
             config.addToken(new Token(client.slug(), TEST_TOKEN));
         }

@@ -404,7 +404,7 @@ class ConfigDbTest {
     }
 
     private static Client testClient(String slug) {
-        return new Client(slug, "1.0.0-patch", Client.Status.COMPLETED, Path.of(""));
+        return new Client(slug, "1.0.0-patch", Client.Status.UPDATED, Path.of(""));
     }
 
     private static Token testToken(String slug) {

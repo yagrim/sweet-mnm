@@ -99,8 +99,8 @@ class LogoutCommandTest {
 
     private static void initTokens(Path dbFile) {
         try (ConfigDb config = ConfigDb.open(dbFile)) {
-            Client client1 = new Client("mnm-1", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
-            Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.COMPLETED, Path.of("/install/path"));
+            Client client1 = new Client("mnm-1", "v1.0.0", Client.Status.UPDATED, Path.of("/install/path"));
+            Client client2 = new Client("mnm-2", "v1.0.0", Client.Status.UPDATED, Path.of("/install/path"));
             config.addClient(client1);
             config.addClient(client2);
             config.addToken(new Token(client1.slug(), "token-1"));

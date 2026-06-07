@@ -17,7 +17,7 @@ class ValidatorsTest {
 
     @Test
     void shouldAllowMatchingVersion() {
-        Client client = new Client("mnm", "1.2.3", Client.Status.COMPLETED, null);
+        Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
         when(session.getVersion()).thenReturn("1.2.3");
 
@@ -33,7 +33,7 @@ class ValidatorsTest {
 
     @Test
     void shouldPanicWhenVersionDiffers() {
-        Client client = new Client("mnm", "1.2.3", Client.Status.COMPLETED, null);
+        Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
         when(session.getVersion()).thenReturn("2.0.0");
 
