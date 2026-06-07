@@ -5,15 +5,12 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.client.ClientInstaller;
@@ -24,15 +21,12 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
-import org.mnm.config.Environment;
 import org.mnm.config.OS;
-import org.mnm.config.Token;
-import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.config.Environment.*;
-import static org.mnm.gui.GUI.DEFAULT_SLUG;
+import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.GUI.createTabbedPanel;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.FileUtils.installClasspathResource;
@@ -113,7 +107,7 @@ public class GuiCommand implements Command {
     @Override
     public void run(Arguments args) {
         initialize();
-        guiStarter.start(getClientStatus());
+        guiStarter.start(getClientStatus(configDbLocator.get()));
     }
 
     @Override
@@ -140,36 +134,6 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
-    // We extract the information we need, but do not store token for security
-    record ClientStatus(Client client, boolean clientUptoDate,
-                        boolean validToken, Instant expiresAt) {
-    }
-
-    // TODO we need to wrap the client with a property to tell if it's up-to-date
-    // with that, we can later do the proper UI treatment
-    private ClientStatus getClientStatus() {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            Client client = configDb.getClient(DEFAULT_SLUG);
-            if (client != null) {
-                List<Token> tokens = configDb.getTokens(DEFAULT_SLUG);
-                if (!tokens.isEmpty()) {
-                    Token token = tokens.get(0);
-                    JwtParser.JwtClaims tokenClaims = JwtParser.parse(token.token());
-                    if (!tokenClaims.isExpired()) {
-                        Session session = Session.login(token.token(), Environment.API_BASE_URL);
-                        boolean upToDateClient = session.getVersion().equals(client.version());
-                        return new ClientStatus(client, true, upToDateClient, tokenClaims.expirationTime());
-                    } else {
-                        return new ClientStatus(null, false, false, null);
-                    }
-                } else {
-                    // Technically it could be up-to-date, but we can't query API without a token
-                    return new ClientStatus(null, false, false, null);
-                }
-            }
-            return new ClientStatus(null, false, false, null);
-        }
-    }
 
     // Commands should not initialize in constructor because debug is configured after it
     private static void initialize() {
@@ -232,7 +196,7 @@ public class GuiCommand implements Command {
 
     private void postInitialization(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel) {
 
-        if (clientStatus.client != null) {
+        if (clientStatus.client() != null) {
             logger.debug("No client found in config db");
             Client.Status status = clientStatus.client().status();
             if (status.isInProgress()) {
@@ -240,13 +204,13 @@ public class GuiCommand implements Command {
                     Last operation was interrupted: Re-run Install
                     Token expires at: %s""".formatted(clientStatus.expiresAt());
                 infoPanel.setText(message);
-            } else if (clientStatus.validToken) {
+            } else if (clientStatus.validToken()) {
                 String message;
-                if (!clientStatus.validToken) {
+                if (!clientStatus.validToken()) {
                     message = "Token expired: run Logout, and then Login";
                     showInfoMessageDialogSync(message);
                     buttons.refreshToken();
-                } else if (!clientStatus.clientUptoDate) {
+                } else if (!clientStatus.clientUptoDate()) {
                     message = "Client update detected: run Install or Repair";
                     showInfoMessageDialogSync(message);
                 } else {

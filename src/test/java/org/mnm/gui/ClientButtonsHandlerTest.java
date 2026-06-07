@@ -79,9 +79,9 @@ class ClientButtonsHandlerTest {
         handler.setHasToken(true);
         handler.refresh();
 
-        // This happens only if Repair process is aborted
+        // This happens only if Install/Repair is aborted without completing
         assertThat(install.isEnabled()).isTrue();
-        assertThat(repair.isEnabled()).isTrue();
+        assertThat(repair.isEnabled()).isFalse();
         assertThat(play.isEnabled()).isFalse();
         assertThat(login.isEnabled()).isFalse();
         assertThat(logout.isEnabled()).isTrue();

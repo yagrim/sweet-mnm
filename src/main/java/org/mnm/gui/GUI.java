@@ -8,7 +8,7 @@ public class GUI {
 
     static final String DEFAULT_SLUG = "mnm";
 
-    static GuiCommand.Tabs createTabbedPanel(JFrame frame, GuiCommand.ClientStatus clientStatus,
+    static GuiCommand.Tabs createTabbedPanel(JFrame frame, ClientStatus clientStatus,
                                              GuiCommand.LoginAction loginAction, GuiCommand.LogoutAction logoutAction,
                                              GuiCommand.RepairAction repairAction, GuiCommand.RunAction runAction) {
 

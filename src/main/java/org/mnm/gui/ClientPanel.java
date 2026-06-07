@@ -39,7 +39,7 @@ class ClientPanel extends JPanel {
         return infoPanel;
     }
 
-    JPanel create(GuiCommand.ClientStatus clientStatus,
+    JPanel create(ClientStatus clientStatus,
                   GuiCommand.RepairAction repairAction,
                   GuiCommand.LoginAction loginAction,
                   GuiCommand.LogoutAction logoutAction,

@@ -42,7 +42,7 @@ public class LoginService {
             configDb.addToken(new Token(session.getSlug(), session.getToken()));
             return newClient;
         } else {
-            if (status.isInProgress()) {
+            if (client.status().isInProgress()) {
                 configDb.updateClientStatus(session.getSlug(), status);
             } else if (!session.getVersion().equals(client.version())) {
                 configDb.updateClientStatus(session.getSlug(), NEEDS_UPDATE);

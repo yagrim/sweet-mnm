@@ -15,7 +15,7 @@ class GuiTest {
     @Test
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
         var client = testClient();
-        var clientStatus = new GuiCommand.ClientStatus(client, true, true, Instant.now());
+        var clientStatus = new ClientStatus(client, true, true, Instant.now());
 
         var tabs = GUI.createTabbedPanel(null, clientStatus,
             (_, _) -> null,
