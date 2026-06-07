@@ -1400,6 +1400,17 @@
       "allDeclaredFields": true
     },
     {
+      "type": "javax.swing.plaf.basic.BasicTextPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
       "type": "java.lang.System",
       "jniAccessible": true,
       "methods": [
