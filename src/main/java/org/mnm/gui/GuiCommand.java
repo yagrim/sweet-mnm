@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.mnm.cli.DevFlags;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +108,11 @@ public class GuiCommand implements Command {
 
     @Override
     public void run(Arguments args) {
+        final DevFlags devFlags = DevFlags.parse(args);
+        final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
+
         initialize();
-        guiStarter.start(getClientStatus(configDbLocator.get()));
+        guiStarter.start(getClientStatus(configDbLocator.get(), apiEndpoint));
     }
 
     @Override

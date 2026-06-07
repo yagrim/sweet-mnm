@@ -17,7 +17,7 @@ import static org.mnm.gui.GUI.DEFAULT_SLUG;
 record ClientStatus(Client client, boolean clientUptoDate,
                     boolean validToken, Instant expiresAt) {
 
-    static ClientStatus getClientStatus(Path dbFile) {
+    static ClientStatus getClientStatus(Path dbFile, String apiEndpoint) {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             Client client = configDb.getClient(DEFAULT_SLUG);
             if (client != null) {
@@ -26,7 +26,7 @@ record ClientStatus(Client client, boolean clientUptoDate,
                     Token token = tokens.get(0);
                     JwtParser.JwtClaims tokenClaims = JwtParser.parse(token.token());
                     if (!tokenClaims.isExpired()) {
-                        Session session = Session.login(token.token(), Environment.API_BASE_URL);
+                        Session session = Session.login(token.token(), apiEndpoint);
                         boolean upToDateClient = session.getVersion().equals(client.version());
                         return new ClientStatus(client, upToDateClient, true, tokenClaims.expirationTime());
                     } else {

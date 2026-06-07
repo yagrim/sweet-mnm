@@ -2,6 +2,8 @@ package org.mnm.gui;
 
 import java.nio.file.Path;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -16,12 +18,15 @@ import org.mnm.config.Token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
+import static org.mnm.ApiServerStubs.stubAccountLogin;
+import static org.mnm.ApiServerStubs.stubGameVersions;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons state change after install, logout
+@WireMockTest(httpsEnabled = true)
 class GuiCommandTest {
 
     @Test
@@ -49,7 +54,10 @@ class GuiCommandTest {
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    void shouldStartGui(@TempDir(cleanup = NEVER) Path tempDir) {
+    void shouldStartGui(WireMockRuntimeInfo wiremock, @TempDir(cleanup = NEVER) Path tempDir) {
+        stubAccountLogin();
+        stubGameVersions();
+
         final Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(testClient());
@@ -58,7 +66,10 @@ class GuiCommandTest {
 
         GuiCommand command = new GuiCommand(() -> dbFile);
 
-        command.run(Arguments.parse());
+        command.run(Arguments.parse(
+            "--dev-options", "true",
+            "--api-endpoint", wiremock.getHttpBaseUrl()
+        ));
 
         // TODO validate buttons
         command.close();

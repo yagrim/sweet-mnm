@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +34,7 @@ class ClientStatusTest {
     void shouldCalculateClientStatusClientIsMissing(@TempDir(cleanup = NEVER) Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
 
-        ClientStatus clientStatus = ClientStatus.getClientStatus(dbFile);
+        ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
 
         assertEmptyClientStatus(clientStatus);
     }
@@ -57,7 +58,7 @@ class ClientStatusTest {
             }
         }
 
-        ClientStatus clientStatus = ClientStatus.getClientStatus(dbFile);
+        ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
 
         assertEmptyClientStatus(clientStatus);
     }
@@ -88,7 +89,7 @@ class ClientStatusTest {
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(validToken, API_BASE_URL)).thenReturn(session);
 
-            ClientStatus clientStatus = ClientStatus.getClientStatus(dbFile);
+            ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
 
             assertThat(clientStatus.client()).isEqualTo(new Client(DEFAULT_SLUG, CLIENT_VERSION, UPDATED, tempDir));
             assertThat(clientStatus.clientUptoDate()).isEqualTo(serverVersion.equals(CLIENT_VERSION));
