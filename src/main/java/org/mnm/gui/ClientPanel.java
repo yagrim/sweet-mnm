@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.client.RunnerOptions;
-import org.mnm.config.Client;
 import org.mnm.tools.PanicException;
 
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
@@ -61,11 +60,11 @@ class ClientPanel extends JPanel {
         buttonsHandler.disableAll();
         this.buttonsHandler = buttonsHandler;
 
-        installButton.addActionListener(_ -> handleInstall(buttonsHandler, repairAction, inMemoryHashing));
-        repairButton.addActionListener(_ -> handleRepair(buttonsHandler, repairAction, inMemoryHashing));
+        installButton.addActionListener(_ -> handleInstall(repairAction, inMemoryHashing));
+        repairButton.addActionListener(_ -> handleRepair(repairAction, inMemoryHashing));
         playButton.addActionListener(_ -> runAction(runAction, optionsSupplier));
-        loginButton.addActionListener(_ -> handleLogin(buttonsHandler, parent, loginAction));
-        logoutButton.addActionListener(_ -> handleLogout(buttonsHandler, logoutAction));
+        loginButton.addActionListener(_ -> handleLogin(parent, loginAction));
+        logoutButton.addActionListener(_ -> handleLogout(logoutAction));
 
         final JPanel clientPanel = new JPanel(new GridLayout(1, 2, SCALE, 0));
         clientPanel.add(loginButton);
@@ -88,47 +87,58 @@ class ClientPanel extends JPanel {
         return this;
     }
 
-    private static void handleInstall(ClientButtonsHandler buttons, GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
-        buttons.installationStart();
+    private void handleInstall(GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
+        buttonsHandler.installationStart();
         CompletableFuture
             .supplyAsync(() -> installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Installation completed");
-                buttons.installationDone(client);
+                infoPanel.setText("""
+                    Client is up-to-date
+                    Token expires at: %s""".formatted(client.expiresAt()));
+                buttonsHandler.installationDone(client.client());
+
             }));
     }
 
-    private static void handleRepair(ClientButtonsHandler buttons, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
-        buttons.repairStart();
+    private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
+        buttonsHandler.repairStart();
         CompletableFuture
             .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Repair completed");
-                buttons.repairDone(client);
+                infoPanel.setText("""
+                    Client is up-to-date
+                    Token expires at: %s""".formatted(client.expiresAt()));
+                buttonsHandler.repairDone(client.client());
             }));
     }
 
-    private static void handleLogin(ClientButtonsHandler buttons, JFrame parent, GuiCommand.LoginAction loginAction) {
-        buttons.loginStart();
+    private void handleLogin(JFrame parent, GuiCommand.LoginAction loginAction) {
+        buttonsHandler.loginStart();
 
         final CredentialsPanel credentialsPanel = new CredentialsPanel();
         final int result = credentialsPanel.show(parent);
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                final Client client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
-                buttons.loginDone(client);
+                final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
+                infoPanel.setText("""
+                    Successfully authenticated
+                    Token expires at: %s""".formatted(client.expiresAt()));
+                buttonsHandler.loginDone(client.client());
             } catch (Exception e) {
-                buttons.refresh();
+                buttonsHandler.refresh();
                 e.printStackTrace();
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
         }
     }
 
-    private static void handleLogout(ClientButtonsHandler buttons, GuiCommand.LogoutAction logoutAction) {
+    private void handleLogout(GuiCommand.LogoutAction logoutAction) {
         logoutAction.logout(DEFAULT_SLUG);
-        buttons.logoutDone();
+        infoPanel.setText("Token deleted");
+        buttonsHandler.logoutDone();
     }
 
     private static void runAction(GuiCommand.RunAction runAction, Supplier<RunnerOptions> optionsSupplier) {
