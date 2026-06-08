@@ -15,6 +15,7 @@ import org.mnm.tools.PanicException;
 import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
+import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientPanel extends JPanel {
 
@@ -120,7 +121,7 @@ class ClientPanel extends JPanel {
         final CredentialsPanel credentialsPanel = new CredentialsPanel();
         final int result = credentialsPanel.show(parent);
 
-        if (result == JOptionPane.OK_OPTION) {
+        if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
             try {
                 final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
                 infoPanel.setText("""
