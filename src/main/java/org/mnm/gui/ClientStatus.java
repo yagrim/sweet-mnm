@@ -4,10 +4,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Environment;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
