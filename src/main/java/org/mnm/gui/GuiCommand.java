@@ -96,16 +96,6 @@ public class GuiCommand implements Command {
         this.postInitAction = (clientStatus, buttons, intoPanel) -> postInitialization(clientStatus, buttons, intoPanel);
     }
 
-    GuiCommand(Supplier<Path> configDbLocator, GuiStarter guiStarter, PostInitializationAction postInitAction) {
-        this.configDbLocator = configDbLocator;
-        this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
-        this.runAction = (options) -> runClient(configDbLocator, options);
-        this.loginAction = (username, password) -> login(configDbLocator, username, password);
-        this.logoutAction = slug -> logout(configDbLocator, slug);
-        this.guiStarter = guiStarter;
-        this.postInitAction = postInitAction;
-    }
-
     @Override
     public void run(Arguments args) {
         final DevFlags devFlags = DevFlags.parse(args);

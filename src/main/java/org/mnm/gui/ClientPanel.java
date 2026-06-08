@@ -132,6 +132,8 @@ class ClientPanel extends JPanel {
                 e.printStackTrace();
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
+        } else {
+            buttonsHandler.refresh();
         }
     }
 
