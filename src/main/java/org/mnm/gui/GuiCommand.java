@@ -8,13 +8,12 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.mnm.cli.DevFlags;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.cli.DevFlags;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
@@ -24,6 +23,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.OS;
+import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Client.Status.REPAIRING;
@@ -47,12 +47,12 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface RepairAction {
-        Client repair(String slug, boolean inMemoryHashing);
+        ClientStatus repair(String slug, boolean inMemoryHashing);
     }
 
     @FunctionalInterface
     interface LoginAction {
-        Client login(String username, String password);
+        ClientStatus login(String username, String password);
     }
 
     @FunctionalInterface
@@ -231,24 +231,32 @@ public class GuiCommand implements Command {
     record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
     }
 
-    private static Client repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
+    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
             new ClientInstaller(configDb)
                 .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
 
-            return configDb.getClient(slug);
+            return buildClientStatus(configDb, slug, true);
         }
     }
 
-    private static Client login(Supplier<Path> configDbLocator, String username, String password) {
+    private static ClientStatus login(Supplier<Path> configDbLocator, String username, String password) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
             String slug = new LoginService(configDb)
                 .login(username, password, getWorkDir(), API_BASE_URL);
 
-            return configDb.getClient(slug);
+            return buildClientStatus(configDb, slug, false);
         }
+    }
+
+    /**
+     * Returns data with the most up-to-date information from DB.
+     */
+    private static ClientStatus buildClientStatus(ConfigDb configDb, String slug, boolean uptoDate) {
+        JwtParser.JwtClaims claims = JwtParser.parse(configDb.getTokens(slug).get(0).token());
+        return new ClientStatus(configDb.getClient(slug), uptoDate, true, claims.expirationTime());
     }
 
     private static void logout(Supplier<Path> configDbLocator, String slug) {

@@ -70,6 +70,7 @@ public class LoginService {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));
             } else {
+                // TODO review, does it makes sense? It seems is replacing the current token with the same?
                 tokenToUpdate = tokens.get(0);
                 configDb.updateToken(tokenToUpdate.id(), session.getToken());
                 logger.debug("Replaced valid token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
