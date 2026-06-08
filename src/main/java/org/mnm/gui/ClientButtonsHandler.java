@@ -111,6 +111,14 @@ class ClientButtonsHandler {
         logout.setEnabled(true);
     }
 
+    public void enableAll() {
+        install.setEnabled(true);
+        repair.setEnabled(true);
+        play.setEnabled(true);
+        login.setEnabled(true);
+        logout.setEnabled(true);
+    }
+
     public void disableAll() {
         install.setEnabled(false);
         repair.setEnabled(false);
