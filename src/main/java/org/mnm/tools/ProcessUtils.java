@@ -10,7 +10,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProcessUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProcessUtils.class);
 
     public static void panic(String message) {
         throw new PanicException(message);
@@ -39,11 +44,20 @@ public class ProcessUtils {
                 String stdout = getFuture(standardOutput);
                 String stderr = getFuture(standardError);
 
-                if (exitCode != 0 || stdout.isEmpty()) {
+                if (exitCode != 0) {
                     throw new RuntimeException("Process failed: exitCode=" + exitCode
                         + ", stdout=" + stdout
                         + ", stderr=" + stderr);
                 }
+                if (logger.isDebugEnabled()) {
+                    if (!stdout.isEmpty()) {
+                        logger.debug("stdout={}", stdout);
+                    }
+                    if (!stderr.isEmpty()) {
+                        logger.debug("stderr={}", stderr);
+                    }
+                }
+
                 return stdout;
             }
         } catch (IOException e) {
