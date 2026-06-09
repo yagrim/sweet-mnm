@@ -1,13 +1,14 @@
 package org.mnm.cli;
 
-import org.mnm.tools.FileUtils;
+import org.mnm.config.Environment;
+import org.mnm.config.VersionDetails;
 
 class VersionCommand implements Command {
 
     @Override
     public void run(Arguments args) {
-        String version = FileUtils.readFromClasspath("version.txt");
-        System.out.printf("Version: %s", version);
+        VersionDetails versionDetails = Environment.versionDetails();
+        System.out.printf("Version: %s%nGit SHA: %s%n", versionDetails.version(), versionDetails.gitSha());
     }
 
     @Override
