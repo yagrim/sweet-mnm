@@ -6,9 +6,9 @@ APPBINDIR := $(PREFIX)/sweet-mnm/native
 
 # Detect OS and choose correct Gradle wrapper
 ifeq ($(OS),Windows_NT)
-	GRADLEW := gradlew.bat
+    GRADLEW := gradlew.bat
 else
-	GRADLEW := ./gradlew
+    GRADLEW := ./gradlew
 endif
 
 help:
@@ -46,3 +46,6 @@ native-install: install native
 	@rm -rf $(APPBINDIR)
 	@cp -r build/native/nativeCompile/ $(APPBINDIR)
 	@ln -sf $(APPBINDIR)/sweet $(PREFIX)/sweet
+
+%:
+	@:

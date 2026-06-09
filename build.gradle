@@ -114,8 +114,14 @@ tasks.register("setVersion") {
     def gitSha = "git rev-parse --short HEAD".execute().text.trim()
     def versionFile = layout.buildDirectory.file("resources/main/version.txt").get().asFile
 
-    def current = versionFile.text.trim()
-    versionFile.text = "${current}-${gitSha}\n"
+    def buildVersion = project.findProperty('buildVersion')
+    if (buildVersion) {
+      versionFile.text = "${buildVersion}\n${gitSha}\n"
+    } else {
+      versionFile.text = "${project.version}\n${gitSha}\n"
+    }
+
+    println "${versionFile.getText()}"
   }
 }
 

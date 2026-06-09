@@ -5,6 +5,7 @@ import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.TestUtils;
 
@@ -42,13 +43,14 @@ class VersionCommandTest {
     }
 
     @Test
-    void shouldRunAndPrintVersion(SystemOutCaptureExtension out) throws IOException {
+    void shouldRunAndPrintVersion(SystemOutCaptureExtension out) {
         final Command command = new VersionCommand();
 
         command.run(null);
 
         assertThat(out.getOutput())
-            .startsWith("Version: %s".formatted(readVersion()));
+            .contains("Version: 0.0.1-SNAPSHOT\n")
+            .contains("Git SHA:");
     }
 
     private static String readVersion() throws IOException {
