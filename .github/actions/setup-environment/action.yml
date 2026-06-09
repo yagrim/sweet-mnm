@@ -1,0 +1,40 @@
+name: Setup Environment
+description: Checks out the repository, sets up GraalVM, captures the runner architecture, and displays tool versions.
+
+inputs:
+  github-token:
+    description: GitHub token for GraalVM setup
+    required: true
+  java-version:
+    description: Java version to set up
+    required: false
+    default: "25"
+
+outputs:
+  arch:
+    description: Runner CPU architecture (e.g. X64, ARM64)
+    value: ${{ steps.arch.outputs.arch }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+    - name: Set up Java
+      uses: graalvm/setup-graalvm@v1
+      with:
+        distribution: graalvm-community
+        java-version: ${{ inputs.java-version }}
+        github-token: ${{ inputs.github-token }}
+    - name: Set artifact architecture
+      id: arch
+      shell: bash
+      run: echo "arch=$RUNNER_ARCH" >> "$GITHUB_OUTPUT"
+    - name: Display versions
+      shell: bash
+      continue-on-error: true
+      run: |
+        java --version
+        native-image --version
