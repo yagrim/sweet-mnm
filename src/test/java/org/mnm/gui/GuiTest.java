@@ -41,7 +41,7 @@ class GuiTest {
         javax.swing.JPanel optionsPanel = (javax.swing.JPanel) tabPanel.getComponentAt(1);
         assertThat(optionsPanel.getLayout()).isInstanceOf(javax.swing.BoxLayout.class);
         assertThat(((javax.swing.BoxLayout) optionsPanel.getLayout()).getAxis()).isEqualTo(javax.swing.BoxLayout.Y_AXIS);
-        assertThat(optionsPanel.getComponentCount()).isEqualTo(5);
+        assertThat(optionsPanel.getComponentCount()).isEqualTo(7);
         assertThat(findCheckBox(optionsPanel, "Enable debug")).isNotNull();
         assertThat(findCheckBox(optionsPanel, "Enable debug").getActionCommand()).isEqualTo("debug");
         assertThat(findCheckBox(optionsPanel, "In-memory hashing")).isNotNull();
