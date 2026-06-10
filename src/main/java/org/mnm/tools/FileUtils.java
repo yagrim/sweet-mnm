@@ -3,12 +3,15 @@ package org.mnm.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.mnm.gui.GuiCommand;
 
@@ -41,15 +44,42 @@ public class FileUtils {
         }
     }
 
+    public static long getFolderSize(Path dir) {
+        try (Stream<Path> stream = Files.walk(dir, 2)) {
+            return stream
+                .filter(Files::isRegularFile)
+                .mapToLong(path -> path.toFile().length())
+                .sum();
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
+    public static void deleteFolder(Path folder) throws IOException {
+        if (!Files.exists(folder)) return;
+
+        try (Stream<Path> stream = Files.walk(folder)) {
+            stream.sorted(Comparator.reverseOrder())
+                .filter(path -> !path.equals(folder))
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+        }
+    }
+
     public static String humanReadableSize(long bytes) {
         if (bytes < 1024) {
             return bytes + " B";
         } else if (bytes < 1024 * 1024) {
-            double kb = bytes / 1024.0;
-            return String.format("%.2f KB", kb);
+            return String.format("%.2f KB", bytes / 1024.0);
+        } else if (bytes < 1024L * 1024 * 1024) {
+            return String.format("%.2f MB", bytes / (1024.0 * 1024));
         } else {
-            double mb = bytes / (1024.0 * 1024);
-            return String.format("%.2f MB", mb);
+            return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
         }
     }
 

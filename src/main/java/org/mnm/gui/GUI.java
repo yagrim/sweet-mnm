@@ -16,8 +16,8 @@ public class GUI {
         final OptionsPanel optionsPanel = new OptionsPanel();
 
         final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Client", clientPanel.create(clientStatus, repairAction, loginAction, logoutAction, runAction, optionsPanel::useInMemoryHashing, optionsPanel::getRunnerOptions));
-        tabs.addTab("Options", optionsPanel.create());
+        tabs.addTab("Client", clientPanel.initialize(clientStatus, repairAction, loginAction, logoutAction, runAction, optionsPanel::useInMemoryHashing, optionsPanel::getRunnerOptions));
+        tabs.addTab("Options", optionsPanel.initialize(clientStatus));
         setFontSize(tabs, 15f);
         return new GuiCommand.Tabs(clientPanel, optionsPanel, tabs);
     }

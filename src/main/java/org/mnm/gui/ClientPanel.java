@@ -39,13 +39,13 @@ class ClientPanel extends JPanel {
         return infoPanel;
     }
 
-    JPanel create(ClientStatus clientStatus,
-                  GuiCommand.RepairAction repairAction,
-                  GuiCommand.LoginAction loginAction,
-                  GuiCommand.LogoutAction logoutAction,
-                  GuiCommand.RunAction runAction,
-                  BooleanSupplier inMemoryHashing,
-                  Supplier<RunnerOptions> optionsSupplier) {
+    JPanel initialize(ClientStatus clientStatus,
+                      GuiCommand.RepairAction repairAction,
+                      GuiCommand.LoginAction loginAction,
+                      GuiCommand.LogoutAction logoutAction,
+                      GuiCommand.RunAction runAction,
+                      BooleanSupplier inMemoryHashing,
+                      Supplier<RunnerOptions> optionsSupplier) {
 
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
@@ -130,7 +130,7 @@ class ClientPanel extends JPanel {
                 buttonsHandler.loginDone(client.client());
             } catch (Exception e) {
                 buttonsHandler.refresh();
-                e.printStackTrace();
+                logger.error("", e);
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
         } else {
@@ -149,7 +149,7 @@ class ClientPanel extends JPanel {
             RunnerOptions options = new RunnerOptions(DEFAULT_SLUG, null, false, optionsSupplier.get().enableMangoHud());
             runAction.run(options);
         } catch (PanicException e) {
-            e.printStackTrace();
+            logger.error("", e);
             showErrorMessageDialogSync("Error: " + e.getMessage());
         }
     }

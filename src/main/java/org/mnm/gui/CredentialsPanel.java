@@ -32,7 +32,7 @@ class CredentialsPanel {
         return new String(password.getPassword());
     }
 
-    public int show(JFrame parent) {
+    public int show(Container parent) {
         return JOptionPane.showConfirmDialog(
             parent,
             panel,
