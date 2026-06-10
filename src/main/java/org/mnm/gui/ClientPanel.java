@@ -1,7 +1,9 @@
 package org.mnm.gui;
 
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -26,6 +28,7 @@ class ClientPanel extends JPanel {
     private final JFrame parent;
     private ClientButtonsHandler buttonsHandler;
     private InfoPanel infoPanel;
+    private List<RepairListener> repairListeners;
 
     ClientPanel(JFrame parent) {
         this.parent = parent;
@@ -45,8 +48,10 @@ class ClientPanel extends JPanel {
                       GuiCommand.LogoutAction logoutAction,
                       GuiCommand.RunAction runAction,
                       BooleanSupplier inMemoryHashing,
-                      Supplier<RunnerOptions> optionsSupplier) {
+                      Supplier<RunnerOptions> optionsSupplier,
+                      List<RepairListener> repairListeners) {
 
+        this.repairListeners = repairListeners;
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
         final JButton installButton = new JButton("Install");
@@ -90,6 +95,8 @@ class ClientPanel extends JPanel {
 
     private void handleInstall(GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
         buttonsHandler.installationStart();
+        repairListeners.forEach(listener -> listener.repairStart());
+
         CompletableFuture
             .supplyAsync(() -> installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
@@ -97,13 +104,16 @@ class ClientPanel extends JPanel {
                 infoPanel.setText("""
                     Client is up-to-date
                     Token expires at: %s""".formatted(client.expiresAt()));
-                buttonsHandler.installationDone(client.client());
 
+                buttonsHandler.installationDone(client.client());
+                repairListeners.forEach(listener -> listener.repairDone(client.client()));
             }));
     }
 
     private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
         buttonsHandler.repairStart();
+        repairListeners.forEach(listener -> listener.repairStart());
+
         CompletableFuture
             .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
@@ -111,7 +121,9 @@ class ClientPanel extends JPanel {
                 infoPanel.setText("""
                     Client is up-to-date
                     Token expires at: %s""".formatted(client.expiresAt()));
+
                 buttonsHandler.repairDone(client.client());
+                repairListeners.forEach(listener -> listener.repairDone(client.client()));
             }));
     }
 

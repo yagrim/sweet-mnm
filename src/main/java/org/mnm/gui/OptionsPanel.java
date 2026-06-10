@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.client.Installation;
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.Client;
 import org.mnm.config.OS;
 import org.mnm.tools.FileUtils;
 
@@ -16,7 +17,7 @@ import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
 // NOTE: so far options can be grouped as repair or run.
-class OptionsPanel extends JPanel {
+class OptionsPanel extends JPanel implements RepairListener {
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
@@ -24,11 +25,10 @@ class OptionsPanel extends JPanel {
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
-    OptionsPanel() {
-        super();
-    }
+    private JButton clearCache;
 
-    JPanel initialize(ClientStatus clientStatus) {
+    OptionsPanel(ClientStatus clientStatus) {
+        super();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
 
@@ -44,35 +44,26 @@ class OptionsPanel extends JPanel {
             mangoHudOption.setText("Enable MangoHud (Linux only)");
         }
 
+        initializeClearCache(new JButton(), clientStatus);
+
         this.add(debugOption);
         this.add(Box.createVerticalStrut(8));
         this.add(inMemoryHashingOption);
         this.add(Box.createVerticalStrut(8));
         this.add(mangoHudOption);
         this.add(Box.createVerticalStrut(8));
-        this.add(createClearCacheButton(clientStatus));
+        this.add(clearCache);
 
-        return this;
     }
 
-    private JButton createClearCacheButton(ClientStatus clientStatus) {
-        final JButton clearCache = new JButton();
-        long folderSize = 0;
-
-        if (clientStatus.client() != null) {
-            final Path downloadsPath = getDownloadsPath(clientStatus);
-            folderSize = FileUtils.getFolderSize(downloadsPath);
-            clearCache.addActionListener(_ -> handleClearCache(this, clearCache, downloadsPath));
-        }
-        String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
-        clearCache.setEnabled(clientStatus.client() != null && folderSize > 0);
-        clearCache.setText("Clear cache (%s)".formatted(size));
-        return clearCache;
+    private void initializeClearCache(JButton button, ClientStatus clientStatus) {
+        clearCache = button;
+        update(clientStatus.client());
     }
 
     // TODO disable button while Installing/Repairing
     private void handleClearCache(OptionsPanel parent, JButton clearCache, Path downloadsPath) {
-        final int result = show(parent);
+        final int result = showClearCacheConfirmation(parent);
         if (result == JOptionPane.OK_OPTION) {
             try {
                 FileUtils.deleteFolder(downloadsPath);
@@ -85,8 +76,8 @@ class OptionsPanel extends JPanel {
         }
     }
 
-    private static Path getDownloadsPath(ClientStatus clientStatus) {
-        return new Installation(clientStatus.client().path(), GUI.DEFAULT_SLUG).getDownloadsPath();
+    private static Path getDownloadsSize(Client client) {
+        return new Installation(client.path(), GUI.DEFAULT_SLUG).getDownloadsPath();
     }
 
     boolean useInMemoryHashing() {
@@ -97,11 +88,9 @@ class OptionsPanel extends JPanel {
         return new RunnerOptions(null, null, false, mangoHudOption.isSelected());
     }
 
-    public int show(Container parent) {
+    public int showClearCacheConfirmation(Container parent) {
         final JPanel panel = new JPanel(new GridLayout(1, 1, 8, 8));
-
         panel.add(new JLabel("Delete all temporal downloads cache?"));
-
         return JOptionPane.showConfirmDialog(
             parent,
             panel,
@@ -111,4 +100,25 @@ class OptionsPanel extends JPanel {
         );
     }
 
+    public void update(Client client) {
+        long folderSize = 0;
+        if (client != null) {
+            final Path downloadsPath = getDownloadsSize(client);
+            folderSize = FileUtils.getFolderSize(downloadsPath);
+            clearCache.addActionListener(_ -> handleClearCache(this, clearCache, downloadsPath));
+        }
+        String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
+        clearCache.setEnabled(client != null && folderSize > 0);
+        clearCache.setText("Clear cache (%s)".formatted(size));
+    }
+
+    @Override
+    public void repairStart() {
+        clearCache.setEnabled(false);
+    }
+
+    @Override
+    public void repairDone(Client client) {
+        update(client);
+    }
 }

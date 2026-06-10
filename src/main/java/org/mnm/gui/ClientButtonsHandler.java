@@ -8,7 +8,7 @@ import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
-class ClientButtonsHandler {
+class ClientButtonsHandler implements RepairListener {
 
     private final JButton install;
     private final JButton repair;
@@ -65,23 +65,23 @@ class ClientButtonsHandler {
     }
 
     void installationStart() {
+        repairStart();
+    }
+
+    void installationDone(Client client) {
+        repairDone(client);
+    }
+
+    @Override
+    public void repairStart() {
         install.setEnabled(false);
         repair.setEnabled(false);
         logout.setEnabled(false);
         play.setEnabled(false);
     }
 
-    void installationDone(Client client) {
-        this.client = client;
-        this.upToDate = true;
-        refresh();
-    }
-
-    void repairStart() {
-        installationStart();
-    }
-
-    void repairDone(Client client) {
+    @Override
+    public void repairDone(Client client) {
         this.client = client;
         this.upToDate = true;
         refresh();
