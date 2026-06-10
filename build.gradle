@@ -120,8 +120,6 @@ tasks.register("setVersion") {
     } else {
       versionFile.text = "${project.version}\n${gitSha}\n"
     }
-
-    println "${versionFile.getText()}"
   }
 }
 

@@ -42,12 +42,29 @@ public class MainClazz {
                 System.err.println("Command '%s' not supported for your platform".formatted(command.name()));
             }
         } catch (PanicException e) {
-            System.err.println("[Error] " + e.getMessage());
-            exit.accept(1);
+            handleError(e, exit);
         } catch (Exception e) {
-            System.err.println("Unexpected error:");
-            e.printStackTrace();
-            exit.accept(1);
+            handleError(e, exit);
+        }
+    }
+
+    private static void handleError(Exception e, IntConsumer exit) {
+        if (e instanceof PanicException) {
+            System.err.println("[Error] " + e.getMessage());
+        } else {
+            System.err.println("[Error] Unexpected error!");
+        }
+        e.printStackTrace();
+        pause();
+        exit.accept(1);
+    }
+
+    public static void pause() {
+        System.out.print("Press Enter to close...");
+        try {
+            System.in.read();
+        } catch (Exception e) {
+            // ignore
         }
     }
 

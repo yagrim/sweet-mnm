@@ -66,7 +66,7 @@ class MainClazzTest {
         assertThat(exitStatus).hasValue(1);
         assertThat(out.getErrorOutput())
             .startsWith("""
-                Unexpected error:
+                [Error] Unexpected error!
                 java.lang.IllegalStateException: broken command
                 """);
     }
@@ -84,9 +84,9 @@ class MainClazzTest {
 
         assertThat(exitStatus).hasValue(1);
         String errorOutput = out.getErrorOutput();
-        assertThat(errorOutput).hasSize(23);
-        assertThat(errorOutput).isEqualTo("""
+        assertThat(errorOutput).startsWith("""
             [Error] broken command
+            org.mnm.tools.PanicException: broken command
             """);
     }
 
