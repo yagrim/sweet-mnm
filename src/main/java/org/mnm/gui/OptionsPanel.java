@@ -1,7 +1,15 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -17,7 +25,8 @@ import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
 // NOTE: so far options can be grouped as repair or run.
-class OptionsPanel extends JPanel implements RepairListener {
+class OptionsPanel extends JPanel
+    implements RepairListener {
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
@@ -27,7 +36,7 @@ class OptionsPanel extends JPanel implements RepairListener {
 
     private JButton clearCache;
 
-    OptionsPanel(ClientStatus clientStatus) {
+    OptionsPanel() {
         super();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
@@ -44,7 +53,8 @@ class OptionsPanel extends JPanel implements RepairListener {
             mangoHudOption.setText("Enable MangoHud (Linux only)");
         }
 
-        initializeClearCache(new JButton(), clientStatus);
+        clearCache = new JButton();
+        updateButton(null);
 
         this.add(debugOption);
         this.add(Box.createVerticalStrut(8));
@@ -53,12 +63,6 @@ class OptionsPanel extends JPanel implements RepairListener {
         this.add(mangoHudOption);
         this.add(Box.createVerticalStrut(8));
         this.add(clearCache);
-
-    }
-
-    private void initializeClearCache(JButton button, ClientStatus clientStatus) {
-        clearCache = button;
-        update(clientStatus.client());
     }
 
     // TODO disable button while Installing/Repairing
@@ -100,7 +104,17 @@ class OptionsPanel extends JPanel implements RepairListener {
         );
     }
 
-    public void update(Client client) {
+    @Override
+    public void repairStart() {
+        clearCache.setEnabled(false);
+    }
+
+    @Override
+    public void repairDone(ClientStatus client) {
+        updateButton(client.client());
+    }
+
+    private void updateButton(Client client) {
         long folderSize = 0;
         if (client != null) {
             final Path downloadsPath = getDownloadsSize(client);
@@ -110,15 +124,5 @@ class OptionsPanel extends JPanel implements RepairListener {
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(client != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-    }
-
-    @Override
-    public void repairStart() {
-        clearCache.setEnabled(false);
-    }
-
-    @Override
-    public void repairDone(Client client) {
-        update(client);
     }
 }

@@ -1,14 +1,12 @@
 package org.mnm.gui;
 
-import org.mnm.config.Client;
-
 /**
  * Handles events related to an Installation or Repair.
  */
-public interface RepairListener {
+interface RepairListener {
 
     void repairStart();
 
-    void repairDone(Client client);
+    void repairDone(ClientStatus client);
 
 }

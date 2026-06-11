@@ -1,7 +1,11 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -27,7 +31,9 @@ import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Client.Status.REPAIRING;
-import static org.mnm.config.Environment.*;
+import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.GUI.createTabbedPanel;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
@@ -42,7 +48,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(ClientStatus clientStatus);
+        void start(Supplier<ClientStatus> clientStatus);
     }
 
     @FunctionalInterface
@@ -68,7 +74,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel);
+        void run(ClientStatus clientStatus, ClientPanel clientPanel);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -93,7 +99,7 @@ public class GuiCommand implements Command {
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus, buttons, intoPanel) -> postInitialization(clientStatus, buttons, intoPanel);
+        this.postInitAction = (clientStatus, clientPanel) -> postInitialization(clientStatus, clientPanel);
     }
 
     @Override
@@ -102,7 +108,7 @@ public class GuiCommand implements Command {
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
 
         initialize();
-        guiStarter.start(getClientStatus(configDbLocator.get(), apiEndpoint));
+        guiStarter.start(() -> getClientStatus(configDbLocator.get(), apiEndpoint));
     }
 
     @Override
@@ -150,7 +156,7 @@ public class GuiCommand implements Command {
         }
     }
 
-    private void startSwingInterface(ClientStatus clientStatus) {
+    private void startSwingInterface(Supplier<ClientStatus> clientStatusSupplier) {
         try {
             // For message windows
             UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
@@ -158,7 +164,10 @@ public class GuiCommand implements Command {
 
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
-                final Tabs tabs = createTabbedPanel(frame, clientStatus, loginAction, logoutAction, repairAction, runAction);
+
+                // TODO remove clientStatus: we init the components with defaults, then async we update, that way we don't block
+                //  eventually we can add a "Loading..." in InfoPanel
+                final Tabs tabs = createTabbedPanel(frame, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
@@ -169,12 +178,9 @@ public class GuiCommand implements Command {
 
                 // Prevent UI locking for some seconds
                 CompletableFuture
-                    .runAsync(() -> {
-                        ClientPanel clientPanel = tabs.clientPanel();
-                        postInitAction.run(clientStatus, clientPanel.getButtonsHandler(), clientPanel.getInfoPanel());
-                    })
-                    .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
-                        tabs.clientPanel.getButtonsHandler().refresh();
+                    .supplyAsync(() -> clientStatusSupplier.get())
+                    .whenComplete((clientStatus, _) -> SwingUtilities.invokeLater(() -> {
+                        postInitAction.run(clientStatus, tabs.clientPanel());
                     }));
             });
         } catch (InterruptedException e) {
@@ -189,7 +195,13 @@ public class GuiCommand implements Command {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void postInitialization(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel) {
+    private void postInitialization(ClientStatus clientStatus, ClientPanel clientPanel) {
+
+        // TODO we should be able to do this without exposing internals
+        //  we should have a ClientButtonsPanel::refresh(ClientStatus), InfoPanel::refresh(ClientStatus)
+        //  maybe a Refreashable interface?
+        final ClientButtonsPanel clientButtons = clientPanel.getClientButtons();
+        final InfoPanel infoPanel = clientPanel.getInfoPanel();
 
         if (clientStatus.client() != null) {
             logger.debug("No client found in config db");
@@ -204,7 +216,7 @@ public class GuiCommand implements Command {
                 if (!clientStatus.validToken()) {
                     message = "Token expired: run Logout, and then Login";
                     showInfoMessageDialogSync(message);
-                    buttons.refreshToken();
+                    clientButtons.refreshToken();
                 } else if (!clientStatus.clientUptoDate()) {
                     message = "Client update detected: run Install or Repair";
                     showInfoMessageDialogSync(message);
