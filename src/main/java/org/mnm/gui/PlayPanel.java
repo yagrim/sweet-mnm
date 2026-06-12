@@ -8,7 +8,7 @@ import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 public class PlayPanel extends JPanel
-    implements LoginListener, RepairListener {
+    implements LoginListener, RepairListener, Refreshable {
 
     final JButton play;
 
@@ -49,10 +49,11 @@ public class PlayPanel extends JPanel
         play.setEnabled(true);
     }
 
-    public void refresh(ClientStatus clientStatus) {
-        play.setEnabled(clientStatus.validToken()
-            && clientStatus.clientUptoDate()
-            && clientStatus.statusIs(UPDATED));
+    @Override
+    public void refresh(ClientStatus client) {
+        play.setEnabled(client.validToken()
+            && client.clientUptoDate()
+            && client.statusIs(UPDATED));
     }
 
 }

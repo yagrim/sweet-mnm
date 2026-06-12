@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.client.RunnerOptions;
-import org.mnm.config.Client;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
 import org.mnm.gui.GuiCommand.RepairAction;
@@ -25,9 +24,10 @@ import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.StringUtils.isEmpty;
 
-public class MainGui {
+class MainTabs extends JTabbedPane
+    implements Refreshable {
 
-    private static final Logger logger = LoggerFactory.getLogger(MainGui.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainTabs.class);
 
     static final String DEFAULT_SLUG = "mnm";
 
@@ -46,30 +46,26 @@ public class MainGui {
         void run(RunAction runAction, Supplier<RunnerOptions> optionsSupplier);
     }
 
-    Tabs createTabbedPanel(JFrame frame,
-                           LoginAction loginAction, LogoutAction logoutAction,
-                           RepairAction repairAction, RunAction runAction) {
+    private final ClientPanel clientPanel;
+    private final OptionsPanel optionsPanel;
 
-        final ClientPanel clientPanel = new ClientPanel(frame);
-        final OptionsPanel optionsPanel = new OptionsPanel();
+    MainTabs(JFrame frame,
+             LoginAction loginAction, LogoutAction logoutAction,
+             RepairAction repairAction, RunAction runAction) {
 
-        // init Listeners
-        // ClientButtonsHandler: LoginListener, LogoutListener, RepairListener
-        // OptionsPanel: RepairListener
-        // infoPanel: LoginListener, LogoutListener, RepairListener
-        // TODO move play button to PlayPannel, implements LoginListener, LogoutListener, RepairListener
+        setFontSize(this, 15f);
 
-        List<LoginListener> loginListeners = List.of(clientPanel);
-        List<RepairListener> repairListeners = List.of(clientPanel, optionsPanel);
+        this.clientPanel = new ClientPanel(frame);
+        this.optionsPanel = new OptionsPanel();
 
-        final JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Client", clientPanel);
-        tabs.addTab("Options", optionsPanel);
-        setFontSize(tabs, 15f);
-        return new Tabs(clientPanel, optionsPanel, tabs);
+        this.addTab("Client", clientPanel);
+        this.addTab("Options", optionsPanel);
     }
 
-    record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
+    @Override
+    public void refresh(ClientStatus client) {
+        clientPanel.refresh(client);
+        optionsPanel.refresh(client);
     }
 
     private void handleInstall(RepairAction installAction, BooleanSupplier inMemoryHashing, List<RepairListener> listeners) {

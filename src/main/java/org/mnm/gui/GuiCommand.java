@@ -25,7 +25,6 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.OS;
-import org.mnm.gui.MainGui.Tabs;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
@@ -71,7 +70,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(ClientStatus clientStatus, ClientPanel clientPanel);
+        void run(ClientStatus clientStatus, MainTabs tabs);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -96,7 +95,7 @@ public class GuiCommand implements Command {
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus, clientPanel) -> postInitializeSwing(clientStatus, clientPanel);
+        this.postInitAction = (clientStatus, tabs) -> postInitializeSwing(clientStatus, tabs);
     }
 
     @Override
@@ -161,13 +160,10 @@ public class GuiCommand implements Command {
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
 
-                // TODO remove clientStatus: we init the components with defaults, then async we update, that way we don't block
-                //  eventually we can add a "Loading..." in InfoPanel
-                final MainGui gui = new MainGui();
-                final Tabs tabs = gui.createTabbedPanel(frame, loginAction, logoutAction, repairAction, runAction);
+                final MainTabs tabs = new MainTabs(frame, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
+                frame.getContentPane().add(tabs, BorderLayout.CENTER);
                 frame.setResizable(false);
                 frame.pack();
                 frame.setLocationRelativeTo(null);
@@ -177,7 +173,7 @@ public class GuiCommand implements Command {
                 CompletableFuture
                     .supplyAsync(() -> clientStatusSupplier.get())
                     .whenComplete((clientStatus, _) -> SwingUtilities.invokeLater(() -> {
-                        postInitAction.run(clientStatus, tabs.clientPanel());
+                        postInitAction.run(clientStatus, tabs);
                     }));
             });
         } catch (InterruptedException e) {
@@ -188,12 +184,11 @@ public class GuiCommand implements Command {
         }
     }
 
-    static void postInitializeSwing(ClientStatus clientStatus, ClientPanel clientPanel) {
-        // Test with deleted DB
+    static void postInitializeSwing(ClientStatus clientStatus, MainTabs tabs) {
         if (clientStatus.client() == null) {
             logger.debug("No client found in config db");
         }
-        clientPanel.refresh(clientStatus);
+        tabs.refresh(clientStatus);
     }
 
     void close() {

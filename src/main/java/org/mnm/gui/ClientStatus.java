@@ -10,7 +10,7 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
-import static org.mnm.gui.MainGui.DEFAULT_SLUG;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 
 // We extract the information we need from token, we do not store the actual token for security
 record ClientStatus(Client client, boolean clientUptoDate,

@@ -22,7 +22,7 @@ import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.UPDATED;
-import static org.mnm.gui.MainGui.DEFAULT_SLUG;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons state change after install, logout

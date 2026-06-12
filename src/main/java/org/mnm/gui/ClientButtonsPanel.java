@@ -10,7 +10,7 @@ import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 class ClientButtonsPanel extends JPanel
-    implements LoginListener, RepairListener {
+    implements LoginListener, RepairListener, Refreshable {
 
     private final JButton install;
     private final JButton repair;
@@ -40,16 +40,6 @@ class ClientButtonsPanel extends JPanel
         JButton button = new JButton(text);
         setFontSize(button, 20f);
         return button;
-    }
-
-    public void refresh(ClientStatus clientStatus) {
-        this.clientStatus = clientStatus;
-
-        boolean validToken = this.clientStatus.validToken();
-        install.setEnabled(validToken && !clientStatus.statusIs(UPDATED));
-        repair.setEnabled(validToken && !clientStatus.statusIs(NOT_INSTALLED) && (clientStatus.statusIs(UPDATED) || !clientStatus.clientUptoDate()));
-        login.setEnabled(!validToken);
-        logout.setEnabled(validToken);
     }
 
     @Override
@@ -82,17 +72,15 @@ class ClientButtonsPanel extends JPanel
         refresh(clientStatus);
     }
 
-    public void refreshToken() {
-        install.setEnabled(false);
-        repair.setEnabled(false);
-        logout.setEnabled(true);
-    }
+    @Override
+    public void refresh(ClientStatus client) {
+        this.clientStatus = client;
 
-    public void enableAll() {
-        install.setEnabled(true);
-        repair.setEnabled(true);
-        login.setEnabled(true);
-        logout.setEnabled(true);
+        boolean validToken = client.validToken();
+        install.setEnabled(validToken && !client.statusIs(UPDATED));
+        repair.setEnabled(validToken && !client.statusIs(NOT_INSTALLED) && (client.statusIs(UPDATED) || !client.clientUptoDate()));
+        login.setEnabled(!validToken);
+        logout.setEnabled(validToken);
     }
 
     public void disableAll() {

@@ -22,7 +22,7 @@ import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.gui.ClientStatus.getClientStatus;
-import static org.mnm.gui.MainGui.DEFAULT_SLUG;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mockito.Mockito.when;
 
 class ClientStatusTest {

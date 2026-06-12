@@ -8,12 +8,8 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
 class ClientPanel extends JPanel
-    implements LoginListener, RepairListener {
+    implements LoginListener, RepairListener, Refreshable {
 
     static final int SCALE = 8;
 
@@ -73,9 +69,10 @@ class ClientPanel extends JPanel
         repairListeners.forEach(l -> l.repairDone(client));
     }
 
-    public void refresh(ClientStatus clientStatus) {
-        infoPanel.refresh(clientStatus);
-        clientButtons.refresh(clientStatus);
-        playPanel.refresh(clientStatus);
+    @Override
+    public void refresh(ClientStatus client) {
+        infoPanel.refresh(client);
+        clientButtons.refresh(client);
+        playPanel.refresh(client);
     }
 }

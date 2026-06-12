@@ -15,7 +15,7 @@ import org.mnm.config.Client;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 
 public class InfoPanel extends JPanel
-    implements LoginListener, RepairListener {
+    implements LoginListener, RepairListener, Refreshable {
 
     private final JTextPane textArea;
 
@@ -69,26 +69,27 @@ public class InfoPanel extends JPanel
             Token expires at: %s""".formatted(client.expiresAt()));
     }
 
-    public void refresh(ClientStatus clientStatus) {
-        if (clientStatus.client() != null) {
-            Client.Status status = clientStatus.client().status();
+    @Override
+    public void refresh(ClientStatus client) {
+        if (client.client() != null) {
+            Client.Status status = client.client().status();
             if (status.isInProgress()) {
                 String message = """
                     Last operation was interrupted: Re-run Install
-                    Token expires at: %s""".formatted(clientStatus.expiresAt());
+                    Token expires at: %s""".formatted(client.expiresAt());
                 this.setText(message);
-            } else if (clientStatus.validToken()) {
+            } else if (client.validToken()) {
                 String message;
-                if (!clientStatus.validToken()) {
+                if (!client.validToken()) {
                     message = "Token expired: run Logout, and then Login";
                     showInfoMessageDialogSync(message);
-                } else if (!clientStatus.clientUptoDate()) {
+                } else if (!client.clientUptoDate()) {
                     message = "Client update detected: run Install or Repair";
                     showInfoMessageDialogSync(message);
                 } else {
                     message = """
                         Client is up-to-date
-                        Token expires at: %s""".formatted(clientStatus.expiresAt());
+                        Token expires at: %s""".formatted(client.expiresAt());
                 }
                 this.setText(message);
             }

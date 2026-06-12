@@ -26,7 +26,7 @@ import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
 // NOTE: so far options can be grouped as repair or run.
 class OptionsPanel extends JPanel
-    implements RepairListener {
+    implements RepairListener, Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
@@ -53,8 +53,7 @@ class OptionsPanel extends JPanel
             mangoHudOption.setText("Enable MangoHud (Linux only)");
         }
 
-        clearCache = new JButton();
-        updateButton(null);
+        clearCache = new JButton("Clear cache");
 
         this.add(debugOption);
         this.add(Box.createVerticalStrut(8));
@@ -81,7 +80,7 @@ class OptionsPanel extends JPanel
     }
 
     private static Path getDownloadsSize(Client client) {
-        return new Installation(client.path(), MainGui.DEFAULT_SLUG).getDownloadsPath();
+        return new Installation(client.path(), MainTabs.DEFAULT_SLUG).getDownloadsPath();
     }
 
     boolean useInMemoryHashing() {
@@ -111,13 +110,14 @@ class OptionsPanel extends JPanel
 
     @Override
     public void repairDone(ClientStatus client) {
-        updateButton(client.client());
+        refresh(client);
     }
 
-    private void updateButton(Client client) {
+    @Override
+    public void refresh(ClientStatus client) {
         long folderSize = 0;
         if (client != null) {
-            final Path downloadsPath = getDownloadsSize(client);
+            final Path downloadsPath = getDownloadsSize(client.client());
             folderSize = FileUtils.getFolderSize(downloadsPath);
             clearCache.addActionListener(_ -> handleClearCache(this, clearCache, downloadsPath));
         }
