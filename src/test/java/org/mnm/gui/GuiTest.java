@@ -17,7 +17,7 @@ class GuiTest {
         var client = testClient();
         var clientStatus = new ClientStatus(client, true, true, Instant.now());
 
-        var tabs = GUI.createTabbedPanel(null, clientStatus,
+        var tabs = MainGui.createTabbedPanel(null, clientStatus,
             (_, _) -> null,
             _ -> {
             },

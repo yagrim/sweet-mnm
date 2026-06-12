@@ -4,8 +4,6 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import java.awt.GridLayout;
 
-import org.mnm.config.Client;
-
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.ClientPanel.SCALE;
@@ -20,8 +18,7 @@ class ClientButtonsPanel extends JPanel
     private final JButton login;
     private final JButton logout;
 
-    private ClientStatus client;
-    private boolean hasToken;
+    private ClientStatus clientStatus;
 
     public ClientButtonsPanel() {
         super(new GridLayout(1, 2, SCALE, 0));
@@ -45,24 +42,14 @@ class ClientButtonsPanel extends JPanel
         return button;
     }
 
-    public void refresh() {
-        boolean isCompleted = clientStatusIs(UPDATED);
-        install.setEnabled(hasToken && !isCompleted);
-        repair.setEnabled(hasToken && !clientStatusIs(NOT_INSTALLED) && (isCompleted || !clientIsUpTodDate()));
-        login.setEnabled(!hasToken);
-        logout.setEnabled(hasToken);
-    }
+    public void refresh(ClientStatus clientStatus) {
+        this.clientStatus = clientStatus;
 
-    private boolean clientStatusIs(Client.Status status) {
-        return client != null
-            && client.client() != null
-            && client.client().status() == status;
-    }
-
-    private boolean clientIsUpTodDate() {
-        return client != null
-            && client.client() != null
-            && client.clientUptoDate();
+        boolean validToken = this.clientStatus.validToken();
+        install.setEnabled(validToken && !clientStatus.statusIs(UPDATED));
+        repair.setEnabled(validToken && !clientStatus.statusIs(NOT_INSTALLED) && (clientStatus.statusIs(UPDATED) || !clientStatus.clientUptoDate()));
+        login.setEnabled(!validToken);
+        logout.setEnabled(validToken);
     }
 
     @Override
@@ -74,8 +61,8 @@ class ClientButtonsPanel extends JPanel
 
     @Override
     public void repairDone(ClientStatus client) {
-        this.client = client;
-        refresh();
+        this.clientStatus = client;
+        refresh(clientStatus);
     }
 
     @Override
@@ -85,14 +72,14 @@ class ClientButtonsPanel extends JPanel
 
     @Override
     public void loginDone(ClientStatus client) {
-        this.client = client;
-        refresh();
+        clientStatus = client;
+        refresh(clientStatus);
     }
 
     @Override
     public void logoutDone() {
-        hasToken = false;
-        refresh();
+        clientStatus = null;
+        refresh(clientStatus);
     }
 
     public void refreshToken() {

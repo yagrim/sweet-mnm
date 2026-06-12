@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.Client;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
 import org.mnm.gui.GuiCommand.RepairAction;
@@ -24,9 +25,9 @@ import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.StringUtils.isEmpty;
 
-public class GUI {
+public class MainGui {
 
-    private static final Logger logger = LoggerFactory.getLogger(GUI.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainGui.class);
 
     static final String DEFAULT_SLUG = "mnm";
 
@@ -45,9 +46,9 @@ public class GUI {
         void run(RunAction runAction, Supplier<RunnerOptions> optionsSupplier);
     }
 
-    static GuiCommand.Tabs createTabbedPanel(JFrame frame,
-                                             LoginAction loginAction, LogoutAction logoutAction,
-                                             RepairAction repairAction, RunAction runAction) {
+    Tabs createTabbedPanel(JFrame frame,
+                           LoginAction loginAction, LogoutAction logoutAction,
+                           RepairAction repairAction, RunAction runAction) {
 
         final ClientPanel clientPanel = new ClientPanel(frame);
         final OptionsPanel optionsPanel = new OptionsPanel();
@@ -65,9 +66,11 @@ public class GUI {
         tabs.addTab("Client", clientPanel);
         tabs.addTab("Options", optionsPanel);
         setFontSize(tabs, 15f);
-        return new GuiCommand.Tabs(clientPanel, optionsPanel, tabs);
+        return new Tabs(clientPanel, optionsPanel, tabs);
     }
 
+    record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
+    }
 
     private void handleInstall(RepairAction installAction, BooleanSupplier inMemoryHashing, List<RepairListener> listeners) {
         listeners.forEach(listener -> listener.repairStart());

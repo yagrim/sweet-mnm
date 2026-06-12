@@ -1,8 +1,10 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
 
+import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
 
 public class PlayPanel extends JPanel
@@ -29,11 +31,7 @@ public class PlayPanel extends JPanel
 
     @Override
     public void loginDone(ClientStatus client) {
-        // TODO maybe we can assume true? depends on when is this invoked
-        play.setEnabled(true);
-//        play.setEnabled(client.validToken()
-//            && client.clientUptoDate()
-//            && (client.client() != null && client.client().status() == UPDATED));
+        refresh(client);
     }
 
     @Override
@@ -51,16 +49,10 @@ public class PlayPanel extends JPanel
         play.setEnabled(true);
     }
 
-    public void refresh() {
-//        play.setEnabled(hasToken && upToDate && isCompleted);
-    }
-
-    public void refreshToken() {
-//        play.setEnabled(false);
-    }
-
-    public void disableAll() {
-//        play.setEnabled(false);
+    public void refresh(ClientStatus clientStatus) {
+        play.setEnabled(clientStatus.validToken()
+            && clientStatus.clientUptoDate()
+            && clientStatus.statusIs(UPDATED));
     }
 
 }

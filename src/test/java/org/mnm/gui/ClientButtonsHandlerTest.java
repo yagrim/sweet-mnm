@@ -27,7 +27,7 @@ class ClientButtonsHandlerTest {
         ClientStatus clientStatus = new ClientStatus(client, true, false, null);
         var handler = initComponents(clientStatus);
 
-        handler.refresh();
+        handler.refresh(clientStatus);
 
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isFalse();
@@ -42,7 +42,7 @@ class ClientButtonsHandlerTest {
         ClientStatus clientStatus = new ClientStatus(client, true, true, null);
         var handler = initComponents(clientStatus);
 
-        handler.refresh();
+        handler.refresh(clientStatus);
 
         assertThat(install.isEnabled()).isTrue();
         assertThat(repair.isEnabled()).isFalse();
@@ -58,7 +58,7 @@ class ClientButtonsHandlerTest {
         ClientStatus clientStatus = new ClientStatus(client, true, false, null);
         var handler = initComponents(clientStatus);
 
-        handler.refresh();
+        handler.refresh(clientStatus);
 
         // This happens only if Install/Repair is aborted without completing
         assertThat(install.isEnabled()).isTrue();
@@ -74,7 +74,7 @@ class ClientButtonsHandlerTest {
         ClientStatus clientStatus = new ClientStatus(client, false, true, null);
         var handler = initComponents(clientStatus);
 
-        handler.refresh();
+        handler.refresh(clientStatus);
 
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();
@@ -89,7 +89,7 @@ class ClientButtonsHandlerTest {
         ClientStatus clientStatus = new ClientStatus(client, true, true, null);
         var handler = initComponents(clientStatus);
 
-        handler.refresh();
+        handler.refresh(clientStatus);
 
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();

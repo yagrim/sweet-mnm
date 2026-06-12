@@ -81,7 +81,7 @@ class OptionsPanel extends JPanel
     }
 
     private static Path getDownloadsSize(Client client) {
-        return new Installation(client.path(), GUI.DEFAULT_SLUG).getDownloadsPath();
+        return new Installation(client.path(), MainGui.DEFAULT_SLUG).getDownloadsPath();
     }
 
     boolean useInMemoryHashing() {

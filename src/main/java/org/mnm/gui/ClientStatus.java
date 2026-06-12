@@ -4,16 +4,13 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.tools.JwtParser;
 
-import static org.mnm.gui.GUI.DEFAULT_SLUG;
+import static org.mnm.gui.MainGui.DEFAULT_SLUG;
 
 // We extract the information we need from token, we do not store the actual token for security
 record ClientStatus(Client client, boolean clientUptoDate,
@@ -41,5 +38,9 @@ record ClientStatus(Client client, boolean clientUptoDate,
             }
             return new ClientStatus(null, false, false, null);
         }
+    }
+    
+    public boolean statusIs(Client.Status status) {
+        return client != null && client.status() == status;
     }
 }

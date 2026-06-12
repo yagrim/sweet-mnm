@@ -1,7 +1,6 @@
 package org.mnm.gui;
 
 import javax.swing.JFrame;
-import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import java.awt.BorderLayout;
@@ -23,10 +22,10 @@ import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
-import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.OS;
+import org.mnm.gui.MainGui.Tabs;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
@@ -35,8 +34,6 @@ import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.ClientStatus.getClientStatus;
-import static org.mnm.gui.GUI.createTabbedPanel;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -99,7 +96,7 @@ public class GuiCommand implements Command {
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus, clientPanel) -> postInitialization(clientStatus, clientPanel);
+        this.postInitAction = (clientStatus, clientPanel) -> postInitializeSwing(clientStatus, clientPanel);
     }
 
     @Override
@@ -135,7 +132,6 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
-
     // Commands should not initialize in constructor because debug is configured after it
     private static void initialize() {
         logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
@@ -167,7 +163,8 @@ public class GuiCommand implements Command {
 
                 // TODO remove clientStatus: we init the components with defaults, then async we update, that way we don't block
                 //  eventually we can add a "Loading..." in InfoPanel
-                final Tabs tabs = createTabbedPanel(frame, loginAction, logoutAction, repairAction, runAction);
+                final MainGui gui = new MainGui();
+                final Tabs tabs = gui.createTabbedPanel(frame, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
@@ -191,47 +188,18 @@ public class GuiCommand implements Command {
         }
     }
 
+    static void postInitializeSwing(ClientStatus clientStatus, ClientPanel clientPanel) {
+        // Test with deleted DB
+        if (clientStatus.client() == null) {
+            logger.debug("No client found in config db");
+        }
+        clientPanel.refresh(clientStatus);
+    }
+
     void close() {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void postInitialization(ClientStatus clientStatus, ClientPanel clientPanel) {
-
-        // TODO we should be able to do this without exposing internals
-        //  we should have a ClientButtonsPanel::refresh(ClientStatus), InfoPanel::refresh(ClientStatus)
-        //  maybe a Refreashable interface?
-        final ClientButtonsPanel clientButtons = clientPanel.getClientButtons();
-        final InfoPanel infoPanel = clientPanel.getInfoPanel();
-
-        if (clientStatus.client() != null) {
-            logger.debug("No client found in config db");
-            Client.Status status = clientStatus.client().status();
-            if (status.isInProgress()) {
-                String message = """
-                    Last operation was interrupted: Re-run Install
-                    Token expires at: %s""".formatted(clientStatus.expiresAt());
-                infoPanel.setText(message);
-            } else if (clientStatus.validToken()) {
-                String message;
-                if (!clientStatus.validToken()) {
-                    message = "Token expired: run Logout, and then Login";
-                    showInfoMessageDialogSync(message);
-                    clientButtons.refreshToken();
-                } else if (!clientStatus.clientUptoDate()) {
-                    message = "Client update detected: run Install or Repair";
-                    showInfoMessageDialogSync(message);
-                } else {
-                    message = """
-                        Client is up-to-date
-                        Token expires at: %s""".formatted(clientStatus.expiresAt());
-                }
-                infoPanel.setText(message);
-            }
-        }
-    }
-
-    record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
-    }
 
     private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
