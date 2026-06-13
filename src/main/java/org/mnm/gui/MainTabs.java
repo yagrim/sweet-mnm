@@ -15,9 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.mnm.client.RunnerOptions;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
+import org.mnm.gui.GuiCommand.PlayAction;
 import org.mnm.gui.GuiCommand.RepairAction;
-import org.mnm.gui.GuiCommand.RunAction;
-import org.mnm.tools.PanicException;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -43,7 +42,7 @@ class MainTabs extends JTabbedPane
 
     @FunctionalInterface
     interface RunButtonAction {
-        void run(RunAction runAction, Supplier<RunnerOptions> optionsSupplier);
+        void run(PlayAction runAction, Supplier<RunnerOptions> optionsSupplier);
     }
 
     private final ClientPanel clientPanel;
@@ -51,12 +50,12 @@ class MainTabs extends JTabbedPane
 
     MainTabs(JFrame frame,
              LoginAction loginAction, LogoutAction logoutAction,
-             RepairAction repairAction, RunAction runAction) {
+             RepairAction repairAction, PlayAction playAction) {
 
         setFontSize(this, 15f);
 
-        this.clientPanel = new ClientPanel(frame);
         this.optionsPanel = new OptionsPanel();
+        this.clientPanel = new ClientPanel(frame, playAction, () -> optionsPanel.getRunnerOptions());
 
         this.addTab("Client", clientPanel);
         this.addTab("Options", optionsPanel);
@@ -117,13 +116,4 @@ class MainTabs extends JTabbedPane
         listeners.forEach(listener -> listener.logoutDone());
     }
 
-    private static void runAction(RunAction runAction, Supplier<RunnerOptions> optionsSupplier) {
-        try {
-            RunnerOptions options = new RunnerOptions(DEFAULT_SLUG, null, false, optionsSupplier.get().enableMangoHud());
-            runAction.run(options);
-        } catch (PanicException e) {
-            logger.error("", e);
-            showErrorMessageDialogSync("Error: " + e.getMessage());
-        }
-    }
 }

@@ -7,6 +7,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.List;
+import java.util.function.Supplier;
+
+import org.mnm.client.RunnerOptions;
 
 class ClientPanel extends JPanel
     implements LoginListener, RepairListener, Refreshable {
@@ -20,7 +23,8 @@ class ClientPanel extends JPanel
     private final InfoPanel infoPanel;
     private final PlayPanel playPanel;
 
-    ClientPanel(JFrame parent) {
+    ClientPanel(JFrame parent,
+                GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
         // ClientButtonsHandler: LoginListener, LogoutListener, RepairListener
@@ -30,7 +34,7 @@ class ClientPanel extends JPanel
 
         this.clientButtons = new ClientButtonsPanel();
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
-        this.playPanel = new PlayPanel();
+        this.playPanel = new PlayPanel(playAction, optionsSuppler);
 
         var listeners = List.of(clientButtons, infoPanel, playPanel);
         loginListeners = (List<LoginListener>) (List<?>) listeners;

@@ -63,7 +63,7 @@ public class GuiCommand implements Command {
     }
 
     @FunctionalInterface
-    interface RunAction {
+    interface PlayAction {
         void run(RunnerOptions options);
     }
 
@@ -77,7 +77,7 @@ public class GuiCommand implements Command {
     private final GuiStarter guiStarter;
     private final PostInitializationAction postInitAction;
 
-    private final RunAction runAction;
+    private final PlayAction runAction;
     private final RepairAction repairAction;
     private final LoginAction loginAction;
     private final LogoutAction logoutAction;
@@ -88,6 +88,7 @@ public class GuiCommand implements Command {
         this(new ConfigDbLocator());
     }
 
+    // NOTE: we wrap logic in Actions to keep ConfigDB handling here
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);

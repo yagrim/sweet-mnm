@@ -22,6 +22,7 @@ import org.mnm.config.OS;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.GeneralOptions.toggleDebug;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
 // NOTE: so far options can be grouped as repair or run.
@@ -88,7 +89,7 @@ class OptionsPanel extends JPanel
     }
 
     RunnerOptions getRunnerOptions() {
-        return new RunnerOptions(null, null, false, mangoHudOption.isSelected());
+        return new RunnerOptions(DEFAULT_SLUG, null, false, mangoHudOption.isSelected());
     }
 
     public int showClearCacheConfirmation(Container parent) {
