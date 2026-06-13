@@ -70,7 +70,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(ClientStatus clientStatus, MainTabs tabs);
+        void run(ClientStatus clientStatus);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -96,7 +96,7 @@ public class GuiCommand implements Command {
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus, tabs) -> postInitializeSwing(clientStatus, tabs);
+        this.postInitAction = (clientStatus) -> postInitializeSwing(clientStatus);
     }
 
     @Override
@@ -174,7 +174,7 @@ public class GuiCommand implements Command {
                 CompletableFuture
                     .supplyAsync(() -> clientStatusSupplier.get())
                     .whenComplete((clientStatus, _) -> SwingUtilities.invokeLater(() -> {
-                        postInitAction.run(clientStatus, tabs);
+                        postInitAction.run(clientStatus);
                     }));
             });
         } catch (InterruptedException e) {
@@ -185,11 +185,11 @@ public class GuiCommand implements Command {
         }
     }
 
-    static void postInitializeSwing(ClientStatus clientStatus, MainTabs tabs) {
+    static void postInitializeSwing(ClientStatus clientStatus) {
         if (clientStatus.client() == null) {
             logger.debug("No client found in config db");
         }
-        tabs.refresh(clientStatus);
+        ClientEventHandler.getInstance().refresh(clientStatus);
     }
 
     void close() {

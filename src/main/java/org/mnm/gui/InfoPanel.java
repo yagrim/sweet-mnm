@@ -22,6 +22,7 @@ public class InfoPanel extends JPanel
     public InfoPanel(int width, int height, Color color) {
         super(new FlowLayout(FlowLayout.CENTER, 0, 0));
         textArea = new JTextPane();
+        GuiComponents.setFontSize(textArea, 15);
         textArea.setText("Checking data...");
         textArea.setEditable(false);
         textArea.setBackground(color);
@@ -33,8 +34,16 @@ public class InfoPanel extends JPanel
         StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
         doc.setParagraphAttributes(0, doc.getLength(), center, false);
 
-        GuiComponents.setFontSize(textArea, 15);
         this.add(textArea);
+
+        registerListeners();
+    }
+
+    private void registerListeners() {
+        ClientEventHandler instance = ClientEventHandler.getInstance();
+        instance.register((LoginListener) this);
+        instance.register((RepairListener) this);
+        instance.register((Refreshable) this);
     }
 
     public void setText(String text) {

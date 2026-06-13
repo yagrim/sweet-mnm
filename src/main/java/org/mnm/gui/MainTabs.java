@@ -1,7 +1,6 @@
 package org.mnm.gui;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import java.util.List;
@@ -19,12 +18,9 @@ import org.mnm.gui.GuiCommand.PlayAction;
 import org.mnm.gui.GuiCommand.RepairAction;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
-import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
-import static org.mnm.tools.StringUtils.isEmpty;
 
-class MainTabs extends JTabbedPane
-    implements Refreshable {
+class MainTabs extends JTabbedPane {
 
     private static final Logger logger = LoggerFactory.getLogger(MainTabs.class);
 
@@ -55,17 +51,17 @@ class MainTabs extends JTabbedPane
         setFontSize(this, 15f);
 
         this.optionsPanel = new OptionsPanel();
-        this.clientPanel = new ClientPanel(frame, playAction, () -> optionsPanel.getRunnerOptions());
+        this.clientPanel = new ClientPanel(frame, loginAction, logoutAction, playAction, () -> optionsPanel.getRunnerOptions());
 
         this.addTab("Client", clientPanel);
         this.addTab("Options", optionsPanel);
     }
 
-    @Override
-    public void refresh(ClientStatus client) {
-        clientPanel.refresh(client);
-        optionsPanel.refresh(client);
-    }
+//    public void refresh(ClientStatus client) {
+//        clientPanel.refresh(client);
+//        optionsPanel.refresh(client);
+//        ClientEventHandler.getInstance().refresh(client);
+//    }
 
     private void handleInstall(RepairAction installAction, BooleanSupplier inMemoryHashing, List<RepairListener> listeners) {
         listeners.forEach(listener -> listener.repairStart());
@@ -89,31 +85,5 @@ class MainTabs extends JTabbedPane
             }));
     }
 
-    private void handleLogin(JFrame parent, GuiCommand.LoginAction loginAction, List<LoginListener> listeners) {
-        listeners.forEach(LoginListener::loginStart);
-
-        final CredentialsPanel credentialsPanel = new CredentialsPanel();
-        final int result = credentialsPanel.show(parent);
-
-        if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
-            try {
-                final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
-
-                listeners.forEach(listener -> listener.loginDone(client));
-            } catch (Exception e) {
-                // TODO XXX remove direct call, should be through interface
-//                this.refresh();
-                logger.error("", e);
-                showErrorMessageDialogSync("Error: " + e.getMessage());
-            }
-        } else {
-//            this.refresh();
-        }
-    }
-
-    private static void handleLogout(LogoutAction action, List<LoginListener> listeners) {
-        action.logout(DEFAULT_SLUG);
-        listeners.forEach(listener -> listener.logoutDone());
-    }
 
 }

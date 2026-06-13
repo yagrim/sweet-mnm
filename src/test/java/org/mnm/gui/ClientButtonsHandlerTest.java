@@ -1,6 +1,6 @@
 package org.mnm.gui;
 
-import javax.swing.*;
+import javax.swing.JButton;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 
@@ -198,7 +198,7 @@ class ClientButtonsHandlerTest {
     }
 
     private ClientButtonsPanel initComponents(ClientStatus clientStatus) {
-        var handler = new ClientButtonsPanel();
+        var handler = new ClientButtonsPanel(null, null, null);
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         play = getButton(handler, "play");

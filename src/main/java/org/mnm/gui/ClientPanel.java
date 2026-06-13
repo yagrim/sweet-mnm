@@ -6,24 +6,21 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.mnm.client.RunnerOptions;
 
-class ClientPanel extends JPanel
-    implements LoginListener, RepairListener, Refreshable {
+class ClientPanel extends JPanel {
 
     static final int SCALE = 8;
-
-    final List<LoginListener> loginListeners;
-    final List<RepairListener> repairListeners;
 
     private final ClientButtonsPanel clientButtons;
     private final InfoPanel infoPanel;
     private final PlayPanel playPanel;
 
-    ClientPanel(JFrame parent,
+    ClientPanel(JFrame mainWindow,
+                GuiCommand.LoginAction loginAction,
+                GuiCommand.LogoutAction logoutAction,
                 GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
@@ -32,13 +29,9 @@ class ClientPanel extends JPanel
         // infoPanel: LoginListener, LogoutListener, RepairListener
         // TODO move play button to PlayPannel, implements LoginListener, LogoutListener, RepairListener
 
-        this.clientButtons = new ClientButtonsPanel();
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
         this.playPanel = new PlayPanel(playAction, optionsSuppler);
-
-        var listeners = List.of(clientButtons, infoPanel, playPanel);
-        loginListeners = (List<LoginListener>) (List<?>) listeners;
-        repairListeners = (List<RepairListener>) (List<?>) listeners;
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(clientButtons);
@@ -48,35 +41,4 @@ class ClientPanel extends JPanel
         this.add(playPanel);
     }
 
-    @Override
-    public void loginStart() {
-        loginListeners.forEach(LoginListener::loginStart);
-    }
-
-    @Override
-    public void loginDone(ClientStatus client) {
-        loginListeners.forEach(l -> l.loginDone(client));
-    }
-
-    @Override
-    public void logoutDone() {
-        loginListeners.forEach(LoginListener::logoutDone);
-    }
-
-    @Override
-    public void repairStart() {
-        repairListeners.forEach(RepairListener::repairStart);
-    }
-
-    @Override
-    public void repairDone(ClientStatus client) {
-        repairListeners.forEach(l -> l.repairDone(client));
-    }
-
-    @Override
-    public void refresh(ClientStatus client) {
-        infoPanel.refresh(client);
-        clientButtons.refresh(client);
-        playPanel.refresh(client);
-    }
 }
