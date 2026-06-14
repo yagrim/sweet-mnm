@@ -1,13 +1,11 @@
 package org.mnm.gui;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import org.mnm.config.OS;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.gui.GuiCommandTest.testClient;
 
 class GuiTest {
@@ -15,7 +13,7 @@ class GuiTest {
     @Test
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
         var client = testClient();
-        var clientStatus = new ClientStatus(client, true, true, Instant.now());
+        var clientStatus = new ClientStatus(client, true, Instant.now());
 
 //        var tabs = new MainTabs(null, clientStatus,
 //            (_, _) -> null,

@@ -33,6 +33,7 @@ import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.ClientStatus.getClientStatus;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -105,7 +106,7 @@ public class GuiCommand implements Command {
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
 
         initialize();
-        guiStarter.start(() -> getClientStatus(configDbLocator.get(), apiEndpoint));
+        guiStarter.start(() -> getClientStatus(DEFAULT_SLUG, configDbLocator.get(), apiEndpoint));
     }
 
     @Override
@@ -204,7 +205,7 @@ public class GuiCommand implements Command {
             new ClientInstaller(configDb)
                 .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
 
-            return buildClientStatus(configDb, slug, true);
+            return buildClientStatus(configDb, slug);
         }
     }
 
@@ -213,16 +214,16 @@ public class GuiCommand implements Command {
             String slug = new LoginService(configDb)
                 .login(username, password, getWorkDir(), API_BASE_URL);
 
-            return buildClientStatus(configDb, slug, false);
+            return buildClientStatus(configDb, slug);
         }
     }
 
     /**
      * Returns data with the most up-to-date information from DB.
      */
-    private static ClientStatus buildClientStatus(ConfigDb configDb, String slug, boolean uptoDate) {
+    private static ClientStatus buildClientStatus(ConfigDb configDb, String slug) {
         JwtParser.JwtClaims claims = JwtParser.parse(configDb.getTokens(slug).get(0).token());
-        return new ClientStatus(configDb.getClient(slug), uptoDate, true, claims.expirationTime());
+        return new ClientStatus(configDb.getClient(slug), true, claims.expirationTime());
     }
 
     private static void logout(Supplier<Path> configDbLocator, String slug) {

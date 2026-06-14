@@ -6,7 +6,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import java.awt.GridLayout;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
-import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
@@ -56,7 +54,7 @@ class ClientButtonsPanel extends JPanel
 
         this.login.addActionListener(e -> handleLogin(mainWindow, loginAction));
         this.logout.addActionListener(e -> handleLogout(logoutAction));
-        this.install.addActionListener(e -> handleInstall(repairAction,inMemoryHashing));
+        this.install.addActionListener(e -> handleInstall(repairAction, inMemoryHashing));
         this.repair.addActionListener(e -> handleRepair(repairAction, inMemoryHashing));
 
         registerListeners();
@@ -107,9 +105,11 @@ class ClientButtonsPanel extends JPanel
     public void refresh(ClientStatus client) {
         this.clientStatus = client;
 
-        boolean validToken = client != null && client.validToken();
-        install.setEnabled(validToken && !client.statusIs(UPDATED));
-        repair.setEnabled(validToken && !client.statusIs(NOT_INSTALLED) && (client.statusIs(UPDATED) || !client.clientUptoDate()));
+        boolean hasClient = client != null && client.client() != null;
+        boolean validToken = hasClient && client.validToken();
+        boolean toInstall = hasClient && (client.statusIs(NOT_INSTALLED) || client.client().status().isInProgress());
+        install.setEnabled(validToken && toInstall);
+        repair.setEnabled(validToken && !toInstall);
         login.setEnabled(!validToken);
         logout.setEnabled(validToken);
     }

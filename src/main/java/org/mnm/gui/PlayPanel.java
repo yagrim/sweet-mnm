@@ -28,7 +28,6 @@ public class PlayPanel extends JPanel
 
         super(new FlowLayout(FlowLayout.CENTER, 0, 0));
         play = createButton("Play");
-        this.add(play);
         play.addActionListener(_ -> {
             try {
                 runAction.run(optionsSupplier.get());
@@ -37,6 +36,7 @@ public class PlayPanel extends JPanel
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
         });
+        this.add(play);
 
         registerListeners();
     }
@@ -54,7 +54,7 @@ public class PlayPanel extends JPanel
         instance.register((RepairListener) this);
         instance.register((Refreshable) this);
     }
-    
+
     @Override
     public void loginStart() {
         play.setEnabled(false);
@@ -82,9 +82,7 @@ public class PlayPanel extends JPanel
 
     @Override
     public void refresh(ClientStatus client) {
-        play.setEnabled(client.validToken()
-            && client.clientUptoDate()
-            && client.statusIs(UPDATED));
+        play.setEnabled(client.validToken() && client.statusIs(UPDATED));
     }
 
 }
