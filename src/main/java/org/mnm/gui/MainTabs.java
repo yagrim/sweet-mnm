@@ -46,12 +46,18 @@ class MainTabs extends JTabbedPane {
 
     MainTabs(JFrame frame,
              LoginAction loginAction, LogoutAction logoutAction,
-             RepairAction repairAction, PlayAction playAction) {
+             RepairAction repairAction,
+             PlayAction playAction) {
 
         setFontSize(this, 15f);
 
         this.optionsPanel = new OptionsPanel();
-        this.clientPanel = new ClientPanel(frame, loginAction, logoutAction, playAction, () -> optionsPanel.getRunnerOptions());
+        this.clientPanel = new ClientPanel(frame,
+            loginAction,
+            logoutAction,
+            repairAction, () -> optionsPanel.useInMemoryHashing(),
+            playAction, () -> optionsPanel.getRunnerOptions()
+        );
 
         this.addTab("Client", clientPanel);
         this.addTab("Options", optionsPanel);
@@ -70,17 +76,6 @@ class MainTabs extends JTabbedPane {
             .supplyAsync(() -> installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync("Installation completed");
-                listeners.forEach(listener -> listener.repairDone(client));
-            }));
-    }
-
-    private void handleRepair(RepairAction repairAction, BooleanSupplier inMemoryHashing, List<RepairListener> listeners) {
-        listeners.forEach(listener -> listener.repairStart());
-
-        CompletableFuture
-            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
-            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
-                showInfoMessageDialogSync("Repair completed");
                 listeners.forEach(listener -> listener.repairDone(client));
             }));
     }

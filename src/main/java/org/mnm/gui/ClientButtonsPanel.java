@@ -4,7 +4,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import java.awt.GridLayout;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientButtonsPanel extends JPanel
@@ -33,7 +37,9 @@ class ClientButtonsPanel extends JPanel
     public ClientButtonsPanel(
         JFrame mainWindow,
         GuiCommand.LoginAction loginAction,
-        GuiCommand.LogoutAction logoutAction) {
+        GuiCommand.LogoutAction logoutAction,
+        GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing
+    ) {
 
         super(new GridLayout(1, 2, SCALE, 0));
 
@@ -49,6 +55,7 @@ class ClientButtonsPanel extends JPanel
 
         this.login.addActionListener(e -> handleLogin(mainWindow, loginAction));
         this.logout.addActionListener(e -> handleLogout(logoutAction));
+        this.repair.addActionListener(e -> handleRepair(repairAction, inMemoryHashing));
 
         registerListeners();
     }
@@ -125,6 +132,17 @@ class ClientButtonsPanel extends JPanel
         } else {
             eventHandler.refresh(clientStatus);
         }
+    }
+
+    private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
+        ClientEventHandler.getInstance().repairStart();
+
+        CompletableFuture
+            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
+            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
+                showInfoMessageDialogSync("Repair completed");
+                ClientEventHandler.getInstance().repairDone(client);
+            }));
     }
 
     private void handleLogout(GuiCommand.LogoutAction logoutAction) {
