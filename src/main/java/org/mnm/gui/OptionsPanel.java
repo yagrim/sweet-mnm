@@ -92,7 +92,7 @@ class OptionsPanel extends JPanel
         this.clientStatus = clientStatus;
 
         long folderSize = 0;
-        if (clientStatus != null) {
+        if (clientStatus != null && clientStatus.client() != null) {
             final Path downloadsPath = getDownloadsPath(clientStatus.client());
             folderSize = FileUtils.getFolderSize(downloadsPath);
         }
