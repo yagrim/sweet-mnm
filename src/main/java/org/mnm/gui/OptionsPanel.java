@@ -105,7 +105,7 @@ class OptionsPanel extends JPanel
         return new Installation(client.path(), MainTabs.DEFAULT_SLUG).getDownloadsPath();
     }
 
-    // This is quick enough we don't bother running async and disabling button in the meantime
+    // This is quick enough, we don't bother running async and disabling button in the meantime
     private void handleClearCache(OptionsPanel parent, JButton clearCache) {
         final int result = showClearCacheConfirmation(parent);
         if (result == JOptionPane.OK_OPTION) {
