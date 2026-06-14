@@ -12,7 +12,11 @@ import java.util.function.BooleanSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.config.Client;
+
+import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
+import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
@@ -136,18 +140,18 @@ class ClientButtonsPanel extends JPanel
     }
 
     private void handleInstall(GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
-        runRepair(installAction, inMemoryHashing, "Installation completed");
+        runRepair(installAction, inMemoryHashing, INSTALLING, "Installation completed");
     }
 
     private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
-        runRepair(repairAction, inMemoryHashing, "Repair completed");
+        runRepair(repairAction, inMemoryHashing, REPAIRING, "Repair completed");
     }
 
-    private static void runRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, String completedMessage) {
+    private static void runRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, Client.Status status, String completedMessage) {
         ClientEventHandler.getInstance().repairStart();
 
         CompletableFuture
-            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
+            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync(completedMessage);
                 ClientEventHandler.getInstance().repairDone(client);

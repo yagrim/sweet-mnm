@@ -31,11 +31,11 @@ public class LoginService {
 
         final Session session = Session.login(username, password, apiBaseUrl);
         final Client client = configDb.getClient(session.getSlug());
-        return storeToken(session, client, workDir, null).slug();
+        return updateClientAndToken(session, client, workDir, null).slug();
     }
 
     // status only used when REPAIRING or INSTALLING
-    public Client storeToken(Session session, Client client, Path workDir, Client.Status status) {
+    public Client updateClientAndToken(Session session, Client client, Path workDir, Client.Status status) {
         if (client == null) {
             // Installing works, since no installation has been completed yet
             Client newClient = new Client(session.getSlug(), session.getVersion(), NOT_INSTALLED, workDir);
@@ -43,7 +43,7 @@ public class LoginService {
             configDb.addToken(new Token(session.getSlug(), session.getToken()));
             return newClient;
         } else {
-            if (client.status().isInProgress()) {
+            if (status != null && status.isInProgress() && status != client.status()) {
                 configDb.updateClientStatus(session.getSlug(), status);
             } else if (!session.getVersion().equals(client.version())) {
                 configDb.updateClient(session.getSlug(), session.getVersion(), NEEDS_UPDATE, client.path());
@@ -70,10 +70,11 @@ public class LoginService {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
                 configDb.addToken(new Token(session.getSlug(), session.getToken()));
             } else {
-                // TODO review, does it makes sense? It seems is replacing the current token with the same?
                 tokenToUpdate = tokens.get(0);
-                configDb.updateToken(tokenToUpdate.id(), session.getToken());
-                logger.debug("Replaced valid token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
+                if (!session.getToken().equals(tokenToUpdate.token())) {
+                    configDb.updateToken(tokenToUpdate.id(), session.getToken());
+                    logger.debug("Replaced valid token: {}, {}", tokenToUpdate.id(), tokenToUpdate.slug());
+                }
             }
         }
     }

@@ -84,7 +84,6 @@ public class InfoPanel extends JPanel
         if (client.client() != null) {
             Client.Status status = client.client().status();
             if (status.isInProgress()) {
-                // TODO Test this
                 String message = """
                     Last operation was interrupted: Re-run Install
                     Token expires at: %s""".formatted(client.expiresAt());
@@ -94,7 +93,7 @@ public class InfoPanel extends JPanel
                 if (!client.validToken()) {
                     message = "Token expired: run Logout, and then Login";
                     showInfoMessageDialogSync(message);
-                } else if (!client.statusIs(NEEDS_UPDATE)) {
+                } else if (client.statusIs(NEEDS_UPDATE)) {
                     message = "Client update detected: run Repair";
                     showInfoMessageDialogSync(message);
                 } else {

@@ -80,7 +80,7 @@ public class ClientInstaller {
         final Installation installation = new Installation(installDir, slug);
 
         new LoginService(configDb)
-            .storeToken(session, currentClient, installDir, status);
+            .updateClientAndToken(session, currentClient, installDir, status);
 
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();

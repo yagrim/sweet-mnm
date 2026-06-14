@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.mnm.config.Client;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +52,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface RepairAction {
-        ClientStatus repair(String slug, boolean inMemoryHashing);
+        ClientStatus repair(String slug, Client.Status status, boolean inMemoryHashing);
     }
 
     @FunctionalInterface
@@ -92,7 +94,7 @@ public class GuiCommand implements Command {
     // NOTE: we wrap logic in Actions to keep ConfigDB handling here
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
-        this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
+        this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);
         this.runAction = (options) -> runClient(configDbLocator, options);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
@@ -197,13 +199,12 @@ public class GuiCommand implements Command {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-
-    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
+    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, Client.Status status, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
             new ClientInstaller(configDb)
-                .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
+                .install(options, getWorkDir(), API_BASE_URL, status);
 
             return buildClientStatus(configDb, slug);
         }
