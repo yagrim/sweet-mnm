@@ -1,12 +1,17 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
+import org.mnm.config.Client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +24,6 @@ import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
-import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.OS;
@@ -27,10 +31,11 @@ import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Client.Status.REPAIRING;
-import static org.mnm.config.Environment.*;
+import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.ClientStatus.getClientStatus;
-import static org.mnm.gui.GUI.createTabbedPanel;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -42,12 +47,12 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(ClientStatus clientStatus);
+        void start(Supplier<ClientStatus> clientStatus);
     }
 
     @FunctionalInterface
     interface RepairAction {
-        ClientStatus repair(String slug, boolean inMemoryHashing);
+        ClientStatus repair(String slug, Client.Status status, boolean inMemoryHashing);
     }
 
     @FunctionalInterface
@@ -61,21 +66,21 @@ public class GuiCommand implements Command {
     }
 
     @FunctionalInterface
-    interface RunAction {
+    interface PlayAction {
         void run(RunnerOptions options);
     }
 
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel);
+        void run(ClientStatus clientStatus);
     }
 
     private final Supplier<Path> configDbLocator;
     private final GuiStarter guiStarter;
     private final PostInitializationAction postInitAction;
 
-    private final RunAction runAction;
+    private final PlayAction runAction;
     private final RepairAction repairAction;
     private final LoginAction loginAction;
     private final LogoutAction logoutAction;
@@ -86,14 +91,15 @@ public class GuiCommand implements Command {
         this(new ConfigDbLocator());
     }
 
+    // NOTE: we wrap logic in Actions to keep ConfigDB handling here
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
-        this.repairAction = (slug, inMemoryHashing) -> repairClient(configDbLocator, slug, inMemoryHashing);
+        this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);
         this.runAction = (options) -> runClient(configDbLocator, options);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus, buttons, intoPanel) -> postInitialization(clientStatus, buttons, intoPanel);
+        this.postInitAction = (clientStatus) -> postInitializeSwing(clientStatus);
     }
 
     @Override
@@ -102,7 +108,7 @@ public class GuiCommand implements Command {
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
 
         initialize();
-        guiStarter.start(getClientStatus(configDbLocator.get(), apiEndpoint));
+        guiStarter.start(() -> getClientStatus(DEFAULT_SLUG, configDbLocator.get(), apiEndpoint));
     }
 
     @Override
@@ -129,7 +135,6 @@ public class GuiCommand implements Command {
             """.formatted(description(), name());
     }
 
-
     // Commands should not initialize in constructor because debug is configured after it
     private static void initialize() {
         logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
@@ -150,7 +155,7 @@ public class GuiCommand implements Command {
         }
     }
 
-    private void startSwingInterface(ClientStatus clientStatus) {
+    private void startSwingInterface(Supplier<ClientStatus> clientStatusSupplier) {
         try {
             // For message windows
             UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
@@ -158,10 +163,11 @@ public class GuiCommand implements Command {
 
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
-                final Tabs tabs = createTabbedPanel(frame, clientStatus, loginAction, logoutAction, repairAction, runAction);
+
+                final MainTabs tabs = new MainTabs(frame, loginAction, logoutAction, repairAction, runAction);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.getContentPane().add(tabs.root(), BorderLayout.CENTER);
+                frame.getContentPane().add(tabs, BorderLayout.CENTER);
                 frame.setResizable(false);
                 frame.pack();
                 frame.setLocationRelativeTo(null);
@@ -169,12 +175,9 @@ public class GuiCommand implements Command {
 
                 // Prevent UI locking for some seconds
                 CompletableFuture
-                    .runAsync(() -> {
-                        ClientPanel clientPanel = tabs.clientPanel();
-                        postInitAction.run(clientStatus, clientPanel.getButtonsHandler(), clientPanel.getInfoPanel());
-                    })
-                    .whenComplete((_, _) -> SwingUtilities.invokeLater(() -> {
-                        tabs.clientPanel.getButtonsHandler().refresh();
+                    .supplyAsync(() -> clientStatusSupplier.get())
+                    .whenComplete((clientStatus, _) -> SwingUtilities.invokeLater(() -> {
+                        postInitAction.run(clientStatus);
                     }));
             });
         } catch (InterruptedException e) {
@@ -185,50 +188,25 @@ public class GuiCommand implements Command {
         }
     }
 
+    static void postInitializeSwing(ClientStatus clientStatus) {
+        if (clientStatus.client() == null) {
+            logger.debug("No client found in config db");
+        }
+        ClientEventHandler.getInstance().refresh(clientStatus);
+    }
+
     void close() {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void postInitialization(ClientStatus clientStatus, ClientButtonsHandler buttons, InfoPanel infoPanel) {
-
-        if (clientStatus.client() != null) {
-            logger.debug("No client found in config db");
-            Client.Status status = clientStatus.client().status();
-            if (status.isInProgress()) {
-                String message = """
-                    Last operation was interrupted: Re-run Install
-                    Token expires at: %s""".formatted(clientStatus.expiresAt());
-                infoPanel.setText(message);
-            } else if (clientStatus.validToken()) {
-                String message;
-                if (!clientStatus.validToken()) {
-                    message = "Token expired: run Logout, and then Login";
-                    showInfoMessageDialogSync(message);
-                    buttons.refreshToken();
-                } else if (!clientStatus.clientUptoDate()) {
-                    message = "Client update detected: run Install or Repair";
-                    showInfoMessageDialogSync(message);
-                } else {
-                    message = """
-                        Client is up-to-date
-                        Token expires at: %s""".formatted(clientStatus.expiresAt());
-                }
-                infoPanel.setText(message);
-            }
-        }
-    }
-
-    record Tabs(ClientPanel clientPanel, OptionsPanel optionsPanel, JTabbedPane root) {
-    }
-
-    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, boolean inMemoryHashing) {
+    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, Client.Status status, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
             new ClientInstaller(configDb)
-                .install(options, getWorkDir(), API_BASE_URL, REPAIRING);
+                .install(options, getWorkDir(), API_BASE_URL, status);
 
-            return buildClientStatus(configDb, slug, true);
+            return buildClientStatus(configDb, slug);
         }
     }
 
@@ -237,16 +215,16 @@ public class GuiCommand implements Command {
             String slug = new LoginService(configDb)
                 .login(username, password, getWorkDir(), API_BASE_URL);
 
-            return buildClientStatus(configDb, slug, false);
+            return buildClientStatus(configDb, slug);
         }
     }
 
     /**
      * Returns data with the most up-to-date information from DB.
      */
-    private static ClientStatus buildClientStatus(ConfigDb configDb, String slug, boolean uptoDate) {
+    private static ClientStatus buildClientStatus(ConfigDb configDb, String slug) {
         JwtParser.JwtClaims claims = JwtParser.parse(configDb.getTokens(slug).get(0).token());
-        return new ClientStatus(configDb.getClient(slug), uptoDate, true, claims.expirationTime());
+        return new ClientStatus(configDb.getClient(slug), true, claims.expirationTime());
     }
 
     private static void logout(Supplier<Path> configDbLocator, String slug) {

@@ -19,22 +19,23 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 import static org.mnm.TestUtils.expiredToken;
+import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.gui.ClientStatus.getClientStatus;
-import static org.mnm.gui.GUI.DEFAULT_SLUG;
 import static org.mockito.Mockito.when;
 
 class ClientStatusTest {
 
     private static final String CLIENT_VERSION = "1.0.0";
+    private static final String TEST_SLUG = "my-slug";
 
 
     @Test
     void shouldCalculateClientStatusClientIsMissing(@TempDir(cleanup = NEVER) Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
 
-        ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
+        ClientStatus clientStatus = getClientStatus(TEST_SLUG, dbFile, API_BASE_URL);
 
         assertEmptyClientStatus(clientStatus);
     }
@@ -52,35 +53,35 @@ class ClientStatusTest {
     private static void shouldCalculateClientStatus(String token, Path tempDir) {
         Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(DEFAULT_SLUG, CLIENT_VERSION, UPDATED, tempDir));
+            configDb.addClient(new Client(TEST_SLUG, CLIENT_VERSION, UPDATED, tempDir));
             if (token != null) {
-                configDb.addToken(new Token(DEFAULT_SLUG, token));
+                configDb.addToken(new Token(TEST_SLUG, token));
             }
         }
 
-        ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
+        ClientStatus clientStatus = getClientStatus(TEST_SLUG, dbFile, API_BASE_URL);
 
         assertEmptyClientStatus(clientStatus);
     }
 
     @Test
     void shouldCalculateClientStatusWhenTokenIsValidAndClientIsUpToDate(@TempDir(cleanup = NEVER) Path tempDir) {
-        shouldCalculateClientStatusWhenTokenIsValid(CLIENT_VERSION, tempDir);
+        shouldCalculateClientStatusWhenTokenIsValid(CLIENT_VERSION, tempDir, UPDATED);
     }
 
     @Test
-    void shouldCalculateClientStatusWhenTokenIsValidAndClientIsOutdated(@TempDir(cleanup = NEVER) Path tempDir) {
-        shouldCalculateClientStatusWhenTokenIsValid("1.2.3", tempDir);
+    void shouldCalculateAndUpdateClientStatusWhenTokenIsValidAndClientIsOutdated(@TempDir(cleanup = NEVER) Path tempDir) {
+        shouldCalculateClientStatusWhenTokenIsValid("1.2.3", tempDir, NEEDS_UPDATE);
     }
 
-    private static void shouldCalculateClientStatusWhenTokenIsValid(String serverVersion, Path tempDir) {
+    private static void shouldCalculateClientStatusWhenTokenIsValid(String serverVersion, Path tempDir, Client.Status expectedStatus) {
         final Instant expiresAt = Instant.now().plus(5, MINUTES).truncatedTo(SECONDS);
         final String validToken = TestUtils.testToken(expiresAt);
 
         Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
-            configDb.addClient(new Client(DEFAULT_SLUG, CLIENT_VERSION, UPDATED, tempDir));
-            configDb.addToken(new Token(DEFAULT_SLUG, validToken));
+            configDb.addClient(new Client(TEST_SLUG, CLIENT_VERSION, UPDATED, tempDir));
+            configDb.addToken(new Token(TEST_SLUG, validToken));
         }
 
         Session session = Mockito.mock(Session.class);
@@ -89,10 +90,9 @@ class ClientStatusTest {
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(validToken, API_BASE_URL)).thenReturn(session);
 
-            ClientStatus clientStatus = getClientStatus(dbFile, API_BASE_URL);
+            ClientStatus clientStatus = getClientStatus(TEST_SLUG, dbFile, API_BASE_URL);
 
-            assertThat(clientStatus.client()).isEqualTo(new Client(DEFAULT_SLUG, CLIENT_VERSION, UPDATED, tempDir));
-            assertThat(clientStatus.clientUptoDate()).isEqualTo(serverVersion.equals(CLIENT_VERSION));
+            assertThat(clientStatus.client()).isEqualTo(new Client(TEST_SLUG, CLIENT_VERSION, expectedStatus, tempDir));
             assertThat(clientStatus.validToken()).isTrue();
             assertThat(clientStatus.expiresAt()).isEqualTo(expiresAt);
         }
@@ -100,7 +100,6 @@ class ClientStatusTest {
 
     private static void assertEmptyClientStatus(ClientStatus clientStatus) {
         assertThat(clientStatus.client()).isNull();
-        assertThat(clientStatus.clientUptoDate()).isFalse();
         assertThat(clientStatus.validToken()).isFalse();
         assertThat(clientStatus.expiresAt()).isNull();
     }

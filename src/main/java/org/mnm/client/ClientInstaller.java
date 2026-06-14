@@ -36,7 +36,7 @@ public class ClientInstaller {
     @FunctionalInterface
     interface Installer {
         // TODO having to pass status seems a smell.
-        // Instead, maybe have an OPS table to audit what was the last operation
+        // Instead, maybe have an OPs table to audit what was the last operation
         void install(InstallerOptions options, ConfigDb configDb, Client.Status status);
     }
 
@@ -80,7 +80,7 @@ public class ClientInstaller {
         final Installation installation = new Installation(installDir, slug);
 
         new LoginService(configDb)
-            .storeToken(session, currentClient, installDir, status);
+            .updateClientAndToken(session, currentClient, installDir, status);
 
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();

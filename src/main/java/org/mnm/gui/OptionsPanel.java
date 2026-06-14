@@ -1,7 +1,15 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -9,14 +17,18 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.client.Installation;
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.Client;
 import org.mnm.config.OS;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.GeneralOptions.toggleDebug;
+import static org.mnm.gui.ClientPanel.SCALE;
+import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
 // NOTE: so far options can be grouped as repair or run.
-class OptionsPanel extends JPanel {
+class OptionsPanel extends JPanel
+    implements RepairListener, Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
@@ -24,11 +36,12 @@ class OptionsPanel extends JPanel {
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
+    private JButton clearCache;
+
+    private ClientStatus clientStatus;
+
     OptionsPanel() {
         super();
-    }
-
-    JPanel initialize(ClientStatus clientStatus) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
 
@@ -44,49 +57,68 @@ class OptionsPanel extends JPanel {
             mangoHudOption.setText("Enable MangoHud (Linux only)");
         }
 
-        this.add(debugOption);
-        this.add(Box.createVerticalStrut(8));
-        this.add(inMemoryHashingOption);
-        this.add(Box.createVerticalStrut(8));
-        this.add(mangoHudOption);
-        this.add(Box.createVerticalStrut(8));
-        this.add(createClearCacheButton(clientStatus));
+        clearCache = new JButton("Clear cache");
+        clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
-        return this;
+        this.add(debugOption);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(inMemoryHashingOption);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(mangoHudOption);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(clearCache);
+
+        registerListeners();
     }
 
-    private JButton createClearCacheButton(ClientStatus clientStatus) {
-        final JButton clearCache = new JButton();
-        long folderSize = 0;
+    private void registerListeners() {
+        ClientEventHandler instance = ClientEventHandler.getInstance();
+        instance.register((RepairListener) this);
+        instance.register((Refreshable) this);
+    }
 
-        if (clientStatus.client() != null) {
-            final Path downloadsPath = getDownloadsPath(clientStatus);
+    @Override
+    public void repairStart() {
+        clearCache.setEnabled(false);
+    }
+
+    @Override
+    public void repairDone(ClientStatus client) {
+        refresh(client);
+    }
+
+    @Override
+    public void refresh(ClientStatus clientStatus) {
+        this.clientStatus = clientStatus;
+
+        long folderSize = 0;
+        if (clientStatus != null && clientStatus.client() != null) {
+            final Path downloadsPath = getDownloadsPath(clientStatus.client());
             folderSize = FileUtils.getFolderSize(downloadsPath);
-            clearCache.addActionListener(_ -> handleClearCache(this, clearCache, downloadsPath));
         }
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
-        clearCache.setEnabled(clientStatus.client() != null && folderSize > 0);
+        clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-        return clearCache;
     }
 
-    // TODO disable button while Installing/Repairing
-    private void handleClearCache(OptionsPanel parent, JButton clearCache, Path downloadsPath) {
-        final int result = show(parent);
+    private static Path getDownloadsPath(Client client) {
+        return new Installation(client.path(), MainTabs.DEFAULT_SLUG).getDownloadsPath();
+    }
+
+    // This is quick enough, we don't bother running async and disabling button in the meantime
+    private void handleClearCache(OptionsPanel parent, JButton clearCache) {
+        final int result = showClearCacheConfirmation(parent);
         if (result == JOptionPane.OK_OPTION) {
             try {
+                final Path downloadsPath = getDownloadsPath(clientStatus.client());
                 FileUtils.deleteFolder(downloadsPath);
-                clearCache.setEnabled(false);
                 clearCache.setText("Clear cache (empty)");
             } catch (Exception e) {
                 logger.error("", e);
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
+            refresh(clientStatus);
         }
-    }
-
-    private static Path getDownloadsPath(ClientStatus clientStatus) {
-        return new Installation(clientStatus.client().path(), GUI.DEFAULT_SLUG).getDownloadsPath();
     }
 
     boolean useInMemoryHashing() {
@@ -94,14 +126,12 @@ class OptionsPanel extends JPanel {
     }
 
     RunnerOptions getRunnerOptions() {
-        return new RunnerOptions(null, null, false, mangoHudOption.isSelected());
+        return new RunnerOptions(DEFAULT_SLUG, null, false, mangoHudOption.isSelected());
     }
 
-    public int show(Container parent) {
+    public int showClearCacheConfirmation(Container parent) {
         final JPanel panel = new JPanel(new GridLayout(1, 1, 8, 8));
-
         panel.add(new JLabel("Delete all temporal downloads cache?"));
-
         return JOptionPane.showConfirmDialog(
             parent,
             panel,
@@ -110,5 +140,4 @@ class OptionsPanel extends JPanel {
             JOptionPane.PLAIN_MESSAGE
         );
     }
-
 }

@@ -1,6 +1,7 @@
 package org.mnm.gui;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
 
 class MessageWindow {
