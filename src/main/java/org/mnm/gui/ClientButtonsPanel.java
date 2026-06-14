@@ -6,6 +6,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import java.awt.GridLayout;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
@@ -55,6 +56,7 @@ class ClientButtonsPanel extends JPanel
 
         this.login.addActionListener(e -> handleLogin(mainWindow, loginAction));
         this.logout.addActionListener(e -> handleLogout(logoutAction));
+        this.install.addActionListener(e -> handleInstall(repairAction,inMemoryHashing));
         this.repair.addActionListener(e -> handleRepair(repairAction, inMemoryHashing));
 
         registerListeners();
@@ -125,7 +127,6 @@ class ClientButtonsPanel extends JPanel
                 final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
                 eventHandler.loginDone(client);
             } catch (Exception e) {
-                eventHandler.refresh(clientStatus);
                 logger.error("", e);
                 showErrorMessageDialogSync("Error: " + e.getMessage());
             }
@@ -134,13 +135,21 @@ class ClientButtonsPanel extends JPanel
         }
     }
 
+    private void handleInstall(GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
+        runRepair(installAction, inMemoryHashing, "Installation completed");
+    }
+
     private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
+        runRepair(repairAction, inMemoryHashing, "Repair completed");
+    }
+
+    private static void runRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, String completedMessage) {
         ClientEventHandler.getInstance().repairStart();
 
         CompletableFuture
             .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
             .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
-                showInfoMessageDialogSync("Repair completed");
+                showInfoMessageDialogSync(completedMessage);
                 ClientEventHandler.getInstance().repairDone(client);
             }));
     }

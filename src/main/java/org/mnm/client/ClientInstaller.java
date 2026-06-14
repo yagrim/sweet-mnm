@@ -36,7 +36,7 @@ public class ClientInstaller {
     @FunctionalInterface
     interface Installer {
         // TODO having to pass status seems a smell.
-        // Instead, maybe have an OPS table to audit what was the last operation
+        // Instead, maybe have an OPs table to audit what was the last operation
         void install(InstallerOptions options, ConfigDb configDb, Client.Status status);
     }
 

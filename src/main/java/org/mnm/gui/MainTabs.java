@@ -2,10 +2,7 @@ package org.mnm.gui;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -18,7 +15,6 @@ import org.mnm.gui.GuiCommand.PlayAction;
 import org.mnm.gui.GuiCommand.RepairAction;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 
 class MainTabs extends JTabbedPane {
 
@@ -62,23 +58,5 @@ class MainTabs extends JTabbedPane {
         this.addTab("Client", clientPanel);
         this.addTab("Options", optionsPanel);
     }
-
-//    public void refresh(ClientStatus client) {
-//        clientPanel.refresh(client);
-//        optionsPanel.refresh(client);
-//        ClientEventHandler.getInstance().refresh(client);
-//    }
-
-    private void handleInstall(RepairAction installAction, BooleanSupplier inMemoryHashing, List<RepairListener> listeners) {
-        listeners.forEach(listener -> listener.repairStart());
-
-        CompletableFuture
-            .supplyAsync(() -> installAction.repair(DEFAULT_SLUG, inMemoryHashing.getAsBoolean()))
-            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
-                showInfoMessageDialogSync("Installation completed");
-                listeners.forEach(listener -> listener.repairDone(client));
-            }));
-    }
-
 
 }
