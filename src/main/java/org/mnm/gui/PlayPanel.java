@@ -43,6 +43,7 @@ public class PlayPanel extends JPanel
 
     private static JButton createButton(String text) {
         JButton button = new JButton(text);
+        button.setEnabled(false);
         setFontSize(button, 20f);
         return button;
     }
