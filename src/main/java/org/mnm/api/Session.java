@@ -74,8 +74,9 @@ public class Session {
         String manifestName = getLastSegment(manifestUrl);
         final Path downloadPath = downloadsCache.resolve(manifestName);
         if (fileExists(downloadPath)) {
-            logger.info("Skipping manifest download: {} already present", manifestName);
+            logger.debug("Skipping manifest download: {} already present", manifestName);
         } else {
+            logger.debug("Downloading manifest: {}", manifestName);
             Downloader.downloadFile(manifestUrl, downloadPath);
         }
         return downloadPath;

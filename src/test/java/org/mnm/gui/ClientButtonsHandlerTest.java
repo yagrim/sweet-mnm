@@ -1,148 +1,108 @@
 package org.mnm.gui;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import java.nio.file.Path;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.config.Client;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mnm.ApiServerStubs.TEST_SLUG;
+import static org.mnm.config.Client.Status.INSTALLING;
+import static org.mnm.config.Client.Status.NEEDS_UPDATE;
+import static org.mnm.config.Client.Status.REPAIRING;
+import static org.mnm.config.Client.Status.UPDATED;
+import static org.mnm.gui.ReflectionTestTools.getButton;
 
 class ClientButtonsHandlerTest {
 
     private JButton install;
     private JButton repair;
-    private JButton play;
     private JButton login;
     private JButton logout;
 
-    private ClientButtonsHandler handler;
+    @Test
+    void shouldEnableOnlyLoginWhenThereIsNoClient() {
+        ClientStatus clientStatus = new ClientStatus(null, false, null);
+        var handler = initComponents();
 
-    @BeforeEach
-    void setUp() {
-        install = new JButton();
-        repair = new JButton();
-        play = new JButton();
-        login = new JButton();
-        logout = new JButton();
+        handler.refresh(clientStatus);
 
-        handler = new ClientButtonsHandler(
-            install,
-            repair,
-            play,
-            login,
-            logout
-        );
+        installEnabled();
     }
 
     @Test
-    void shouldEnableOnlyLoginWhenNoTokenAndNoClient() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
+    void shouldEnableOnlyLoginWhenTokenIsNotValid() {
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, false, null);
+        var handler = initComponents();
 
-        handler.setClient(client, true);
-        handler.setHasToken(false);
-        handler.refresh();
+        handler.refresh(clientStatus);
 
-        assertThat(install.isEnabled()).isFalse();
-        assertThat(repair.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
-        assertThat(login.isEnabled()).isTrue();
-        assertThat(logout.isEnabled()).isFalse();
+        installEnabled();
     }
 
     @Test
-    void shouldRefreshWhenTokenExistsAndClientNotCompletedButNotUpToDate() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.REPAIRING);
+    void shouldRefreshWhenTokenExistsAndClientInstallDidNotCompleted() {
+        shouldRefreshWhenTokenExistsAndClientRepairDidNotCompleted(INSTALLING);
+    }
 
-        handler.setClient(client, true);
-        handler.setHasToken(true);
-        handler.refresh();
+    @Test
+    void shouldRefreshWhenTokenExistsAndClientRepairDidNotCompleted() {
+        shouldRefreshWhenTokenExistsAndClientRepairDidNotCompleted(REPAIRING);
+    }
+
+    private void shouldRefreshWhenTokenExistsAndClientRepairDidNotCompleted(Client.Status foundStatus) {
+        Client client = new Client(TEST_SLUG, "1.2.3", foundStatus, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
+
+        handler.refresh(clientStatus);
 
         assertThat(install.isEnabled()).isTrue();
         assertThat(repair.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
         assertThat(login.isEnabled()).isFalse();
         assertThat(logout.isEnabled()).isTrue();
     }
 
     @Test
-    void shouldRefreshWhenTokenExistsAndClientNotCompletedAndNotUpToDate() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.REPAIRING);
+    void shouldRefreshWhenClientCompletedAndIsUpToDate() {
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
 
-        handler.setClient(client, true);
-        handler.setHasToken(true);
-        handler.refresh();
+        handler.refresh(clientStatus);
 
-        // This happens only if Install/Repair is aborted without completing
-        assertThat(install.isEnabled()).isTrue();
-        assertThat(repair.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
-        assertThat(login.isEnabled()).isFalse();
-        assertThat(logout.isEnabled()).isTrue();
+        refreshEnabled();
     }
 
     @Test
-    void shouldRefreshWhenClientCompletedButNotUpToDate() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
+    void shouldRefreshWhenClientCompletedAndNeedsUpdate() {
+        Client client = new Client(TEST_SLUG, "1.2.3", NEEDS_UPDATE, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
 
-        handler.setClient(client, false);
-        handler.setHasToken(true);
-        handler.refresh();
+        handler.refresh(clientStatus);
 
-        assertThat(install.isEnabled()).isFalse();
-        assertThat(repair.isEnabled()).isTrue();
-        assertThat(play.isEnabled()).isFalse();
-        assertThat(login.isEnabled()).isFalse();
-        assertThat(logout.isEnabled()).isTrue();
+        refreshEnabled();
     }
 
     @Test
-    void shouldRefreshWhenClientCompletedAnUptoDate() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
+    void repairStartShouldDisableButtons() {
+        var handler = initComponents();
 
-        handler.setClient(client, true);
-        handler.setHasToken(true);
-        handler.refresh();
-
-        assertThat(install.isEnabled()).isFalse();
-        assertThat(repair.isEnabled()).isTrue();
-        assertThat(play.isEnabled()).isTrue();
-        assertThat(login.isEnabled()).isFalse();
-        assertThat(logout.isEnabled()).isTrue();
-    }
-
-
-    @Test
-    void installationStartShouldDisableRelevantButtons() {
-        handler.installationStart();
-
-        assertThat(install.isEnabled()).isFalse();
-        assertThat(repair.isEnabled()).isFalse();
-        assertThat(logout.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
-    }
-
-    @Test
-    void repairStartShouldDisableRelevantButtons() {
         handler.repairStart();
 
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isFalse();
+        assertThat(login.isEnabled()).isFalse();
         assertThat(logout.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
     }
 
     @Test
     void loginStartShouldDisableLoginButton() {
-        login.setEnabled(true);
+        var handler = initComponents();
 
         handler.loginStart();
 
@@ -150,65 +110,80 @@ class ClientButtonsHandlerTest {
     }
 
     @Test
-    void loginDoneShouldSetTokenAndRefreshButtons() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
+    void loginDoneShouldSetTokenAndRefreshButtonsWhenUpToDate() {
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
 
-        handler.loginDone(client);
+        handler.loginDone(clientStatus);
 
+        assertThat(install.isEnabled()).isFalse();
+        assertThat(repair.isEnabled()).isTrue();
         assertThat(login.isEnabled()).isFalse();
         assertThat(logout.isEnabled()).isTrue();
-        assertThat(repair.isEnabled()).isTrue();
-        assertThat(play.isEnabled()).isFalse();
+    }
+
+    @Test
+    void loginDoneShouldSetTokenAndRefreshButtonsWhenNotUpToDate() {
+        Client client = new Client(TEST_SLUG, "1.2.3", NEEDS_UPDATE, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
+
+        handler.loginDone(clientStatus);
+
         assertThat(install.isEnabled()).isFalse();
+        assertThat(repair.isEnabled()).isTrue();
+        assertThat(login.isEnabled()).isFalse();
+        assertThat(logout.isEnabled()).isTrue();
     }
 
     @Test
     void logoutDoneShouldClearTokenAndRefreshButtons() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
 
-        handler.loginDone(client);
+        handler.loginDone(clientStatus);
         handler.logoutDone();
 
-        assertThat(login.isEnabled()).isTrue();
-        assertThat(logout.isEnabled()).isFalse();
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isFalse();
-        assertThat(play.isEnabled()).isFalse();
-    }
-
-    @Test
-    void installationDoneShouldRefreshState() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
-
-        handler.setClient(client, true);
-        handler.setHasToken(true);
-
-        handler.installationStart();
-        handler.installationDone(client);
-
-        assertThat(install.isEnabled()).isFalse();
-        assertThat(repair.isEnabled()).isTrue();
-        assertThat(play.isEnabled()).isTrue();
-        assertThat(logout.isEnabled()).isTrue();
+        assertThat(login.isEnabled()).isTrue();
+        assertThat(logout.isEnabled()).isFalse();
     }
 
     @Test
     void repairDoneShouldRefreshState() {
-        Client client = mock(Client.class);
-        when(client.status()).thenReturn(Client.Status.UPDATED);
-
-        handler.setClient(client, true);
-        handler.setHasToken(true);
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents();
 
         handler.repairStart();
-        handler.repairDone(client);
+        handler.repairDone(clientStatus);
 
+        refreshEnabled();
+    }
+
+    private ClientButtonsPanel initComponents() {
+        var handler = new ClientButtonsPanel(null, null, null, null, null);
+        install = getButton(handler, "install");
+        repair = getButton(handler, "repair");
+        login = getButton(handler, "login");
+        logout = getButton(handler, "logout");
+        return handler;
+    }
+
+    private void installEnabled() {
+        assertThat(install.isEnabled()).isFalse();
+        assertThat(repair.isEnabled()).isFalse();
+        assertThat(login.isEnabled()).isTrue();
+        assertThat(logout.isEnabled()).isFalse();
+    }
+
+    private void refreshEnabled() {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();
-        assertThat(play.isEnabled()).isTrue();
+        assertThat(login.isEnabled()).isFalse();
         assertThat(logout.isEnabled()).isTrue();
     }
 }
