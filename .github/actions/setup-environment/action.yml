@@ -37,4 +37,3 @@ runs:
       continue-on-error: true
       run: |
         java --version
-        native-image --version

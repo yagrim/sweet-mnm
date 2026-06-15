@@ -15,6 +15,8 @@ jobs:
     env:
       BINARY_LOCATION: build/native/nativeCompile/
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
       - name: Setup environment
         id: setup
         uses: ./.github/actions/setup-environment
@@ -22,14 +24,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Native build
         shell: bash
-        run: ./gradlew clean nativeCompile -PbuildVersion=${{ github.event.release.name }}
+        run: |
+          version="${{ github.event.release.name }}"
+          version="${version#v}"
+          ./gradlew clean nativeCompile -PbuildVersion="$version"
       - name: Verify binary
         shell: bash
         run: ${{ env.BINARY_LOCATION }}sweet version
       - name: Upload binary artifact
         uses: actions/upload-artifact@v7
         with:
-          name: binary-linux-${{ steps.setup.outputs.arch }}
+          name: linux-${{ steps.setup.outputs.arch }}
           path: ${{ env.BINARY_LOCATION }}
 
   build-windows:
@@ -38,6 +43,8 @@ jobs:
     env:
       BINARY_LOCATION: build/native/nativeCompile/
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
       - name: Setup environment
         id: setup
         uses: ./.github/actions/setup-environment
@@ -45,14 +52,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Native build
         shell: pwsh
-        run: ./gradlew clean nativeCompile -PbuildVersion=${{ github.event.release.name }}
+        run: |
+          $version = "${{ github.event.release.name }}"
+          $version = $version -replace '^v', ''
+          ./gradlew clean nativeCompile -PbuildVersion=$version
       - name: Verify binary
         shell: pwsh
-        run: & "$env:BINARY_LOCATION\sweet.exe" version
+        run: '& "$env:BINARY_LOCATION\sweet.exe" version'
       - name: Upload binary artifact
         uses: actions/upload-artifact@v7
         with:
-          name: binary-windows-${{ steps.setup.outputs.arch }}
+          name: windows-${{ steps.setup.outputs.arch }}
           path: ${{ env.BINARY_LOCATION }}
 
   publish:
@@ -66,8 +76,19 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: artifacts
-          merge-multiple: true
+      - name: List artifacts
+        shell: bash
+        run: find . -type f -print
+      # See if they are in folders, then compress here and upload zips
+      - name: Prepare zip
+        run: |
+          find ./artifacts -mindepth 1 -maxdepth 1 -type d | while read dir; do
+            name=$(basename "$dir")
+            (cd "$dir" && zip -r "../${name}.zip" .)
+            echo "Created ./artifacts/${name}.zip"
+          done
+          ls -lah ./artifacts
       - name: Upload binaries to release
         uses: softprops/action-gh-release@v3
         with:
-          files: artifacts/**
+          files: artifacts/*.zip
