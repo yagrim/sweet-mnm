@@ -1,27 +1,33 @@
 package org.mnm.gui;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 
 import org.mnm.config.Client;
+import org.mnm.config.SplitVersion;
 
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
+import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 
 public class InfoPanel extends JPanel
     implements LoginListener, RepairListener, Refreshable {
 
     private final JTextPane textArea;
+    private final JLabel versionLabel;
 
     public InfoPanel(int width, int height, Color color) {
-        super(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         textArea = new JTextPane();
         GuiComponents.setFontSize(textArea, 15);
         textArea.setText("Checking data...");
@@ -30,12 +36,20 @@ public class InfoPanel extends JPanel
         textArea.setBorder(new LineBorder(Color.GRAY, 1));
         textArea.setPreferredSize(new Dimension(width, height));
 
+        versionLabel = new JLabel(" ", SwingConstants.RIGHT);
+        GuiComponents.setFontSize(versionLabel, 15);
+        versionLabel.setMaximumSize(new Dimension(width, versionLabel.getPreferredSize().height));
+
         StyledDocument doc = textArea.getStyledDocument();
         SimpleAttributeSet center = new SimpleAttributeSet();
         StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
         doc.setParagraphAttributes(0, doc.getLength(), center, false);
 
+        this.add(Box.createVerticalGlue());
         this.add(textArea);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(versionLabel);
+        this.add(Box.createVerticalGlue());
 
         registerListeners();
     }
@@ -47,24 +61,22 @@ public class InfoPanel extends JPanel
         instance.register((Refreshable) this);
     }
 
-    public void setText(String text) {
-        textArea.setText(text);
-    }
-
     @Override
     public void loginStart() {
     }
 
     @Override
     public void loginDone(ClientStatus client) {
-        this.setText("""
+        this.updateText("""
             Successfully authenticated
             Token expires at: %s""".formatted(client.expiresAt()));
+
+        updateVersion(client);
     }
 
     @Override
     public void logoutDone() {
-        this.setText("Token deleted");
+        this.updateText("Token deleted");
     }
 
     @Override
@@ -74,9 +86,12 @@ public class InfoPanel extends JPanel
 
     @Override
     public void repairDone(ClientStatus client) {
-        this.setText("""
+        this.updateText("""
             Client is up-to-date
             Token expires at: %s""".formatted(client.expiresAt()));
+
+        updateVersion(client);
+        System.out.println(this.getX() + "-" + this.getY());
     }
 
     @Override
@@ -87,7 +102,7 @@ public class InfoPanel extends JPanel
                 String message = """
                     Last operation was interrupted: Re-run Install
                     Token expires at: %s""".formatted(client.expiresAt());
-                this.setText(message);
+                this.updateText(message);
             } else if (client.validToken()) {
                 String message;
                 if (!client.validToken()) {
@@ -101,10 +116,20 @@ public class InfoPanel extends JPanel
                         Client is up-to-date
                         Token expires at: %s""".formatted(client.expiresAt());
                 }
-                this.setText(message);
+                this.updateText(message);
             }
+            updateVersion(client);
         } else {
-            this.setText(null);
+            this.updateText(null);
         }
+    }
+
+    private void updateText(String text) {
+        textArea.setText(text);
+    }
+
+    private void updateVersion(ClientStatus client) {
+        SplitVersion splitVersion = client.client().getSplitVersion();
+        versionLabel.setText("server: %s (%s, %s)".formatted(splitVersion.getSemver(), splitVersion.getPrefix(), splitVersion.getShortSha()));
     }
 }

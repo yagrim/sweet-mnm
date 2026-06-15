@@ -17,6 +17,10 @@ public record Client(
     Path path
 ) {
 
+    public SplitVersion getSplitVersion() {
+        return new SplitVersion(version);
+    }
+
     /**
      * Installation state tracked for a client record.
      * - ~ING: are explicit status change due to install/repair operations.
