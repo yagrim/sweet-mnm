@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.mnm.config.Client;
+import org.mnm.config.VersionDetails;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,14 @@ import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
-import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
@@ -138,6 +139,8 @@ public class GuiCommand implements Command {
     // Commands should not initialize in constructor because debug is configured after it
     private static void initialize() {
         logger.debug("Runtime: native_image:={},windows={}", NATIVE_IMAGE, OS.isWindows());
+        VersionDetails versionDetails = Environment.versionDetails();
+        logger.info("Launcher version: {} ({})", versionDetails.version(), versionDetails.gitSha());
         if (NATIVE_IMAGE) {
             System.setProperty("java.home", "");
             if (OS.isWindows()) {

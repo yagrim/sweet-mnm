@@ -55,7 +55,8 @@ jobs:
         run: |
           $version = "${{ github.event.release.name }}"
           $version = $version -replace '^v', ''
-          ./gradlew clean nativeCompile -PbuildVersion=$version
+          Write-Host "Building version: $version"
+          ./gradlew clean nativeCompile "-PbuildVersion=$version"
       - name: Verify binary
         shell: pwsh
         run: '& "$env:BINARY_LOCATION\sweet.exe" version'
