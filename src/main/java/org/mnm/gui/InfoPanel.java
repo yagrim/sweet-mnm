@@ -15,6 +15,10 @@ import java.awt.Dimension;
 
 import org.mnm.config.Client;
 import org.mnm.config.SplitVersion;
+import org.mnm.events.ClientEventHandler;
+import org.mnm.events.LoginListener;
+import org.mnm.events.Refreshable;
+import org.mnm.events.RepairListener;
 
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.gui.ClientPanel.SCALE;

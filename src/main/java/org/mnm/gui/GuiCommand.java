@@ -13,6 +13,8 @@ import java.util.function.Supplier;
 
 import org.mnm.config.VersionDetails;
 
+import org.mnm.events.ClientEventHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,6 @@
-package org.mnm.gui;
+package org.mnm.events;
+
+import org.mnm.gui.ClientStatus;
 
 interface LoginListener {
 
