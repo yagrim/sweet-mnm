@@ -12,6 +12,7 @@ public class ClientEventHandler
 
     private static final ClientEventHandler instance = new ClientEventHandler();
 
+    // TODO create parent interface and convert lists into Map<Event, List<Event>>
     private final List<LoginListener> loginListeners;
     private final List<RepairListener> repairListeners;
     private final List<Refreshable> refreshables;
@@ -34,16 +35,22 @@ public class ClientEventHandler
         return instance;
     }
 
-    public void register(LoginListener listener) {
-        loginListeners.add(listener);
-    }
-
-    public void register(RepairListener listener) {
-        repairListeners.add(listener);
-    }
-
-    public void register(Refreshable listener) {
-        refreshables.add(listener);
+    public void register(Object listener) {
+        if (listener instanceof LoginListener) {
+            loginListeners.add((LoginListener) listener);
+        }
+        if (listener instanceof RepairListener) {
+            repairListeners.add((RepairListener) listener);
+        }
+        if (listener instanceof Refreshable) {
+            refreshables.add((Refreshable) listener);
+        }
+        if (listener instanceof FilesValidationListener) {
+            filesValidationListeners.add((FilesValidationListener) listener);
+        }
+        if (listener instanceof RepairFilesListener) {
+            repairFilesListeners.add((RepairFilesListener) listener);
+        }
     }
 
     @Override

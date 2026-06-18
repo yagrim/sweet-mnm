@@ -9,14 +9,14 @@ import java.awt.GridLayout;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
-import org.mnm.events.ClientEventHandler;
-import org.mnm.events.LoginListener;
-import org.mnm.events.Refreshable;
-import org.mnm.events.RepairListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Client;
+import org.mnm.events.ClientEventHandler;
+import org.mnm.events.LoginListener;
+import org.mnm.events.Refreshable;
+import org.mnm.events.RepairListener;
 
 import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
@@ -62,17 +62,10 @@ class ClientButtonsPanel extends JPanel
 
         this.login.addActionListener(e -> handleLogin(mainWindow, loginAction));
         this.logout.addActionListener(e -> handleLogout(logoutAction));
-        this.install.addActionListener(e -> handleInstall(repairAction, inMemoryHashing));
-        this.repair.addActionListener(e -> handleRepair(repairAction, inMemoryHashing));
+        this.install.addActionListener(e -> handleInstall(mainWindow, repairAction, inMemoryHashing));
+        this.repair.addActionListener(e -> handleRepair(mainWindow, repairAction, inMemoryHashing));
 
-        registerListeners();
-    }
-
-    private void registerListeners() {
-        ClientEventHandler instance = ClientEventHandler.getInstance();
-        instance.register((LoginListener) this);
-        instance.register((RepairListener) this);
-        instance.register((Refreshable) this);
+        ClientEventHandler.getInstance().register(this);
     }
 
     private static JButton createButton(String text) {
@@ -143,23 +136,42 @@ class ClientButtonsPanel extends JPanel
         }
     }
 
-    private void handleInstall(GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
-        runRepair(installAction, inMemoryHashing, INSTALLING, "Installation completed");
+    private void handleInstall(JFrame mainWindow, GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {
+        runRepair(mainWindow, installAction, inMemoryHashing, INSTALLING, "Installation completed");
     }
 
-    private void handleRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
-        runRepair(repairAction, inMemoryHashing, REPAIRING, "Repair completed");
+    private void handleRepair(JFrame mainWindow, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing) {
+        runRepair(mainWindow, repairAction, inMemoryHashing, REPAIRING, "Repair completed");
     }
 
-    private static void runRepair(GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, Client.Status status, String completedMessage) {
+    private void runRepair(JFrame mainWindow, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, Client.Status status, String completedMessage) {
         ClientEventHandler.getInstance().repairStart();
+        ProgressBarWindow dialog = new ProgressBarWindow(mainWindow);
+        if (status == REPAIRING) {
+            dialog = new ProgressBarWindow(mainWindow, "Validating...", "Patching...");
+        } else {
+            dialog = new ProgressBarWindow(mainWindow);
+        }
+        dialog.setProgress1(0);
+        dialog.setProgress2(0);
+
+        ProgressBarWindow progressBarWindow = dialog;
 
         CompletableFuture
-            .supplyAsync(() -> repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean()))
-            .whenComplete((client, _) -> SwingUtilities.invokeLater(() -> {
+            .supplyAsync(() -> {
+                ClientStatus repair1 = repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean());
+                return new Tuple(repair1, progressBarWindow);
+            })
+            .whenComplete((tuple, _) -> SwingUtilities.invokeLater(() -> {
                 showInfoMessageDialogSync(completedMessage);
-                ClientEventHandler.getInstance().repairDone(client);
+                ClientEventHandler.getInstance().repairDone(tuple.clientStatus());
+//                tuple.dialog().close();
             }));
+
+        progressBarWindow.setVisible(true);
+    }
+
+    record Tuple(ClientStatus clientStatus, ProgressBarWindow dialog) {
     }
 
     private void handleLogout(GuiCommand.LogoutAction logoutAction) {

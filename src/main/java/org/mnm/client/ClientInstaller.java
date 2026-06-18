@@ -135,8 +135,9 @@ public class ClientInstaller {
         if (!currentFiles.isEmpty()) {
             currentFiles.forEach(path -> path.toFile().delete());
         }
+        eventHandler.fileInstalled();
 
-        configDb.updateClientStatus(slug, UPDATED);
+        configDb.updateClient(slug, session.getVersion(),UPDATED);
 
         // Force to clean memory
         System.gc();

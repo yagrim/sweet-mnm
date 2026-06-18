@@ -55,14 +55,7 @@ public class InfoPanel extends JPanel
         this.add(versionLabel);
         this.add(Box.createVerticalGlue());
 
-        registerListeners();
-    }
-
-    private void registerListeners() {
-        ClientEventHandler instance = ClientEventHandler.getInstance();
-        instance.register((LoginListener) this);
-        instance.register((RepairListener) this);
-        instance.register((Refreshable) this);
+        ClientEventHandler.getInstance().register(this);
     }
 
     @Override
@@ -134,6 +127,7 @@ public class InfoPanel extends JPanel
 
     private void updateVersion(ClientStatus client) {
         SplitVersion splitVersion = client.client().getSplitVersion();
-        versionLabel.setText("server: %s (%s, %s)".formatted(splitVersion.getSemver(), splitVersion.getPrefix(), splitVersion.getShortSha()));
+        versionLabel.setText("v%s (%s, %s)".formatted(splitVersion.getSemver(), splitVersion.getPrefix(), splitVersion.getShortSha()));
+        versionLabel.setToolTipText("Installed version");
     }
 }

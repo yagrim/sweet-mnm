@@ -2,7 +2,7 @@ package org.mnm.events;
 
 import org.mnm.gui.ClientStatus;
 
-interface LoginListener {
+public interface LoginListener {
 
     void loginStart();
 
