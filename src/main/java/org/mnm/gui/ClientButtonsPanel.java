@@ -25,7 +25,6 @@ import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientButtonsPanel extends JPanel
@@ -146,29 +145,25 @@ class ClientButtonsPanel extends JPanel
 
     private void runRepair(JFrame mainWindow, GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing, Client.Status status, String completedMessage) {
         ClientEventHandler.getInstance().repairStart();
-        ProgressBarWindow dialog = new ProgressBarWindow(mainWindow);
+        ProgressBarWindow progressWindow;
         if (status == REPAIRING) {
-            dialog = new ProgressBarWindow(mainWindow, "Validating...", "Patching...");
+            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching");
         } else {
-            dialog = new ProgressBarWindow(mainWindow);
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching");
         }
-        dialog.setProgress1(0);
-        dialog.setProgress2(0);
 
-        ProgressBarWindow progressBarWindow = dialog;
+        progressWindow.resetProgress();
 
         CompletableFuture
             .supplyAsync(() -> {
                 ClientStatus repair1 = repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean());
-                return new Tuple(repair1, progressBarWindow);
+                return new Tuple(repair1, progressWindow);
             })
             .whenComplete((tuple, _) -> SwingUtilities.invokeLater(() -> {
-                showInfoMessageDialogSync(completedMessage);
                 ClientEventHandler.getInstance().repairDone(tuple.clientStatus());
-//                tuple.dialog().close();
             }));
 
-        progressBarWindow.setVisible(true);
+        progressWindow.setVisible(true);
     }
 
     record Tuple(ClientStatus clientStatus, ProgressBarWindow dialog) {
