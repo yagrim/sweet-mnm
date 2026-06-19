@@ -17,10 +17,8 @@ import org.mnm.events.RepairFilesListener;
 public class DualProgressPanel extends JPanel
     implements FilesValidationListener, RepairFilesListener {
 
-    private final JLabel label1;
-    private final JLabel label2;
-    private final JProgressBar progressBar1;
-    private final JProgressBar progressBar2;
+    private final ProgressLabel progressLabel1;
+    private final ProgressLabel progressLabel2;
 
     public DualProgressPanel(String labelText1, String labelText2,
                              Color backgroundColor) {
@@ -29,76 +27,93 @@ public class DualProgressPanel extends JPanel
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         setBackground(backgroundColor);
 
-        label1 = createLabel(labelText1);
-        progressBar1 = createProgressBar(new Color(70, 130, 220));
+        progressLabel1 = new ProgressLabel(labelText1, new Color(70, 130, 220));
+        progressLabel2 = new ProgressLabel(labelText2, new Color(70, 190, 140));
 
-        label2 = createLabel(labelText2);
-        progressBar2 = createProgressBar(new Color(70, 190, 140));
-
-        add(label1);
+        add(progressLabel1.label);
         add(Box.createVerticalStrut(6));
-        add(progressBar1);
+        add(progressLabel1.bar);
         add(Box.createVerticalStrut(20));
-        add(label2);
+        add(progressLabel2.bar);
         add(Box.createVerticalStrut(6));
-        add(progressBar2);
+        add(progressLabel2.bar);
 
         ClientEventHandler.getInstance().register(this);
     }
 
     public void resetProgress() {
-        this.progressBar1.setValue(0);
-        this.progressBar2.setValue(0);
+        progressLabel1.setValue(0);
+        progressLabel2.setValue(0);
     }
-
-    private String original1;
-    private String original2;
 
     @Override
     public void validationStart(int filesCount) {
-        progressBar1.setMaximum(filesCount);
-        original1 = label1.getText();
+        progressLabel1.setMaximum(filesCount);
     }
 
     @Override
     public void fileValidated() {
-        int value = progressBar1.getValue() + 1;
-        progressBar1.setValue(value);
-        label1.setText("%s... %s of %s".formatted(original1, value, progressBar1.getMaximum()));
+        progressLabel1.increment();
     }
 
     @Override
     public void filesToInstall(int filesCount) {
-        progressBar2.setMaximum(filesCount);
-        if (filesCount == 0) {
-            progressBar2.setMaximum(100);
-            progressBar2.setValue(100);
-        }
-        original2 = label2.getText();
+        progressLabel2.setMaximum(filesCount);
     }
 
     @Override
     public void fileInstalled() {
-        int value = progressBar2.getValue() + 1;
-        progressBar2.setValue(value);
-        label2.setText("%s... %s of %s".formatted(original2, value, progressBar2.getMaximum()));
+        progressLabel2.increment();
     }
 
-    // --- Factories ---
-    private JLabel createLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return label;
-    }
+    private final class ProgressLabel {
 
-    private JProgressBar createProgressBar(Color fill) {
-        JProgressBar bar = new JProgressBar(0, 100);
-        bar.setValue(0);
-        bar.setStringPainted(true);
-        bar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
-        bar.setForeground(fill);
-        return bar;
+        private final JLabel label;
+        private final JProgressBar bar;
+        private final String labelText;
+
+        private ProgressLabel(String labelText, Color barColor) {
+            this.labelText = labelText;
+            this.bar = createProgressBar(barColor);
+            this.label = createLabel(labelText);
+        }
+
+        private static JProgressBar createProgressBar(Color fill) {
+            JProgressBar bar = new JProgressBar(0, 100);
+            bar.setValue(0);
+            bar.setStringPainted(true);
+            bar.setAlignmentX(Component.LEFT_ALIGNMENT);
+            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
+            bar.setForeground(fill);
+            return bar;
+        }
+
+        private static JLabel createLabel(String text) {
+            JLabel label = new JLabel(text);
+            label.setAlignmentX(Component.LEFT_ALIGNMENT);
+            return label;
+        }
+
+        public void setValue(int value) {
+            bar.setValue(value);
+        }
+
+        public void setMaximum(int value) {
+            bar.setMaximum(value);
+            if (value == 0) {
+                bar.setMaximum(100);
+                bar.setValue(100);
+            }
+        }
+
+        public void increment() {
+            int value;
+            synchronized (bar) {
+                value = bar.getValue() + 1;
+                bar.setValue(value);
+            }
+            label.setText("%s... %s of %s".formatted(labelText, value, bar.getMaximum()));
+        }
     }
 
 }

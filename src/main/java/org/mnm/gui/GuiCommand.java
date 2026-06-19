@@ -11,10 +11,6 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.mnm.config.VersionDetails;
-
-import org.mnm.events.ClientEventHandler;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +27,8 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
+import org.mnm.config.VersionDetails;
+import org.mnm.events.ClientEventHandler;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
