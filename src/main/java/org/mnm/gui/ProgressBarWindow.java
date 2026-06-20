@@ -33,7 +33,6 @@ public class ProgressBarWindow extends JDialog
         closeBtn.setEnabled(false);
         closeBtn.addActionListener(e -> close());
 
-
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
         footer.setBackground(backgroundColor);
         footer.add(new JSeparator(), BorderLayout.NORTH);

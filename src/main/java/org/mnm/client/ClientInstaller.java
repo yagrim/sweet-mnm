@@ -135,8 +135,6 @@ public class ClientInstaller {
         if (!currentFiles.isEmpty()) {
             currentFiles.forEach(path -> path.toFile().delete());
         }
-        // TODO workaround for when repair has 0 files
-//        eventHandler.fileInstalled();
 
         configDb.updateClient(slug, session.getVersion(),UPDATED);
 

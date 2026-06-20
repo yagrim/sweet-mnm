@@ -20,30 +20,36 @@ public class DualProgressPanel extends JPanel
     private final ProgressLabel progressLabel1;
     private final ProgressLabel progressLabel2;
 
-    public DualProgressPanel(String labelText1, String labelText2,
-                             Color backgroundColor) {
+    public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor) {
+        this(new ProgressLabel(labelText1, new Color(70, 130, 220)),
+            new ProgressLabel(labelText2, new Color(70, 190, 140)),
+            backgroundColor);
+    }
 
+    DualProgressPanel(ProgressLabel progressLabel1, ProgressLabel progressLabel2, Color backgroundColor) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         setBackground(backgroundColor);
 
-        progressLabel1 = new ProgressLabel(labelText1, new Color(70, 130, 220));
-        progressLabel2 = new ProgressLabel(labelText2, new Color(70, 190, 140));
+        this.progressLabel1 = progressLabel1;
+        this.progressLabel2 = progressLabel2;
 
-        add(progressLabel1.label);
+        add(progressLabel1.getLabel());
         add(Box.createVerticalStrut(6));
-        add(progressLabel1.bar);
+        add(progressLabel1.getBar());
+
         add(Box.createVerticalStrut(20));
-        add(progressLabel2.bar);
+
+        add(progressLabel2.getLabel());
         add(Box.createVerticalStrut(6));
-        add(progressLabel2.bar);
+        add(progressLabel2.getBar());
 
         ClientEventHandler.getInstance().register(this);
     }
 
     public void resetProgress() {
-        progressLabel1.setValue(0);
-        progressLabel2.setValue(0);
+        progressLabel1.reset();
+        progressLabel2.reset();
     }
 
     @Override
@@ -66,13 +72,13 @@ public class DualProgressPanel extends JPanel
         progressLabel2.increment();
     }
 
-    private final class ProgressLabel {
+    static final class ProgressLabel {
 
         private final JLabel label;
         private final JProgressBar bar;
         private final String labelText;
 
-        private ProgressLabel(String labelText, Color barColor) {
+        ProgressLabel(String labelText, Color barColor) {
             this.labelText = labelText;
             this.bar = createProgressBar(barColor);
             this.label = createLabel(labelText);
@@ -94,12 +100,13 @@ public class DualProgressPanel extends JPanel
             return label;
         }
 
-        public void setValue(int value) {
-            bar.setValue(value);
+        public void reset() {
+            bar.setValue(0);
         }
 
         public void setMaximum(int value) {
             bar.setMaximum(value);
+            // Fakes full progress when there's nothing to do
             if (value == 0) {
                 bar.setMaximum(100);
                 bar.setValue(100);
@@ -113,6 +120,14 @@ public class DualProgressPanel extends JPanel
                 bar.setValue(value);
             }
             label.setText("%s... %s of %s".formatted(labelText, value, bar.getMaximum()));
+        }
+
+        public JProgressBar getBar() {
+            return bar;
+        }
+
+        public JLabel getLabel() {
+            return label;
         }
     }
 
