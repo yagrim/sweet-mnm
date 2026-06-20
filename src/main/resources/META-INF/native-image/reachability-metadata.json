@@ -1400,17 +1400,6 @@
       "allDeclaredFields": true
     },
     {
-      "type": "javax.swing.plaf.basic.BasicTextPaneUI",
-      "methods": [
-        {
-          "name": "createUI",
-          "parameterTypes": [
-            "javax.swing.JComponent"
-          ]
-        }
-      ]
-    },
-    {
       "type": "java.lang.System",
       "jniAccessible": true,
       "methods": [
@@ -1579,6 +1568,17 @@
       ]
     },
     {
+      "type": "javax.swing.plaf.basic.BasicTextPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
       "type": "javax.swing.plaf.metal.MetalButtonUI",
       "methods": [
         {
@@ -1612,7 +1612,29 @@
       ]
     },
     {
+      "type": "javax.swing.plaf.metal.MetalProgressBarUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
       "type": "javax.swing.plaf.metal.MetalRootPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javax.swing.plaf.metal.MetalSeparatorUI",
       "methods": [
         {
           "name": "createUI",
