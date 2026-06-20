@@ -1,6 +1,6 @@
 package org.mnm.events;
 
-public interface RepairFilesListener {
+public interface RepairFilesListener extends EventListener {
 
     void filesToInstall(int filesCount);
 

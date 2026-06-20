@@ -11,22 +11,11 @@ public class ClientEventHandler
 
     private static final ClientEventHandler instance = new ClientEventHandler();
 
-    // TODO create parent interface and convert lists into Map<Event, List<Event>>
-    private final Set<LoginListener> loginListeners;
-    private final Set<RepairListener> repairListeners;
-    private final Set<Refreshable> refreshables;
-
-    private final Set<FilesValidationListener> filesValidationListeners;
-    private final Set<RepairFilesListener> repairFilesListeners;
+    private final Set<EventListener> listeners;
 
     private ClientEventHandler() {
         synchronized (this) {
-            loginListeners = Collections.synchronizedSet(new HashSet<>());
-            repairListeners = Collections.synchronizedSet(new HashSet<>());
-            refreshables = Collections.synchronizedSet(new HashSet<>());
-
-            filesValidationListeners = Collections.synchronizedSet(new HashSet<>());
-            repairFilesListeners = Collections.synchronizedSet(new HashSet<>());
+            listeners = Collections.synchronizedSet(new HashSet<>());
         }
     }
 
@@ -34,80 +23,82 @@ public class ClientEventHandler
         return instance;
     }
 
-    public void register(Object listener) {
-        if (listener instanceof LoginListener) {
-            loginListeners.add((LoginListener) listener);
-        }
-        if (listener instanceof RepairListener) {
-            repairListeners.add((RepairListener) listener);
-        }
-        if (listener instanceof Refreshable) {
-            refreshables.add((Refreshable) listener);
-        }
-        if (listener instanceof FilesValidationListener) {
-            filesValidationListeners.add((FilesValidationListener) listener);
-        }
-        if (listener instanceof RepairFilesListener) {
-            repairFilesListeners.add((RepairFilesListener) listener);
-        }
+    public void register(EventListener listener) {
+        listeners.add(listener);
     }
 
     @Override
     public void loginStart() {
-        loginListeners.forEach(listener -> listener.loginStart());
+        listeners.stream()
+            .filter(l -> l instanceof LoginListener)
+            .forEach(listener -> ((LoginListener) listener).loginStart());
     }
 
     @Override
     public void loginDone(ClientStatus client) {
-        loginListeners.forEach(listener -> listener.loginDone(client));
+        listeners.stream()
+            .filter(l -> l instanceof LoginListener)
+            .forEach(listener -> ((LoginListener) listener).loginDone(client));
     }
 
     @Override
     public void logoutDone() {
-        loginListeners.forEach(listener -> listener.logoutDone());
+        listeners.stream()
+            .filter(l -> l instanceof LoginListener)
+            .forEach(listener -> ((LoginListener) listener).logoutDone());
     }
 
     @Override
     public void repairStart() {
-        repairListeners.forEach(listener -> listener.repairStart());
+        listeners.stream()
+            .filter(l -> l instanceof RepairListener)
+            .forEach(listener -> ((RepairListener) listener).repairStart());
     }
 
     @Override
     public void repairDone(ClientStatus client) {
-        repairListeners.forEach(listener -> listener.repairDone(client));
+        listeners.stream()
+            .filter(l -> l instanceof RepairListener)
+            .forEach(listener -> ((RepairListener) listener).repairDone(client));
     }
 
     @Override
     public void refresh(ClientStatus client) {
-        refreshables.forEach(refreshable -> refreshable.refresh(client));
+        listeners.stream()
+            .filter(l -> l instanceof Refreshable)
+            .forEach(listener -> ((Refreshable) listener).refresh(client));
     }
 
     @Override
     public void validationStart(int filesCount) {
-        filesValidationListeners.forEach(listener -> listener.validationStart(filesCount));
+        listeners.stream()
+            .filter(l -> l instanceof FilesValidationListener)
+            .forEach(listener -> ((FilesValidationListener) listener).validationStart(filesCount));
     }
 
     @Override
     public void fileValidated() {
-        filesValidationListeners.forEach(listener -> listener.fileValidated());
+        listeners.stream()
+            .filter(l -> l instanceof FilesValidationListener)
+            .forEach(listener -> ((FilesValidationListener) listener).fileValidated());
     }
 
     @Override
     public void filesToInstall(int filesCount) {
-        repairFilesListeners.forEach(listener -> listener.filesToInstall(filesCount));
+        listeners.stream()
+            .filter(l -> l instanceof RepairFilesListener)
+            .forEach(listener -> ((RepairFilesListener) listener).filesToInstall(filesCount));
     }
 
     @Override
     public void fileInstalled() {
-        repairFilesListeners.forEach(listener -> listener.fileInstalled());
+        listeners.stream()
+            .filter(l -> l instanceof RepairFilesListener)
+            .forEach(listener -> ((RepairFilesListener) listener).fileInstalled());
     }
 
     public void clear() {
-        loginListeners.clear();
-        repairListeners.clear();
-        refreshables.clear();
-        filesValidationListeners.clear();
-        repairFilesListeners.clear();
+        listeners.clear();
     }
 
 }
