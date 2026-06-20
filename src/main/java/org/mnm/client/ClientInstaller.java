@@ -12,6 +12,7 @@ import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
+import org.mnm.events.ClientEventHandler;
 import org.mnm.manifest.Manifest;
 import org.mnm.tools.Downloader;
 import org.mnm.tools.FileUtils;
@@ -88,9 +89,13 @@ public class ClientInstaller {
         final List<Path> currentFiles = getAllFiles(installation.getInstallPath());
 
         final List<Manifest.File> files = session.getManifestHandler(installation.getDownloadsPath()).getFiles();
+
+        final ClientEventHandler eventHandler = ClientEventHandler.getInstance();
+        eventHandler.validationStart(files.size());
+
         for (int i = 0; i < files.size(); i++) {
             final Manifest.File file = files.get(i);
-            logger.info("Processing file({}/{}): {}", i + 1, files.size(), file.path());
+            logger.info("Processing file ({}/{}): {}", i + 1, files.size(), file.path());
             final Path location = installation.getInstallPath(file.path());
             if (currentFiles.contains(location)) {
                 currentFiles.remove(location);
@@ -102,6 +107,7 @@ public class ClientInstaller {
                     invalid.add(file);
                 }
             }
+            eventHandler.fileValidated();
         }
 
         // Summary
@@ -119,17 +125,18 @@ public class ClientInstaller {
         }
 
         // Actual installation
+        eventHandler.filesToInstall(invalid.size() + missing.size());
         if (!invalid.isEmpty()) {
-            installFiles(invalid, session, installation, options);
+            installFiles(invalid, session, installation, options, eventHandler);
         }
         if (!missing.isEmpty()) {
-            installFiles(missing, session, installation, options);
+            installFiles(missing, session, installation, options, eventHandler);
         }
         if (!currentFiles.isEmpty()) {
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
-        configDb.updateClientStatus(slug, UPDATED);
+        configDb.updateClient(slug, session.getVersion(),UPDATED);
 
         // Force to clean memory
         System.gc();
@@ -171,12 +178,11 @@ public class ClientInstaller {
     }
 
     // We could have async workers to download and extract in parallel
-    private static void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options) {
+    private static void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options, ClientEventHandler eventHandler) {
         for (Manifest.File file : files) {
             FileHelper.downloadChunks(file, session.getChunksUrl(), installation);
-        }
-        for (Manifest.File file : files) {
             FileHelper.extract(file, installation, options.fileCheck());
+            eventHandler.fileInstalled();
         }
     }
 

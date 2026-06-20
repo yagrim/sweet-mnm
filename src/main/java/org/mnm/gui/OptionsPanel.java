@@ -19,6 +19,9 @@ import org.mnm.client.Installation;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.OS;
+import org.mnm.events.ClientEventHandler;
+import org.mnm.events.Refreshable;
+import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.GeneralOptions.toggleDebug;
@@ -68,13 +71,7 @@ class OptionsPanel extends JPanel
         this.add(Box.createVerticalStrut(SCALE));
         this.add(clearCache);
 
-        registerListeners();
-    }
-
-    private void registerListeners() {
-        ClientEventHandler instance = ClientEventHandler.getInstance();
-        instance.register((RepairListener) this);
-        instance.register((Refreshable) this);
+        ClientEventHandler.getInstance().register(this);
     }
 
     @Override

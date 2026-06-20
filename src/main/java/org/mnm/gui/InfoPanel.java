@@ -15,6 +15,10 @@ import java.awt.Dimension;
 
 import org.mnm.config.Client;
 import org.mnm.config.SplitVersion;
+import org.mnm.events.ClientEventHandler;
+import org.mnm.events.LoginListener;
+import org.mnm.events.Refreshable;
+import org.mnm.events.RepairListener;
 
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.gui.ClientPanel.SCALE;
@@ -51,14 +55,7 @@ public class InfoPanel extends JPanel
         this.add(versionLabel);
         this.add(Box.createVerticalGlue());
 
-        registerListeners();
-    }
-
-    private void registerListeners() {
-        ClientEventHandler instance = ClientEventHandler.getInstance();
-        instance.register((LoginListener) this);
-        instance.register((RepairListener) this);
-        instance.register((Refreshable) this);
+        ClientEventHandler.getInstance().register(this);
     }
 
     @Override
@@ -130,6 +127,7 @@ public class InfoPanel extends JPanel
 
     private void updateVersion(ClientStatus client) {
         SplitVersion splitVersion = client.client().getSplitVersion();
-        versionLabel.setText("server: %s (%s, %s)".formatted(splitVersion.getSemver(), splitVersion.getPrefix(), splitVersion.getShortSha()));
+        versionLabel.setText("v%s (%s, %s)".formatted(splitVersion.getSemver(), splitVersion.getPrefix(), splitVersion.getShortSha()));
+        versionLabel.setToolTipText("Installed version");
     }
 }

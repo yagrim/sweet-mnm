@@ -9,6 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.client.RunnerOptions;
+import org.mnm.events.ClientEventHandler;
+import org.mnm.events.LoginListener;
+import org.mnm.events.Refreshable;
+import org.mnm.events.RepairListener;
 import org.mnm.tools.PanicException;
 
 import static org.mnm.config.Client.Status.UPDATED;
@@ -38,7 +42,7 @@ public class PlayPanel extends JPanel
         });
         this.add(play);
 
-        registerListeners();
+        ClientEventHandler.getInstance().register(this);
     }
 
     private static JButton createButton(String text) {
@@ -46,13 +50,6 @@ public class PlayPanel extends JPanel
         button.setEnabled(false);
         setFontSize(button, 20f);
         return button;
-    }
-
-    private void registerListeners() {
-        ClientEventHandler instance = ClientEventHandler.getInstance();
-        instance.register((LoginListener) this);
-        instance.register((RepairListener) this);
-        instance.register((Refreshable) this);
     }
 
     @Override

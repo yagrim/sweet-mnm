@@ -13,7 +13,7 @@ import org.mnm.tools.JwtParser;
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 
 // We extract the information we need from token, we do not store the actual token for security
-record ClientStatus(Client client, boolean validToken, Instant expiresAt) {
+public record ClientStatus(Client client, boolean validToken, Instant expiresAt) {
 
     static ClientStatus getClientStatus(String slug, Path dbFile, String apiEndpoint) {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
