@@ -1,6 +1,7 @@
 plugins {
   id 'java'
   id 'application'
+  id 'jacoco'
   id 'org.graalvm.buildtools.native' version '1.1.0'
 }
 
@@ -46,6 +47,18 @@ dependencies {
   testImplementation "org.mockito:mockito-core:5.20.0"
   testImplementation "org.mockito:mockito-junit-jupiter:5.20.0"
   testImplementation "org.wiremock:wiremock:3.13.2"
+}
+
+jacoco {
+  toolVersion = "0.8.15"
+}
+
+jacocoTestReport {
+  dependsOn test
+  reports {
+    xml.required = false
+    csv.required = false
+  }
 }
 
 tasks.named('test') {
