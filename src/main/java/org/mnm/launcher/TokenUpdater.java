@@ -8,15 +8,15 @@ import org.mnm.api.ApiConnection;
 import org.mnm.api.ApiConnector;
 import org.mnm.api.RestClient;
 
-public class TokenUpdater {
+class TokenUpdater {
 
     private final Supplier<Path> databaseFileLocator;
 
-    public TokenUpdater(Supplier<Path> databaseFileLocator) {
+    TokenUpdater(Supplier<Path> databaseFileLocator) {
         this.databaseFileLocator = databaseFileLocator;
     }
 
-    public void update(String apiEndpoint, Options options) {
+    void update(String apiEndpoint, Options options) {
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(apiEndpoint));
         ApiConnection apiConnection = apiConnector.login(options.username(), options.password());
@@ -39,6 +39,5 @@ public class TokenUpdater {
 
     record Options(String username, String password, boolean ignoreUpdate) {
     }
-
 
 }

@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.GeneralOptions;
 import org.mnm.client.Installation;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
@@ -24,7 +25,6 @@ import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
-import static org.mnm.GeneralOptions.toggleDebug;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -49,7 +49,7 @@ class OptionsPanel extends JPanel
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
 
         debugOption.setActionCommand("debug");
-        debugOption.addActionListener(_ -> toggleDebug(debugOption.isSelected()));
+        debugOption.addActionListener(_ -> GeneralOptions.setDebug(debugOption.isSelected()));
 
         inMemoryHashingOption.setActionCommand("in-memory-hashing");
         inMemoryHashingOption.setSelected(true);
