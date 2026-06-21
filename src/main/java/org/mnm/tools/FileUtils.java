@@ -25,6 +25,7 @@ public class FileUtils {
         try (var stream = Files.walk(base)) {
             return stream
                 .filter(Files::isRegularFile)
+                .filter(path -> !base.relativize(path).startsWith("Screenshots"))
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         } catch (IOException e) {
             throw new RuntimeException(e);
