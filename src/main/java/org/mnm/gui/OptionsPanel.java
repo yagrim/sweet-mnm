@@ -49,7 +49,13 @@ class OptionsPanel extends JPanel
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
 
         debugOption.setActionCommand("debug");
-        debugOption.addActionListener(_ -> GeneralOptions.setDebug(debugOption.isSelected()));
+        debugOption.addActionListener(_ -> {
+            boolean selected = debugOption.isSelected();
+            if (selected && OS.isWindows()) {
+                ConsoleAllocator.attachConsole();
+            }
+            GeneralOptions.setDebug(selected);
+        });
 
         inMemoryHashingOption.setActionCommand("in-memory-hashing");
         inMemoryHashingOption.setSelected(true);
