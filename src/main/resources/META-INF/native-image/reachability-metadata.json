@@ -1,4 +1,12 @@
 {
+  "foreign": {
+    "downcalls": [
+      {
+        "returnType": "int",
+        "parameterTypes": []
+      }
+    ]
+  },
   "reflection": [
     {
       "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",

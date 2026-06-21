@@ -1,15 +1,7 @@
 package org.mnm.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import java.awt.Container;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -25,6 +17,7 @@ import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
+import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -39,7 +32,7 @@ class OptionsPanel extends JPanel
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
-    private JButton clearCache;
+    private final JButton clearCache;
 
     private ClientStatus clientStatus;
 
@@ -51,8 +44,8 @@ class OptionsPanel extends JPanel
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
             boolean selected = debugOption.isSelected();
-            if (selected && OS.isWindows()) {
-                ConsoleAllocator.attachConsole();
+            if (selected && NATIVE_IMAGE && OS.isWindows()) {
+                ConsoleAllocator.allocConsole();
             }
             GeneralOptions.setDebug(selected);
         });
