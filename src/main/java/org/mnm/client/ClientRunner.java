@@ -55,7 +55,6 @@ public class ClientRunner {
         ProcessUtils.run(workingDirectory, command, environment);
     }
 
-
     private static void tokenIsNotExpired(Token token) {
         if (JwtParser.parse(token.token()).isExpired()) {
             panic("Token expired: run 'install --username ...' to create a new one");

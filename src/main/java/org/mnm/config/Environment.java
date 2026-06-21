@@ -8,7 +8,7 @@ public class Environment {
 
     public static final String API_BASE_URL = "https://account.monstersandmemories.com/api/";
 
-    public static final boolean NATIVE_IMAGE = Boolean.valueOf(System.getProperty("sweet_native"));
+    public static final boolean NATIVE_IMAGE = Boolean.parseBoolean(System.getProperty("sweet_native"));
 
     public static Path launcherDb = getHomeDir()
         .resolve(".local/share")

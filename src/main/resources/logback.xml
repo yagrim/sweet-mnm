@@ -5,9 +5,9 @@
         </encoder>
     </appender>
 
-    <logger name="org.mnm" level="INFO"/>
+    <logger name="org.mnm" level="OFF"/>
 
-    <root level="INFO">
+    <root level="OFF">
         <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>

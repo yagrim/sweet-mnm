@@ -26,7 +26,7 @@ public class Session {
     }
 
     public static Session login(String username, String password, String baseUrl) {
-        logger.debug("Authenticating with account: {}", username);
+        logger.info("Authenticating with account: {}", mask(username));
         if (isEmpty(username) || isEmpty(password)) {
             panic("Username or password is empty");
         }
@@ -40,8 +40,26 @@ public class Session {
         return buildSession(connection);
     }
 
+    private static String mask(String email) {
+        if (email == null || !email.contains("@")) return email;
+
+        String[] parts = email.split("@");
+        String name = parts[0];
+        String domain = parts[1];
+
+        String maskedName = name.length() > 3
+            ? name.substring(0, 3) + "***"
+            : name + "***";
+
+        String maskedDomain = domain.length() > 3
+            ? domain.substring(0, 3) + "***"
+            : domain + "***";
+
+        return maskedName + "@" + maskedDomain;
+    }
+
     public static Session login(String token, String baseUrl) {
-        System.out.println("Authenticating with token ...");
+        logger.info("Authenticating with token ...");
         if (isEmpty(token)) {
             panic("Token is empty");
         }

@@ -35,6 +35,12 @@ jobs:
           distribution: graalvm-community
           java-version: "25"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check System.out
+        if: runner.os == 'Linux'
+        run: |
+          ./scripts/check_system_out.sh \
+            --exclude-packages org.mnm.cli,org.mnm.launcher \
+            --exclude-classes MainClazz,InstallCommand,RepairCommand,TokenCommand
       - name: Install xxhsum (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -67,10 +73,16 @@ jobs:
           $exe.Directory.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Display versions
         shell: bash
-        continue-on-error: true
+        if: runner.os == 'Linux'
         run: |
           java --version
           native-image --version
+          xxhsum --version
+      - name: Display versions
+        shell: bash
+        if: runner.os == 'Windows'
+        run: |
+          java --version
           xxhsum --version
       - name: Run tests
         shell: bash

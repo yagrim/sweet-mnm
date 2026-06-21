@@ -6,9 +6,9 @@ import java.util.function.IntConsumer;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.CommandParser;
+import org.mnm.config.OS;
+import org.mnm.gui.GuiCommand;
 import org.mnm.tools.PanicException;
-
-import static org.mnm.GeneralOptions.toggleDebug;
 
 public class MainClazz {
 
@@ -29,7 +29,7 @@ public class MainClazz {
             Arguments arguments = argumentsParser.apply(args);
 
             if (arguments.getBoolean("debug")) {
-                toggleDebug(true);
+                GeneralOptions.setDebug(true);
             }
 
             if (arguments.isHelp() && command.help() != null) {
@@ -37,12 +37,13 @@ public class MainClazz {
                 return;
             }
             if (command.isAvailable()) {
+                if (!(command instanceof GuiCommand)) {
+                    GeneralOptions.setInfo(true);
+                }
                 command.run(arguments);
             } else {
-                System.err.println("Command '%s' not supported for your platform".formatted(command.name()));
+                System.err.printf("Command '%s' not supported for your platform%n", command.name());
             }
-        } catch (PanicException e) {
-            handleError(e, exit);
         } catch (Exception e) {
             handleError(e, exit);
         }
@@ -55,7 +56,10 @@ public class MainClazz {
             System.err.println("[Error] Unexpected error!");
         }
         e.printStackTrace();
-        pause();
+        // In Windows we hide the console at compile time and this would lock the program
+        if (!OS.isWindows()) {
+            pause();
+        }
         exit.accept(1);
     }
 

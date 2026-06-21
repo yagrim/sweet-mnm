@@ -137,6 +137,7 @@ public class ClientInstaller {
         }
 
         configDb.updateClient(slug, session.getVersion(),UPDATED);
+        logger.info("Installation completed");
 
         // Force to clean memory
         System.gc();

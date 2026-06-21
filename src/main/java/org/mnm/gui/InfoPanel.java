@@ -88,7 +88,6 @@ public class InfoPanel extends JPanel
             Token expires at: %s""".formatted(client.expiresAt()));
 
         updateVersion(client);
-        System.out.println(this.getX() + "-" + this.getY());
     }
 
     @Override

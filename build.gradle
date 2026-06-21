@@ -115,6 +115,12 @@ graalvmNative {
         '-Dsweet_native=true',
         '-R:MaxHeapSize=2304m'
       )
+      if (os.isWindows()) {
+        buildArgs.addAll(
+          "-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS",
+          "-H:NativeLinkerOption=/ENTRY:mainCRTStartup"
+        )
+      }
       resources {
         includedPatterns.addAll('logback.xml', 'version.txt')
       }

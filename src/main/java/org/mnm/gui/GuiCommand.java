@@ -1,10 +1,7 @@
 package org.mnm.gui;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import java.awt.BorderLayout;
-import java.awt.Font;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -32,9 +29,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
-import static org.mnm.config.Environment.API_BASE_URL;
-import static org.mnm.config.Environment.NATIVE_IMAGE;
-import static org.mnm.config.Environment.getWorkDir;
+import static org.mnm.config.Environment.*;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
@@ -100,7 +95,7 @@ public class GuiCommand implements Command {
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
-        this.postInitAction = (clientStatus) -> postInitializeSwing(clientStatus);
+        this.postInitAction = this::postInitializeSwing;
     }
 
     @Override
@@ -191,7 +186,7 @@ public class GuiCommand implements Command {
         }
     }
 
-    static void postInitializeSwing(ClientStatus clientStatus) {
+    private void postInitializeSwing(ClientStatus clientStatus) {
         if (clientStatus.client() == null) {
             logger.debug("No client found in config db");
         }
