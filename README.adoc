@@ -19,8 +19,7 @@ That's why we created an alternative launcher that should provide an easy end-to
 
 * Single self-contained package with all required files: `Download > Extract > Run`.
 * Windows build compatible with Proton (e.g Steam, UMU, PROTON-GE + Lutris).
-Add "sweet.exe" to Steam, or run it in any Proton distribution.
-Then, install and run the client directly from it, no need for tinkering.
+Setup and run the client directly from Sweet Launcher, no need for tinkering.
 * Linux build with dedicated Linux features.
 Not recommended for Steam users since it has the same limitations of the Official Launcher.
 Requires MangoHud and https://github.com/Open-Wine-Components/umu-launcher[UMU] installed.
@@ -44,8 +43,7 @@ image::docs/client-panel-login.png[]
 
 == Future work
 
-* Improve usability: downloading bar, download speed metrics, pause download, etc.
-* Download cache management: currently temporal download files are cached under "downloads" folder and never deleted (feel free to delete them if you need space).
+* Improve usability: download speed metrics, pause download, etc.
 * Multiple clients management.
 * More Linux specific features:
 ** more MANGOHUD,
