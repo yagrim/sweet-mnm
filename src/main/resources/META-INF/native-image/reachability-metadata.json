@@ -1,12 +1,4 @@
 {
-  "foreign": {
-    "downcalls": [
-      {
-        "returnType": "int",
-        "parameterTypes": []
-      }
-    ]
-  },
   "reflection": [
     {
       "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
@@ -2916,6 +2908,81 @@
       ]
     },
     {
+      "type": "sun.font.FontConfigManager$FcCompFont",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "allFonts"
+        },
+        {
+          "name": "compFont"
+        },
+        {
+          "name": "fcFamily"
+        },
+        {
+          "name": "fcName"
+        },
+        {
+          "name": "firstFont"
+        },
+        {
+          "name": "jdkName"
+        },
+        {
+          "name": "preferBitmaps"
+        },
+        {
+          "name": "style"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>"
+        }
+      ]
+    },
+    {
+      "type": "sun.font.FontConfigManager$FontConfigFont",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "familyName"
+        },
+        {
+          "name": "fontFile"
+        },
+        {
+          "name": "fullName"
+        },
+        {
+          "name": "styleStr"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>"
+        }
+      ]
+    },
+    {
+      "type": "sun.font.FontConfigManager$FontConfigInfo",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "cacheDirs"
+        },
+        {
+          "name": "fcVersion"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>"
+        }
+      ]
+    },
+    {
       "type": "sun.font.FontStrike",
       "jniAccessible": true,
       "methods": [
@@ -4172,5 +4239,13 @@
     {
       "bundle": "sun.awt.resources.awt"
     }
-  ]
+  ],
+  "foreign": {
+    "downcalls": [
+      {
+        "returnType": "int",
+        "parameterTypes": []
+      }
+    ]
+  }
 }
