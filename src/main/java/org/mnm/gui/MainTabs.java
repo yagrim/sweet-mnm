@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.mnm.config.SettingsStore;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
 import org.mnm.gui.GuiCommand.PlayAction;
@@ -20,11 +21,12 @@ class MainTabs extends JTabbedPane {
     MainTabs(JFrame frame,
              LoginAction loginAction, LogoutAction logoutAction,
              RepairAction repairAction,
-             PlayAction playAction) {
+             PlayAction playAction,
+             SettingsStore settingsStore) {
 
         setFontSize(this, 15f);
 
-        this.optionsPanel = new OptionsPanel();
+        this.optionsPanel = new OptionsPanel(settingsStore);
         this.clientPanel = new ClientPanel(frame,
             loginAction,
             logoutAction,

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
+import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +42,16 @@ class MainTabsTest {
                 @Override
                 public void run(RunnerOptions options) {
 
+                }
+            },
+            new SettingsStore() {
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+
+                @Override
+                public void put(String key, String value) {
                 }
             });
 

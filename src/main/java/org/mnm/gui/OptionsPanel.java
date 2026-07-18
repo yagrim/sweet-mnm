@@ -1,7 +1,15 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -12,6 +20,7 @@ import org.mnm.client.Installation;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.OS;
+import org.mnm.config.SettingsStore;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
@@ -28,6 +37,10 @@ class OptionsPanel extends JPanel
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
+    static final String DEBUG_KEY = "debug";
+    static final String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
+    static final String MANGOHUD_KEY = "linux.mangohud";
+
     private final JCheckBox debugOption = new JCheckBox("Enable debug");
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
@@ -36,10 +49,12 @@ class OptionsPanel extends JPanel
 
     private ClientStatus clientStatus;
 
-    OptionsPanel() {
+    OptionsPanel(SettingsStore settingsStore) {
         super();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
+
+        restoreOptions(settingsStore);
 
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
@@ -48,12 +63,16 @@ class OptionsPanel extends JPanel
                 ConsoleAllocator.allocConsole();
             }
             GeneralOptions.setDebug(selected);
+            settingsStore.putBoolean(DEBUG_KEY, selected);
         });
 
         inMemoryHashingOption.setActionCommand("in-memory-hashing");
-        inMemoryHashingOption.setSelected(true);
+        inMemoryHashingOption.addActionListener(_ ->
+            settingsStore.putBoolean(IN_MEMORY_HASHING_KEY, inMemoryHashingOption.isSelected()));
 
         mangoHudOption.setActionCommand("mangohud");
+        mangoHudOption.addActionListener(_ ->
+            settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
         if (OS.isWindows()) {
             mangoHudOption.setEnabled(false);
             mangoHudOption.setText("Enable MangoHud (Linux only)");
@@ -71,6 +90,16 @@ class OptionsPanel extends JPanel
         this.add(clearCache);
 
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private void restoreOptions(SettingsStore settingsStore) {
+        boolean debugEnabled = settingsStore.getBoolean(DEBUG_KEY, false);
+        if (debugEnabled) {
+            debugOption.setSelected(true);
+            GeneralOptions.setDebug(true);
+        }
+        inMemoryHashingOption.setSelected(settingsStore.getBoolean(IN_MEMORY_HASHING_KEY, true));
+        mangoHudOption.setSelected(settingsStore.getBoolean(MANGOHUD_KEY, false));
     }
 
     @Override

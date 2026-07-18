@@ -42,6 +42,13 @@ public class ConfigDb implements AutoCloseable {
         );
         """;
 
+    private static String SETTINGS = """
+        CREATE TABLE settings (
+            key text NOT NULL PRIMARY KEY,
+            value text NOT NULL
+        );
+        """;
+
     private final Connection connection;
 
     private ConfigDb(Connection connection) {
@@ -84,6 +91,9 @@ public class ConfigDb implements AutoCloseable {
             }
             if (!tableNames.contains("tokens")) {
                 createTableSchema(connection, TOKENS);
+            }
+            if (!tableNames.contains("settings")) {
+                createTableSchema(connection, SETTINGS);
             }
             return this;
         } catch (SQLException e) {
@@ -252,6 +262,31 @@ public class ConfigDb implements AutoCloseable {
         try (PreparedStatement ps = connection.prepareStatement("delete from tokens where slug = ?")) {
             ps.setString(1, slug);
             return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getSettings(String key) {
+        try (PreparedStatement ps = connection.prepareStatement("select value from settings where key = ?")) {
+            ps.setString(1, key);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString("value") : null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void putSettings(String key, String value) {
+        final String query = """
+            INSERT INTO settings (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """;
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, key);
+            ps.setString(2, value);
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
