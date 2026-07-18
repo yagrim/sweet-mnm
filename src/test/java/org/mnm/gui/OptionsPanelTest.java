@@ -1,16 +1,9 @@
 package org.mnm.gui;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.nio.file.Path;
-
 import javax.swing.JCheckBox;
+import java.nio.file.Path;
+import java.util.Map;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -78,22 +71,4 @@ class OptionsPanelTest {
         return (JCheckBox) panel.getComponent(index * 2);
     }
 
-    private static class InMemorySettingsStore implements SettingsStore {
-
-        private final Map<String, String> values;
-
-        InMemorySettingsStore(Map<String, String> values) {
-            this.values = new HashMap<>(values);
-        }
-
-        @Override
-        public String get(String key) {
-            return values.get(key);
-        }
-
-        @Override
-        public void put(String key, String value) {
-            values.put(key, value);
-        }
-    }
 }

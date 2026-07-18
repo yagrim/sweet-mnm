@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.config.Client;
+import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.ApiServerStubs.TEST_SLUG;
@@ -165,7 +166,16 @@ class ClientButtonsHandlerTest {
     }
 
     private ClientButtonsPanel initComponents() {
-        var handler = new ClientButtonsPanel(null, null, null, null, null);
+        var handler = new ClientButtonsPanel(null, null, null, null, null, new SettingsStore() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public void put(String key, String value) {
+            }
+        });
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         login = getButton(handler, "login");

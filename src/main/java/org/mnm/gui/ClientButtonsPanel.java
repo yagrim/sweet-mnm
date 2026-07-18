@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Client;
+import org.mnm.config.SettingsStore;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
@@ -37,6 +38,7 @@ class ClientButtonsPanel extends JPanel
 
     private final JButton login;
     private final JButton logout;
+    private final SettingsStore settingsStore;
 
     private ClientStatus clientStatus;
 
@@ -44,7 +46,8 @@ class ClientButtonsPanel extends JPanel
         JFrame mainWindow,
         GuiCommand.LoginAction loginAction,
         GuiCommand.LogoutAction logoutAction,
-        GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing
+        GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
+        SettingsStore settingsStore
     ) {
 
         super(new GridLayout(1, 2, SCALE, 0));
@@ -53,6 +56,7 @@ class ClientButtonsPanel extends JPanel
         repair = createButton("Repair");
         login = createButton("Login");
         logout = createButton("Logout");
+        this.settingsStore = settingsStore;
 
         this.add(login);
         this.add(install);
@@ -119,11 +123,12 @@ class ClientButtonsPanel extends JPanel
 
         eventHandler.loginStart();
 
-        final CredentialsPanel credentialsPanel = new CredentialsPanel();
+        final CredentialsPanel credentialsPanel = new CredentialsPanel(settingsStore);
         final int result = credentialsPanel.show(parent);
 
         if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
             try {
+                credentialsPanel.storeCredentials();
                 final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
                 eventHandler.loginDone(client);
             } catch (Exception e) {
