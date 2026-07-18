@@ -339,7 +339,7 @@ class ClientInstallerTest {
     private static void assertDatabaseContainsClientAndToken(Path dbFile, Path tempDir) throws SQLException {
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             assertThat(testDatabase.getTables())
-                .containsExactlyInAnyOrder("clients", "tokens");
+                .containsExactlyInAnyOrder("clients", "tokens", "settings");
 
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))

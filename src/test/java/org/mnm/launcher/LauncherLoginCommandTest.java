@@ -5,10 +5,13 @@ import java.util.UUID;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
+import org.mnm.GeneralOptions;
 import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
@@ -25,6 +28,16 @@ import static org.mnm.LauncherTestDatabase.withSettings;
 @ExtendWith(SystemOutCaptureExtension.class)
 @WireMockTest(httpsEnabled = true)
 class LauncherLoginCommandTest extends LinuxOnlyCommand {
+
+    @BeforeEach
+    void beforeEach() {
+        GeneralOptions.setDebug(true);
+    }
+
+    @AfterEach
+    void afterEach() {
+        GeneralOptions.setDebug(false);
+    }
 
     @Test
     void shouldReturnHelp() {
@@ -67,7 +80,8 @@ class LauncherLoginCommandTest extends LinuxOnlyCommand {
         assertThat(out.getOutput())
             .contains("DevFlags - DEVELOPER OPTIONS ENABLED!")
             .contains("DevFlags - If you see this line, proceed at your own risk")
-            .endsWith("Token updated in launcher database\n");
+            .contains("Token updated in launcher database")
+            .endsWith("LauncherDb - Launcher DB closed\n");
 
         testDb.assertThatToken().isEqualTo(uuid);
     }

@@ -22,6 +22,7 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.VersionDetails;
@@ -162,7 +163,9 @@ public class GuiCommand implements Command {
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
 
-                final MainTabs tabs = new MainTabs(frame, loginAction, logoutAction, repairAction, runAction);
+                final MainTabs tabs = new MainTabs(
+                    frame, loginAction, logoutAction, repairAction, runAction,
+                    new ConfigDbSettingsStore(configDbLocator));
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs, BorderLayout.CENTER);

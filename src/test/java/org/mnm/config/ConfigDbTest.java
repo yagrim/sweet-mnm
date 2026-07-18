@@ -21,6 +21,7 @@ class ConfigDbTest {
 
     private static final String CLIENTS_TABLE_NAME = "clients";
     private static final String TOKENS_TABLE_NAME = "tokens";
+    private static final String SETTINGS_TABLE_NAME = "settings";
 
     @Test
     void shouldInitialize(@TempDir Path tempDir) throws SQLException {
@@ -30,9 +31,10 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME);
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME, SETTINGS_TABLE_NAME);
             testDatabase.assertThatTable(CLIENTS_TABLE_NAME).isEmpty();
             testDatabase.assertThatTable(TOKENS_TABLE_NAME).isEmpty();
+            testDatabase.assertThatTable(SETTINGS_TABLE_NAME).isEmpty();
         }
     }
 
@@ -51,9 +53,10 @@ class ConfigDbTest {
         }
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
-            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME);
+            assertThat(testDatabase.getTables()).containsExactlyInAnyOrder(CLIENTS_TABLE_NAME, TOKENS_TABLE_NAME, SETTINGS_TABLE_NAME);
             testDatabase.assertThatTable(CLIENTS_TABLE_NAME).isEmpty();
             testDatabase.assertThatTable(TOKENS_TABLE_NAME).isEmpty();
+            testDatabase.assertThatTable(SETTINGS_TABLE_NAME).isEmpty();
         }
     }
 
@@ -211,6 +214,43 @@ class ConfigDbTest {
 
         static Path testConfigDatabase(Path tempDir) {
             return tempDir.resolve("sweet-test.db");
+        }
+    }
+
+    @Nested
+    class Settings {
+
+        @Test
+        void shouldReturnNullForMissingValue(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
+                assertThat(config.getSettings("missing")).isNull();
+            }
+        }
+
+        @Test
+        void shouldInsertAndRetrieveValue(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
+                config.putSettings("setting", "value");
+
+                assertThat(config.getSettings("setting")).isEqualTo("value");
+            }
+        }
+
+        @Test
+        void shouldUpdateExistingValue(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
+                config.putSettings("setting", "first-value");
+                assertThat(config.getSettings("setting")).isEqualTo("first-value");
+
+                config.putSettings("setting", "updated-value");
+                assertThat(config.getSettings("setting")).isEqualTo("updated-value");
+            }
         }
     }
 
