@@ -11,11 +11,16 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.mnm.config.SettingsStore;
 
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class CredentialsPanel {
+
+    private static final Logger logger = LoggerFactory.getLogger(CredentialsPanel.class);
 
     static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
     static final String EMAIL_KEY = "user.email";
@@ -28,12 +33,15 @@ class CredentialsPanel {
     private final JPasswordField password;
     private final JCheckBox storeCredentials;
 
+    // TODO Simplify this Grid
     CredentialsPanel(SettingsStore settingsStore) {
         this.settingsStore = settingsStore;
 
         final JTextField emailField = new JTextField(20);
         final JPasswordField passwordField = new JPasswordField(20);
-        final JCheckBox storeCredentialsOption = new JCheckBox("Save login details");
+        final JCheckBox storeCredentialsOption = new JCheckBox("Save login details", false);
+
+        loadSettings(settingsStore, emailField, passwordField);
 
         final JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -77,6 +85,17 @@ class CredentialsPanel {
             settingsStore.putBoolean(STORE_CREDENTIALS_KEY, storeCredentials.isSelected()));
     }
 
+    private void loadSettings(SettingsStore settingsStore, JTextField emailField, JPasswordField passwordField) {
+        String storedEmail = settingsStore.get(EMAIL_KEY);
+        if (storedEmail != null) {
+            emailField.setText(storedEmail);
+        }
+        String storedPassword = settingsStore.get(PASSWORD_KEY);
+        if (storedPassword != null) {
+            passwordField.setText(storedPassword);
+        }
+    }
+
     public String getUsername() {
         return username.getText().trim();
     }
@@ -87,13 +106,18 @@ class CredentialsPanel {
 
     void storeCredentials() {
         if (!storeCredentials.isSelected()) {
+            settingsStore.delete(EMAIL_KEY);
+            settingsStore.delete(PASSWORD_KEY);
+            logger.debug("Deleted stored credentials from settings");
             return;
         }
         if (!isEmpty(getUsername())) {
             settingsStore.put(EMAIL_KEY, getUsername());
+            logger.debug("Stored username in settings");
         }
         if (!isEmpty(getPassword())) {
             settingsStore.put(PASSWORD_KEY, getPassword());
+            logger.debug("Stored password in settings");
         }
     }
 

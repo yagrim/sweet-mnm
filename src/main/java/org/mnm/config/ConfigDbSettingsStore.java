@@ -24,4 +24,11 @@ public class ConfigDbSettingsStore implements SettingsStore {
             configDb.putSettings(key, value);
         }
     }
+
+    @Override
+    public void delete(String key) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+            configDb.deleteSettings(key);
+        }
+    }
 }

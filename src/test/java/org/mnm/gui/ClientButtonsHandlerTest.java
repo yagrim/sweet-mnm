@@ -175,6 +175,10 @@ class ClientButtonsHandlerTest {
             @Override
             public void put(String key, String value) {
             }
+
+            @Override
+            public void delete(String key) {
+            }
         });
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");

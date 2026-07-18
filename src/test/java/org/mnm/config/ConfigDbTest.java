@@ -252,6 +252,18 @@ class ConfigDbTest {
                 assertThat(config.getSettings("setting")).isEqualTo("updated-value");
             }
         }
+
+        @Test
+        void shouldDeleteExistingValue(@TempDir Path tempDir) {
+            final Path dbFile = testConfigDatabase(tempDir);
+
+            try (ConfigDb config = ConfigDb.open(dbFile)) {
+                config.putSettings("setting", "value");
+                config.deleteSettings("setting");
+
+                assertThat(config.getSettings("setting")).isNull();
+            }
+        }
     }
 
     @Nested

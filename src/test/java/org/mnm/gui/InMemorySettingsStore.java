@@ -20,4 +20,9 @@ record InMemorySettingsStore(Map<String, String> values) implements SettingsStor
     public void put(String key, String value) {
         values.put(key, value);
     }
+
+    @Override
+    public void delete(String key) {
+        values.remove(key);
+    }
 }

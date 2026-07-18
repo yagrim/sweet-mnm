@@ -128,12 +128,13 @@ class ClientButtonsPanel extends JPanel
 
         if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
             try {
-                credentialsPanel.storeCredentials();
                 final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
+                credentialsPanel.storeCredentials();
                 eventHandler.loginDone(client);
             } catch (Exception e) {
                 logger.error("", e);
                 showErrorMessageDialogSync("Error: " + e.getMessage());
+                eventHandler.refresh(clientStatus);
             }
         } else {
             eventHandler.refresh(clientStatus);
