@@ -54,7 +54,7 @@ class OptionsPanel extends JPanel
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
 
-        restoreOptions(settingsStore);
+        loadSettings(settingsStore);
 
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
@@ -92,7 +92,7 @@ class OptionsPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private void restoreOptions(SettingsStore settingsStore) {
+    private void loadSettings(SettingsStore settingsStore) {
         boolean debugEnabled = settingsStore.getBoolean(DEBUG_KEY, false);
         if (debugEnabled) {
             debugOption.setSelected(true);

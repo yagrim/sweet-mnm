@@ -291,4 +291,13 @@ public class ConfigDb implements AutoCloseable {
             throw new RuntimeException(e);
         }
     }
+
+    public void deleteSettings(String key) {
+        try (PreparedStatement ps = connection.prepareStatement("delete from settings where key = ?")) {
+            ps.setString(1, key);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

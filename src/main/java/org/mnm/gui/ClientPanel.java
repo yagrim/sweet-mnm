@@ -10,6 +10,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.mnm.client.RunnerOptions;
+import org.mnm.config.SettingsStore;
 
 class ClientPanel extends JPanel {
 
@@ -23,10 +24,11 @@ class ClientPanel extends JPanel {
                 GuiCommand.LoginAction loginAction,
                 GuiCommand.LogoutAction logoutAction,
                 GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
-                GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler) {
+                GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler,
+                SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing);
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, settingsStore);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
         this.playPanel = new PlayPanel(playAction, optionsSuppler);
 

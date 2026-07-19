@@ -6,6 +6,8 @@ public interface SettingsStore {
 
     void put(String key, String value);
 
+    void delete(String key);
+
     default boolean getBoolean(String key, boolean defaultValue) {
         String value = get(key);
         return value == null ? defaultValue : Boolean.parseBoolean(value);
@@ -14,4 +16,5 @@ public interface SettingsStore {
     default void putBoolean(String key, boolean value) {
         put(key, Boolean.toString(value));
     }
+
 }

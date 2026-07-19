@@ -1667,6 +1667,17 @@
       ]
     },
     {
+      "type": "javax.swing.plaf.metal.MetalToolTipUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
       "type": "org.mnm.gui.ClientPanel"
     },
     {

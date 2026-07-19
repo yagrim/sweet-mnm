@@ -53,6 +53,10 @@ class MainTabsTest {
                 @Override
                 public void put(String key, String value) {
                 }
+
+                @Override
+                public void delete(String key) {
+                }
             });
 
         assertThat(tabs).isNotNull();
