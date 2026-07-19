@@ -79,7 +79,7 @@ public class PlayPanel extends JPanel
 
     @Override
     public void refresh(ClientStatus client) {
-        play.setEnabled(client.validToken() && client.statusIs(UPDATED));
+        play.setEnabled(client != null && client.validToken() && client.statusIs(UPDATED));
     }
 
 }
