@@ -92,7 +92,7 @@ public class InfoPanel extends JPanel
 
     @Override
     public void refresh(ClientStatus client) {
-        if (client.client() != null) {
+        if (client != null && client.client() != null) {
             Client.Status status = client.client().status();
             if (status.isInProgress()) {
                 String message = """
