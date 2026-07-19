@@ -11,22 +11,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.mnm.config.SettingsStore;
-
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class CredentialsPanel {
 
-    private static final Logger logger = LoggerFactory.getLogger(CredentialsPanel.class);
-
-    static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
-    static final String EMAIL_KEY = "user.email";
-    static final String PASSWORD_KEY = "user.password";
-
-    private final SettingsStore settingsStore;
+    private final CredentialsHandler credentialsHandler;
 
     private final JPanel panel;
     private final JTextField username;
@@ -34,15 +23,15 @@ class CredentialsPanel {
     private final JCheckBox storeCredentials;
 
     // TODO Simplify this Grid
-    CredentialsPanel(SettingsStore settingsStore) {
-        this.settingsStore = settingsStore;
+    CredentialsPanel(CredentialsHandler credentialsHandler) {
+        this.credentialsHandler = credentialsHandler;
 
         final JTextField emailField = new JTextField(20);
         final JPasswordField passwordField = new JPasswordField(20);
-        final JCheckBox storeCredentialsOption = new JCheckBox("Save login details");
+        final JCheckBox storeCredentialsOption = new JCheckBox("Remember login information");
         storeCredentialsOption.setToolTipText("WARNING: Password will be saved locally, use this at your own risk");
 
-        loadSettings(settingsStore, emailField, passwordField, storeCredentialsOption);
+        loadSettings(emailField, passwordField, storeCredentialsOption);
 
         final JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -82,16 +71,17 @@ class CredentialsPanel {
         this.storeCredentials = storeCredentialsOption;
     }
 
-    private void loadSettings(SettingsStore settingsStore, JTextField emailField, JPasswordField passwordField, JCheckBox storeCredentialsOption) {
-        String storedEmail = settingsStore.get(EMAIL_KEY);
+    private void loadSettings(JTextField emailField, JPasswordField passwordField, JCheckBox storeCredentialsOption) {
+
+        String storedEmail = credentialsHandler.getEmail();
         if (storedEmail != null) {
             emailField.setText(storedEmail);
         }
-        String storedPassword = settingsStore.get(PASSWORD_KEY);
+        String storedPassword = credentialsHandler.getPassword();
         if (storedPassword != null) {
             passwordField.setText(storedPassword);
         }
-        storeCredentialsOption.setSelected(settingsStore.getBoolean(STORE_CREDENTIALS_KEY, false));
+        storeCredentialsOption.setSelected(credentialsHandler.getStoreCredentials());
     }
 
     public String getUsername() {
@@ -104,25 +94,20 @@ class CredentialsPanel {
 
     void storeCredentials() {
         if (!storeCredentials.isSelected()) {
-            settingsStore.delete(EMAIL_KEY);
-            settingsStore.delete(PASSWORD_KEY);
-            settingsStore.delete(STORE_CREDENTIALS_KEY);
-            logger.debug("Deleted stored credentials from settings");
+            credentialsHandler.clearCredentials();
             return;
         }
         boolean credentialsStored = false;
         if (!isEmpty(getUsername())) {
-            settingsStore.put(EMAIL_KEY, getUsername());
+            credentialsHandler.saveEmail(getUsername());
             credentialsStored = true;
-            logger.debug("Stored username in settings");
         }
         if (!isEmpty(getPassword())) {
-            settingsStore.put(PASSWORD_KEY, getPassword());
+            credentialsHandler.savePassword(getPassword());
             credentialsStored = true;
-            logger.debug("Stored password in settings");
         }
         if (credentialsStored) {
-            settingsStore.putBoolean(STORE_CREDENTIALS_KEY, true);
+            credentialsHandler.saveStoreCredentials(true);
         }
     }
 

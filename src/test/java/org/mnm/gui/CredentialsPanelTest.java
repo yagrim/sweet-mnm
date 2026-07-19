@@ -8,18 +8,18 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.gui.CredentialsPanel.EMAIL_KEY;
-import static org.mnm.gui.CredentialsPanel.PASSWORD_KEY;
-import static org.mnm.gui.CredentialsPanel.STORE_CREDENTIALS_KEY;
+import static org.mnm.gui.InMemorySettingsStore.EMAIL_KEY;
+import static org.mnm.gui.InMemorySettingsStore.PASSWORD_KEY;
+import static org.mnm.gui.InMemorySettingsStore.STORE_CREDENTIALS_KEY;
 import static org.mnm.gui.ReflectionTestTools.get;
 
 class CredentialsPanelTest {
 
     @Test
     void shouldRestoreStoredCredentials() {
-        CredentialsPanel credentialsPanel = new CredentialsPanel(new InMemorySettingsStore(Map.of(
-            EMAIL_KEY, "user@example.com",
-            PASSWORD_KEY, "secret")));
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(new InMemorySettingsStore(Map.of(
+            InMemorySettingsStore.EMAIL_KEY, "user@example.com",
+            InMemorySettingsStore.PASSWORD_KEY, "secret"))));
 
         assertThat(credentialsPanel.getUsername()).isEqualTo("user@example.com");
         assertThat(credentialsPanel.getPassword()).isEqualTo("secret");
@@ -29,7 +29,7 @@ class CredentialsPanelTest {
     void shouldRestoreStoreCredentialsOption() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             STORE_CREDENTIALS_KEY, "true"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
 
         JCheckBox checkbox = (JCheckBox) get(credentialsPanel, "storeCredentials");
         assertThat(checkbox.isSelected()).isTrue();
@@ -43,7 +43,7 @@ class CredentialsPanelTest {
     @Test
     void shouldSetRestoreStoreFalsAsDefault() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
 
         JCheckBox checkbox = (JCheckBox) get(credentialsPanel, "storeCredentials");
         assertThat(checkbox.isSelected()).isFalse();
@@ -57,7 +57,7 @@ class CredentialsPanelTest {
     void shouldNotStoreCredentialsOptionOnCheckboxClick() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             STORE_CREDENTIALS_KEY, "true"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
 
         JCheckBox checkbox = (JCheckBox) get(credentialsPanel, "storeCredentials");
         assertThat(checkbox.isSelected()).isTrue();
@@ -70,7 +70,7 @@ class CredentialsPanelTest {
 
     @Test
     void shouldLeaveCredentialsEmptyWhenNotStored() {
-        CredentialsPanel credentialsPanel = new CredentialsPanel(new InMemorySettingsStore(Map.of()));
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(new InMemorySettingsStore(Map.of())));
 
         assertThat(credentialsPanel.getUsername()).isEmpty();
         assertThat(credentialsPanel.getPassword()).isEmpty();
@@ -79,7 +79,7 @@ class CredentialsPanelTest {
     @Test
     void shouldStoreNonEmptyCredentialsWhenOptionIsSelected() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
         ((JCheckBox) get(credentialsPanel, "storeCredentials")).doClick();
         ((JTextField) get(credentialsPanel, "username")).setText("user@example.com");
         ((JPasswordField) get(credentialsPanel, "password")).setText("secret");
@@ -96,7 +96,7 @@ class CredentialsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             EMAIL_KEY, "user@example.com",
             PASSWORD_KEY, "secret"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
 
         credentialsPanel.storeCredentials();
 
@@ -110,7 +110,7 @@ class CredentialsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             EMAIL_KEY, "existing@example.com",
             PASSWORD_KEY, "existing-password"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
         ((JCheckBox) get(credentialsPanel, "storeCredentials")).doClick();
         ((JPasswordField) get(credentialsPanel, "password")).setText("new-password");
 
@@ -126,7 +126,7 @@ class CredentialsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             EMAIL_KEY, "existing@example.com",
             PASSWORD_KEY, "existing-password"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(settings);
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
         ((JCheckBox) get(credentialsPanel, "storeCredentials")).doClick();
         ((JTextField) get(credentialsPanel, "username")).setText("new@example.com");
 

@@ -2,6 +2,10 @@ package org.mnm.config;
 
 public interface SettingsStore {
 
+    String DEBUG_KEY = "debug";
+    String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
+    String MANGOHUD_KEY = "linux.mangohud";
+
     String get(String key);
 
     void put(String key, String value);

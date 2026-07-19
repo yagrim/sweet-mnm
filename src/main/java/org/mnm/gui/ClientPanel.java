@@ -25,10 +25,10 @@ class ClientPanel extends JPanel {
                 GuiCommand.LogoutAction logoutAction,
                 GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
                 GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler,
-                SettingsStore settingsStore) {
+                CredentialsHandler credentialsHandler) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, settingsStore);
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
         this.playPanel = new PlayPanel(playAction, optionsSuppler);
 

@@ -19,6 +19,20 @@ class MainTabsTest {
     @EnabledOnOs(OS.WINDOWS)
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
         JFrame root = new JFrame();
+        SettingsStore settingsStore = new SettingsStore() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public void put(String key, String value) {
+            }
+
+            @Override
+            public void delete(String key) {
+            }
+        };
         var tabs = new MainTabs(root,
             new GuiCommand.LoginAction() {
                 @Override
@@ -44,20 +58,8 @@ class MainTabsTest {
 
                 }
             },
-            new SettingsStore() {
-                @Override
-                public String get(String key) {
-                    return null;
-                }
-
-                @Override
-                public void put(String key, String value) {
-                }
-
-                @Override
-                public void delete(String key) {
-                }
-            });
+            settingsStore,
+            new CredentialsHandler(settingsStore));
 
         assertThat(tabs).isNotNull();
     }

@@ -1,7 +1,10 @@
 package org.mnm.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -30,7 +33,9 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
-import static org.mnm.config.Environment.*;
+import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
@@ -163,9 +168,11 @@ public class GuiCommand implements Command {
             SwingUtilities.invokeAndWait(() -> {
                 this.frame = new JFrame("Sweet GUI");
 
+                final ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
                 final MainTabs tabs = new MainTabs(
                     frame, loginAction, logoutAction, repairAction, runAction,
-                    new ConfigDbSettingsStore(configDbLocator));
+                    settingsStore,
+                    new CredentialsHandler(settingsStore));
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.getContentPane().add(tabs, BorderLayout.CENTER);
