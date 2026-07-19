@@ -39,9 +39,10 @@ class CredentialsPanel {
 
         final JTextField emailField = new JTextField(20);
         final JPasswordField passwordField = new JPasswordField(20);
-        final JCheckBox storeCredentialsOption = new JCheckBox("Save login details", false);
+        final JCheckBox storeCredentialsOption = new JCheckBox("Save login details");
+        storeCredentialsOption.setToolTipText("WARNING: Password will be saved locally, use this at your own risk");
 
-        loadSettings(settingsStore, emailField, passwordField);
+        loadSettings(settingsStore, emailField, passwordField, storeCredentialsOption);
 
         final JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -79,13 +80,9 @@ class CredentialsPanel {
         this.username = emailField;
         this.password = passwordField;
         this.storeCredentials = storeCredentialsOption;
-
-        storeCredentials.setSelected(settingsStore.getBoolean(STORE_CREDENTIALS_KEY, false));
-        storeCredentials.addActionListener(_ ->
-            settingsStore.putBoolean(STORE_CREDENTIALS_KEY, storeCredentials.isSelected()));
     }
 
-    private void loadSettings(SettingsStore settingsStore, JTextField emailField, JPasswordField passwordField) {
+    private void loadSettings(SettingsStore settingsStore, JTextField emailField, JPasswordField passwordField, JCheckBox storeCredentialsOption) {
         String storedEmail = settingsStore.get(EMAIL_KEY);
         if (storedEmail != null) {
             emailField.setText(storedEmail);
@@ -94,6 +91,7 @@ class CredentialsPanel {
         if (storedPassword != null) {
             passwordField.setText(storedPassword);
         }
+        storeCredentialsOption.setSelected(settingsStore.getBoolean(STORE_CREDENTIALS_KEY, false));
     }
 
     public String getUsername() {
@@ -108,16 +106,23 @@ class CredentialsPanel {
         if (!storeCredentials.isSelected()) {
             settingsStore.delete(EMAIL_KEY);
             settingsStore.delete(PASSWORD_KEY);
+            settingsStore.delete(STORE_CREDENTIALS_KEY);
             logger.debug("Deleted stored credentials from settings");
             return;
         }
+        boolean credentialsStored = false;
         if (!isEmpty(getUsername())) {
             settingsStore.put(EMAIL_KEY, getUsername());
+            credentialsStored = true;
             logger.debug("Stored username in settings");
         }
         if (!isEmpty(getPassword())) {
             settingsStore.put(PASSWORD_KEY, getPassword());
+            credentialsStored = true;
             logger.debug("Stored password in settings");
+        }
+        if (credentialsStored) {
+            settingsStore.putBoolean(STORE_CREDENTIALS_KEY, true);
         }
     }
 
@@ -130,4 +135,5 @@ class CredentialsPanel {
             JOptionPane.PLAIN_MESSAGE
         );
     }
+
 }
