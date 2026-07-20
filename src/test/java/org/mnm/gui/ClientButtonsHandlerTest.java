@@ -166,7 +166,7 @@ class ClientButtonsHandlerTest {
     }
 
     private ClientButtonsPanel initComponents() {
-        var handler = new ClientButtonsPanel(null, null, null, null, null, new SettingsStore() {
+        var handler = new ClientButtonsPanel(null, null, null, null, null, new CredentialsHandler(new SettingsStore() {
             @Override
             public String get(String key) {
                 return null;
@@ -179,7 +179,7 @@ class ClientButtonsHandlerTest {
             @Override
             public void delete(String key) {
             }
-        });
+        }));
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         login = getButton(handler, "login");

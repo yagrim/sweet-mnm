@@ -38,7 +38,7 @@ class ClientButtonsPanel extends JPanel
 
     private final JButton login;
     private final JButton logout;
-    private final SettingsStore settingsStore;
+    private final CredentialsHandler credentialsHandler;
 
     private ClientStatus clientStatus;
 
@@ -47,7 +47,7 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LoginAction loginAction,
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
-        SettingsStore settingsStore
+        CredentialsHandler credentialsHandler
     ) {
 
         super(new GridLayout(1, 2, SCALE, 0));
@@ -56,7 +56,7 @@ class ClientButtonsPanel extends JPanel
         repair = createButton("Repair");
         login = createButton("Login");
         logout = createButton("Logout");
-        this.settingsStore = settingsStore;
+        this.credentialsHandler = credentialsHandler;
 
         this.add(login);
         this.add(install);
@@ -123,7 +123,7 @@ class ClientButtonsPanel extends JPanel
 
         eventHandler.loginStart();
 
-        final CredentialsPanel credentialsPanel = new CredentialsPanel(settingsStore);
+        final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
         final int result = credentialsPanel.show(parent);
 
         if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
@@ -136,9 +136,8 @@ class ClientButtonsPanel extends JPanel
                 showErrorMessageDialogSync("Error: " + e.getMessage());
                 eventHandler.refresh(clientStatus);
             }
-        } else {
-            eventHandler.refresh(clientStatus);
         }
+        eventHandler.refresh(clientStatus);
     }
 
     private void handleInstall(JFrame mainWindow, GuiCommand.RepairAction installAction, BooleanSupplier inMemoryHashing) {

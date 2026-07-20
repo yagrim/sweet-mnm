@@ -27,6 +27,9 @@ import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.SettingsStore.DEBUG_KEY;
+import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
+import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -37,24 +40,25 @@ class OptionsPanel extends JPanel
 
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
-    static final String DEBUG_KEY = "debug";
-    static final String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
-    static final String MANGOHUD_KEY = "linux.mangohud";
-
     private final JCheckBox debugOption = new JCheckBox("Enable debug");
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
-    private final JButton clearCache;
+    private final JButton deleteCredentials = new JButton("Delete login information");
+    private final JButton clearCache = new JButton("Clear cache");
+
+    private final SettingsStore settingsStore;
+    private final CredentialsHandler credentialsHandler;
 
     private ClientStatus clientStatus;
 
-    OptionsPanel(SettingsStore settingsStore) {
+    OptionsPanel(SettingsStore settingsStore, CredentialsHandler credentialsHandler) {
         super();
+        this.settingsStore = settingsStore;
+        this.credentialsHandler = credentialsHandler;
+        loadSettings();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
-
-        loadSettings(settingsStore);
 
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
@@ -78,7 +82,6 @@ class OptionsPanel extends JPanel
             mangoHudOption.setText("Enable MangoHud (Linux only)");
         }
 
-        clearCache = new JButton("Clear cache");
         clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
         this.add(debugOption);
@@ -87,12 +90,18 @@ class OptionsPanel extends JPanel
         this.add(Box.createVerticalStrut(SCALE));
         this.add(mangoHudOption);
         this.add(Box.createVerticalStrut(SCALE));
+
+        deleteCredentials.setEnabled(false);
+        deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
+        this.add(deleteCredentials);
+        this.add(Box.createVerticalStrut(SCALE));
+
         this.add(clearCache);
 
         ClientEventHandler.getInstance().register(this);
     }
 
-    private void loadSettings(SettingsStore settingsStore) {
+    private void loadSettings() {
         boolean debugEnabled = settingsStore.getBoolean(DEBUG_KEY, false);
         if (debugEnabled) {
             debugOption.setSelected(true);
@@ -100,6 +109,7 @@ class OptionsPanel extends JPanel
         }
         inMemoryHashingOption.setSelected(settingsStore.getBoolean(IN_MEMORY_HASHING_KEY, true));
         mangoHudOption.setSelected(settingsStore.getBoolean(MANGOHUD_KEY, false));
+        refreshOptions();
     }
 
     @Override
@@ -124,6 +134,11 @@ class OptionsPanel extends JPanel
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
+        refreshOptions();
+    }
+
+    private void refreshOptions() {
+        deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
     }
 
     private static Path getDownloadsPath(Client client) {
@@ -132,7 +147,7 @@ class OptionsPanel extends JPanel
 
     // This is quick enough, we don't bother running async and disabling button in the meantime
     private void handleClearCache(OptionsPanel parent, JButton clearCache) {
-        final int result = showClearCacheConfirmation(parent);
+        final int result = showConfirmationWindow(parent, "Clear download cache", "Delete all temporal downloads cache?");
         if (result == JOptionPane.OK_OPTION) {
             try {
                 final Path downloadsPath = getDownloadsPath(clientStatus.client());
@@ -146,6 +161,14 @@ class OptionsPanel extends JPanel
         }
     }
 
+    private void handleClearCredentials(OptionsPanel parent) {
+        final int result = showConfirmationWindow(parent, "Delete login information", "Delete stored email and password?");
+        if (result == JOptionPane.OK_OPTION) {
+            credentialsHandler.clearCredentials();
+            refreshOptions();
+        }
+    }
+
     boolean useInMemoryHashing() {
         return inMemoryHashingOption.isSelected();
     }
@@ -154,13 +177,13 @@ class OptionsPanel extends JPanel
         return new RunnerOptions(DEFAULT_SLUG, null, false, mangoHudOption.isSelected());
     }
 
-    public int showClearCacheConfirmation(Container parent) {
+    public static int showConfirmationWindow(Container parent, String title, String message) {
         final JPanel panel = new JPanel(new GridLayout(1, 1, 8, 8));
-        panel.add(new JLabel("Delete all temporal downloads cache?"));
+        panel.add(new JLabel(message));
         return JOptionPane.showConfirmDialog(
             parent,
             panel,
-            "Clear download cache",
+            title,
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );

@@ -22,17 +22,18 @@ class MainTabs extends JTabbedPane {
              LoginAction loginAction, LogoutAction logoutAction,
              RepairAction repairAction,
              PlayAction playAction,
-             SettingsStore settingsStore) {
+             SettingsStore settingsStore,
+             CredentialsHandler credentialsHandler) {
 
         setFontSize(this, 15f);
 
-        this.optionsPanel = new OptionsPanel(settingsStore);
+        this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
         this.clientPanel = new ClientPanel(frame,
             loginAction,
             logoutAction,
             repairAction, () -> optionsPanel.useInMemoryHashing(),
             playAction, () -> optionsPanel.getRunnerOptions(),
-            settingsStore
+            credentialsHandler
         );
 
         this.addTab("Client", clientPanel);

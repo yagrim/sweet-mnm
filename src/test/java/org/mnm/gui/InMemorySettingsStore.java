@@ -1,11 +1,15 @@
 package org.mnm.gui;
 
-import org.mnm.config.SettingsStore;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mnm.config.SettingsStore;
+
 record InMemorySettingsStore(Map<String, String> values) implements SettingsStore {
+
+    static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
+    static final String EMAIL_KEY = "user.email";
+    static final String PASSWORD_KEY = "user.password";
 
     InMemorySettingsStore(Map<String, String> values) {
         this.values = new HashMap<>(values);

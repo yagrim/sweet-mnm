@@ -13,17 +13,20 @@ import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.config.SettingsStore.DEBUG_KEY;
+import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
+import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
 
 class OptionsPanelTest {
 
     @Test
     void shouldRestorePersistedOptions() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
-            OptionsPanel.DEBUG_KEY, "true",
-            OptionsPanel.IN_MEMORY_HASHING_KEY, "false",
-            OptionsPanel.MANGOHUD_KEY, "true"));
+            DEBUG_KEY, "true",
+            IN_MEMORY_HASHING_KEY, "false",
+            MANGOHUD_KEY, "true"));
 
-        OptionsPanel panel = new OptionsPanel(settings);
+        OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
         assertThat(optionAt(panel, 0).isSelected()).isTrue();
         assertThat(optionAt(panel, 1).isSelected()).isFalse();
@@ -33,25 +36,25 @@ class OptionsPanelTest {
     @Test
     void shouldPersistModifiedDebugAndHashingOptions() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
-        OptionsPanel panel = new OptionsPanel(settings);
+        OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
         optionAt(panel, 0).doClick();
         optionAt(panel, 1).doClick();
 
-        assertThat(settings.get(OptionsPanel.DEBUG_KEY)).isEqualTo("true");
-        assertThat(settings.get(OptionsPanel.IN_MEMORY_HASHING_KEY)).isEqualTo("false");
+        assertThat(settings.get(DEBUG_KEY)).isEqualTo("true");
+        assertThat(settings.get(IN_MEMORY_HASHING_KEY)).isEqualTo("false");
     }
 
     @Test
     void shouldRestoreModifiedOptionsFromConfigDatabase(@TempDir Path tempDir) {
         Path database = tempDir.resolve("config.db");
         SettingsStore settings = new ConfigDbSettingsStore(() -> database);
-        OptionsPanel panel = new OptionsPanel(settings);
+        OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
         optionAt(panel, 0).doClick();
         optionAt(panel, 1).doClick();
 
-        OptionsPanel restoredPanel = new OptionsPanel(settings);
+        OptionsPanel restoredPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
         assertThat(optionAt(restoredPanel, 0).isSelected()).isTrue();
         assertThat(optionAt(restoredPanel, 1).isSelected()).isFalse();
     }
@@ -60,11 +63,11 @@ class OptionsPanelTest {
     @DisabledOnOs(OS.WINDOWS)
     void shouldPersistModifiedMangoHudOption() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
-        OptionsPanel panel = new OptionsPanel(settings);
+        OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
         optionAt(panel, 2).doClick();
 
-        assertThat(settings.get(OptionsPanel.MANGOHUD_KEY)).isEqualTo("true");
+        assertThat(settings.get(MANGOHUD_KEY)).isEqualTo("true");
     }
 
     private static JCheckBox optionAt(OptionsPanel panel, int index) {
