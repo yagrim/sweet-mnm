@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Client;
-import org.mnm.config.SettingsStore;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
@@ -41,6 +40,7 @@ class ClientButtonsPanel extends JPanel
     private final CredentialsHandler credentialsHandler;
 
     private ClientStatus clientStatus;
+    private boolean refreshToken = false;
 
     public ClientButtonsPanel(
         JFrame mainWindow,
@@ -54,7 +54,7 @@ class ClientButtonsPanel extends JPanel
 
         install = createButton("Install");
         repair = createButton("Repair");
-        login = createButton("Login");
+        login = createButton("Refresh");
         logout = createButton("Logout");
         this.credentialsHandler = credentialsHandler;
 
@@ -114,8 +114,24 @@ class ClientButtonsPanel extends JPanel
         boolean toInstall = hasClient && (client.statusIs(NOT_INSTALLED) || client.client().status().isInProgress());
         install.setEnabled(validToken && toInstall);
         repair.setEnabled(validToken && !toInstall);
-        login.setEnabled(!validToken);
+
+        refreshToken = validToken && credentialsHandler.getStoreCredentials();
+        login.setEnabled(refreshToken || !validToken);
+        setLoginText(refreshToken ? "Refresh" : "Login");
+        setToolTip(refreshToken ? "Regenerate token with stored credentials" : "Obtain a new token");
         logout.setEnabled(validToken);
+    }
+
+    private void setLoginText(String text) {
+        if (!text.equals(login.getText())) {
+            login.setText(text);
+        }
+    }
+
+    private void setToolTip(String text) {
+        if (!text.equals(login.getToolTipText())) {
+            login.setToolTipText(text);
+        }
     }
 
     private void handleLogin(JFrame parent, GuiCommand.LoginAction loginAction) {
@@ -123,20 +139,25 @@ class ClientButtonsPanel extends JPanel
 
         eventHandler.loginStart();
 
-        final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
-        final int result = credentialsPanel.show(parent);
-
-        if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
-            try {
-                final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
-                credentialsPanel.storeCredentials();
+        try {
+            if (refreshToken) {
+                final ClientStatus client = loginAction.login(credentialsHandler.getEmail(), credentialsHandler.getPassword());
                 eventHandler.loginDone(client);
-            } catch (Exception e) {
-                logger.error("", e);
-                showErrorMessageDialogSync("Error: " + e.getMessage());
-                eventHandler.refresh(clientStatus);
+            } else {
+                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
+                final int result = credentialsPanel.show(parent);
+                if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
+                    final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
+                    credentialsPanel.storeCredentials();
+                    eventHandler.loginDone(client);
+                }
             }
+        } catch (Exception e) {
+            logger.error("", e);
+            showErrorMessageDialogSync("Error: " + e.getMessage());
+            eventHandler.refresh(clientStatus);
         }
+
         eventHandler.refresh(clientStatus);
     }
 

@@ -109,7 +109,7 @@ class OptionsPanel extends JPanel
         }
         inMemoryHashingOption.setSelected(settingsStore.getBoolean(IN_MEMORY_HASHING_KEY, true));
         mangoHudOption.setSelected(settingsStore.getBoolean(MANGOHUD_KEY, false));
-        refreshOptions();
+        deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
     }
 
     @Override
@@ -134,10 +134,6 @@ class OptionsPanel extends JPanel
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-        refreshOptions();
-    }
-
-    private void refreshOptions() {
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
     }
 
@@ -165,7 +161,7 @@ class OptionsPanel extends JPanel
         final int result = showConfirmationWindow(parent, "Delete login information", "Delete stored email and password?");
         if (result == JOptionPane.OK_OPTION) {
             credentialsHandler.clearCredentials();
-            refreshOptions();
+            ClientEventHandler.getInstance().refresh(clientStatus);
         }
     }
 

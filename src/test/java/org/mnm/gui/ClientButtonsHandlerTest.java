@@ -64,6 +64,7 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isTrue();
         assertThat(repair.isEnabled()).isFalse();
         assertThat(login.isEnabled()).isFalse();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isTrue();
     }
 
@@ -87,6 +88,17 @@ class ClientButtonsHandlerTest {
         handler.refresh(clientStatus);
 
         refreshEnabled();
+    }
+
+    @Test
+    void shouldShowRefreshWhenTokenIsValidAndCredentialsAreStored() {
+        Client client = new Client(TEST_SLUG, "1.2.3", UPDATED, Path.of("."));
+        ClientStatus clientStatus = new ClientStatus(client, true, null);
+        var handler = initComponents(true);
+
+        handler.refresh(clientStatus);
+
+        assertLoginButton("Refresh", "Regenerate token with stored credentials");
     }
 
     @Test
@@ -121,6 +133,7 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();
         assertThat(login.isEnabled()).isFalse();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isTrue();
     }
 
@@ -135,6 +148,7 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();
         assertThat(login.isEnabled()).isFalse();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isTrue();
     }
 
@@ -150,6 +164,7 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isFalse();
         assertThat(login.isEnabled()).isTrue();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isFalse();
     }
 
@@ -166,10 +181,14 @@ class ClientButtonsHandlerTest {
     }
 
     private ClientButtonsPanel initComponents() {
+        return initComponents(false);
+    }
+
+    private ClientButtonsPanel initComponents(boolean storeCredentials) {
         var handler = new ClientButtonsPanel(null, null, null, null, null, new CredentialsHandler(new SettingsStore() {
             @Override
             public String get(String key) {
-                return null;
+                return storeCredentials && key.equals("user.store-credentials") ? "true" : null;
             }
 
             @Override
@@ -191,6 +210,7 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isFalse();
         assertThat(login.isEnabled()).isTrue();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isFalse();
     }
 
@@ -198,6 +218,12 @@ class ClientButtonsHandlerTest {
         assertThat(install.isEnabled()).isFalse();
         assertThat(repair.isEnabled()).isTrue();
         assertThat(login.isEnabled()).isFalse();
+        assertLoginButton("Login", "Obtain a new token");
         assertThat(logout.isEnabled()).isTrue();
+    }
+
+    private void assertLoginButton(String text, String toolTipText) {
+        assertThat(login.getText()).isEqualTo(text);
+        assertThat(login.getToolTipText()).isEqualTo(toolTipText);
     }
 }
