@@ -8,6 +8,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.nio.file.Path;
@@ -57,8 +59,9 @@ class OptionsPanel extends JPanel
         this.settingsStore = settingsStore;
         this.credentialsHandler = credentialsHandler;
         loadSettings();
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
+//        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.setLayout(new GridLayout(1, 2, 10, 0));
+        this.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
 
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
@@ -84,20 +87,39 @@ class OptionsPanel extends JPanel
 
         clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
-        this.add(debugOption);
-        this.add(Box.createVerticalStrut(SCALE));
-        this.add(inMemoryHashingOption);
-        this.add(Box.createVerticalStrut(SCALE));
-        this.add(mangoHudOption);
-        this.add(Box.createVerticalStrut(SCALE));
-        this.add(clearCache);
-        this.add(Box.createVerticalStrut(SCALE));
+        final JPanel left = createColumn("General");
+        left.add(debugOption);
+        left.add(Box.createVerticalStrut(SCALE));
+        left.add(inMemoryHashingOption);
+        left.add(Box.createVerticalStrut(SCALE));
+        left.add(clearCache);
+        left.add(Box.createVerticalStrut(SCALE));
 
         deleteCredentials.setEnabled(false);
         deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
-        this.add(deleteCredentials);
+        left.add(deleteCredentials);
 
+        final JPanel right = createColumn("Linux");
+        right.add(mangoHudOption);
+
+        this.add(left);
+        this.add(right);
+
+        // pot-init
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private static JPanel createColumn(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            title,
+            TitledBorder.LEFT,
+            TitledBorder.DEFAULT_POSITION
+        ), BorderFactory.createEmptyBorder(2, 2, 0, 0)));
+        return panel;
     }
 
     private void loadSettings() {
