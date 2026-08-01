@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.client.RunnerOptions;
+import org.mnm.client.RunnerOptions.LinuxOptions;
 import org.mnm.config.Client;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +38,7 @@ class PlayPanelTest {
         PlayPanel playPanel = new PlayPanel(options -> {
             optionSupplied.set(options.slug());
             actionPerformed.set(true);
-        }, () -> new RunnerOptions(randomSlug, null, false, false));
+        }, () -> new RunnerOptions(randomSlug, null, false, new LinuxOptions(false, false, null)));
         play = getButton(playPanel, "play");
 
         play.setEnabled(true);

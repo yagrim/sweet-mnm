@@ -10,6 +10,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import org.mnm.client.RunnerOptions.LinuxOptions;
+import org.mnm.client.RunnerOptions.UmuOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
@@ -21,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
+import static org.mnm.client.LinuxOptionsTestFactory.defaultLinuxOptions;
+import static org.mnm.client.LinuxOptionsTestFactory.linuxOptions;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -38,7 +42,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No client found: run 'install --username ...' first");
     }
@@ -53,7 +57,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Could not identify client: use --slug");
     }
@@ -67,7 +71,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No token found: run 'install --username ...' first");
     }
@@ -82,7 +86,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Could not identify token: use --id");
     }
@@ -97,7 +101,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG_2, 1, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG_2, 1, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No token found for id 1");
     }
@@ -110,7 +114,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No client found: run 'install --username ...' first");
     }
@@ -125,7 +129,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, false)))
+        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Token expired: run 'install --username ...' to create a new one");
     }
@@ -151,7 +155,7 @@ class ClientRunnerTest {
             processMock.when(() -> ProcessUtils.run(any(Path.class), any(String[].class), anyMap()))
                 .thenReturn("");
 
-            runner.run(new RunnerOptions(null, null, false, false));
+            runner.run(new RunnerOptions(null, null, false, defaultLinuxOptions()));
 
             validatorsMock.verify(() -> Validators.checkVersion(token, client));
         }
@@ -162,7 +166,7 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var options = new RunnerOptions(null, null, true, false);
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
         var result = runClient(installPath, token, true, options);
 
         assertThat(result.workingDir).isEqualTo(installPath);
@@ -175,7 +179,7 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var options = new RunnerOptions(null, null, true, false);
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
         var result = runClient(installPath, token, true, options);
 
         assertThat(result.workingDir).isEqualTo(installPath);
@@ -184,11 +188,36 @@ class ClientRunnerTest {
     }
 
     @Test
-    void shouldRunLinuxClient(@TempDir Path tempDir) {
+    void shouldFailWhenLinuxOptionsAreNull(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var options = new RunnerOptions(null, null, true, false);
+        var options = new RunnerOptions(null, null, true, null);
+
+        assertThatThrownBy(() -> runClient(installPath, token, false, options))
+            .isInstanceOfAny(NullPointerException.class)
+            .hasMessage("linuxOptions cannot be null");
+    }
+
+    @Test
+    void shouldFailWhenUmuOptionsAreNull(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var linuxOptions = new LinuxOptions(true, true, null);
+        var options = new RunnerOptions(null, null, true, linuxOptions);
+
+        assertThatThrownBy(() -> runClient(installPath, token, false, options))
+            .isInstanceOfAny(NullPointerException.class)
+            .hasMessage("linuxOptions.umuOptions cannot be null");
+    }
+
+    @Test
+    void shouldRunLinuxClientWithDefaults(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
         var result = runClient(installPath, token, false, options);
 
         assertThat(result.workingDir).isEqualTo(installPath);
@@ -197,8 +226,8 @@ class ClientRunnerTest {
         assertThat(result.environment)
             .containsExactlyInAnyOrderEntriesOf(Map.of(
                 "GAMEID", SLUG,
-                "PROTONPATH", "GE-Proton10-33",
-                "WINEPREFIX", installPath.toAbsolutePath().resolve("mnm_prefix").toString()
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
             ));
     }
 
@@ -207,17 +236,134 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var options = new RunnerOptions(null, null, true, true);
+        var options = new RunnerOptions(null, null, true, linuxOptions(true));
+
         var result = runClient(installPath, token, false, options);
 
         assertThat(result.environment)
             .containsExactlyInAnyOrderEntriesOf(Map.of(
                 "GAMEID", SLUG,
-                "PROTONPATH", "GE-Proton10-33",
-                "WINEPREFIX", installPath.toAbsolutePath().resolve("mnm_prefix").toString(),
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath),
                 "MANGOHUD", "1"
             ));
     }
+
+    @Test
+    void shouldBuildEnvironmentWithGameId(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        final String gameId = "custom-mnm";
+        var umuOptions = new UmuOptions(gameId, "GE-Proton", null);
+        var options = new RunnerOptions(null, null, true, linuxOptions(umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", gameId,
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
+            ));
+    }
+
+    @Test
+    void shouldBuildEnvironmentWithProtonPath(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        final String protonPath = "my-proton-distro";
+        var umuOptions = new UmuOptions("mnm", protonPath, "/some/absolute");
+        var options = new RunnerOptions(null, null, true, linuxOptions(umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", "mnm",
+                "PROTONPATH", protonPath,
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
+            ));
+    }
+
+    @Test
+    void shouldBuildEnvironmentWithAbsoluteWinePrefix(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        final String winePrefix = "/home/me/some/prefix";
+        var umuOptions = new UmuOptions("mnm", "GE-Proton", winePrefix);
+        var options = new RunnerOptions(null, null, true, linuxOptions(false, umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", "mnm",
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", winePrefix
+            ));
+    }
+
+    @Test
+    void shouldBuildEnvironmentWithClientRelativeWinePrefix(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        final String winePrefix = "my/prefix";
+        var umuOptions = new UmuOptions("mnm", "GE-Proton", winePrefix);
+        var options = new RunnerOptions(null, null, true, linuxOptions(false, umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", "mnm",
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", installPath.toAbsolutePath().resolve(winePrefix).toString()
+            ));
+    }
+
+    @Test
+    void shouldBuildEnvironmentWithClientAsWinePrefixAndIgnoreWinePrefix(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        final String winePrefix = "/home/me/my-protong-distro";
+        var umuOptions = new UmuOptions("mnm", "GE-Proton", winePrefix);
+        var options = new RunnerOptions(null, null, true, linuxOptions(true, umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", "mnm",
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
+            ));
+    }
+
+    @Test
+    void shouldBuildEnvironmentWithClientAsWinePrefixFallbackWhenPrefixIsNull(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var umuOptions = new UmuOptions("mnm", "GE-Proton", null);
+        var options = new RunnerOptions(null, null, true, linuxOptions(false, umuOptions));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", "mnm",
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
+            ));
+    }
+
+    // defaults to client path if prefix is null
+
 
     private RunResult runClient(Path installPath, String token, boolean isWindows, RunnerOptions options) {
         Client client = new Client(SLUG, "v1.0.0", UPDATED, installPath);
@@ -254,4 +400,7 @@ class ClientRunnerTest {
 
     }
 
+    private static String clientRelativeWinePrefix(Path installPath) {
+        return installPath.toAbsolutePath().resolve("mnm_prefix").toString();
+    }
 }

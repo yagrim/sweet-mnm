@@ -10,9 +10,13 @@ public interface SettingsStore {
     String MANGOHUD_KEY = "linux.mangohud";
 
     String UMU_GAMEID = "linux.umu.gameid";
+    String DEFAULT_UMU_GAMEID = "mnm";
     String UMU_PROTONPATH = "linux.umu.protonpath";
-    String UMU_USE_GAME_AS_PREFIX = "linux.umu.use-game-as-prefix";
+    String DEFAULT_UMU_PROTONPATH = "GE-Proton";
+
+    String UMU_USE_CLIENT_AS_PREFIX = "linux.umu.use-client-as-prefix";
     String UMU_WINEPREFIX = "linux.umu.wineprefix";
+
 
     String get(String key);
 

@@ -2,15 +2,11 @@ package org.mnm.gui;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.nio.file.Path;
@@ -32,11 +28,6 @@ import org.mnm.tools.FileUtils;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
-import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
-import static org.mnm.config.SettingsStore.UMU_GAMEID;
-import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
-import static org.mnm.config.SettingsStore.UMU_USE_GAME_AS_PREFIX;
-import static org.mnm.config.SettingsStore.UMU_WINEPREFIX;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -48,12 +39,12 @@ class OptionsPanel extends JPanel
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
     private final JCheckBox debugOption = new JCheckBox("Enable debug");
-
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
-    private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
+
+    private final LinuxOptionsPanel linuxPanel;
 
     private final SettingsStore settingsStore;
     private final CredentialsHandler credentialsHandler;
@@ -83,13 +74,9 @@ class OptionsPanel extends JPanel
         inMemoryHashingOption.addActionListener(_ ->
             settingsStore.putBoolean(IN_MEMORY_HASHING_KEY, inMemoryHashingOption.isSelected()));
 
-        mangoHudOption.setActionCommand("mangohud");
-        mangoHudOption.addActionListener(_ ->
-            settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
-
         clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
-        final JPanel left = createColumn("General");
+        final JPanel left = new GeneralOptionsPanel();
         left.add(debugOption);
         left.add(Box.createVerticalStrut(SCALE));
         left.add(inMemoryHashingOption);
@@ -101,42 +88,13 @@ class OptionsPanel extends JPanel
         deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
         left.add(deleteCredentials);
 
-        final JPanel right = linuxOptions();
+        linuxPanel = new LinuxOptionsPanel(settingsStore);
 
         this.add(left);
-        this.add(right);
+        this.add(linuxPanel);
 
         // pot-init
         ClientEventHandler.getInstance().register(this);
-    }
-
-    private JPanel linuxOptions() {
-        final JPanel right = createColumn("Linux");
-
-        TextOption umuWinePrefix = new TextOption("UMU WinePrefix", settingsStore, UMU_WINEPREFIX);
-        JCheckBox useGameLocationForPrefix = new CheckboxOption("Use game location for WinePrefix", settingsStore, UMU_USE_GAME_AS_PREFIX, true);
-        useGameLocationForPrefix.addActionListener(_ -> refresh(umuWinePrefix, useGameLocationForPrefix));
-        refresh(umuWinePrefix, useGameLocationForPrefix);
-
-        addLinuxComponent(right, mangoHudOption);
-        addLinuxComponent(right, new TextOption("UMU GameId", settingsStore, UMU_GAMEID, "mnm"));
-        addLinuxComponent(right, new TextOption("UMU ProtonPath", settingsStore, UMU_PROTONPATH, "GE-Proton"));
-        addLinuxComponent(right, useGameLocationForPrefix);
-        addLinuxComponent(right, umuWinePrefix);
-
-        return right;
-    }
-
-    private static void refresh(TextOption umuWinePrefix, JCheckBox useGameLocationForPrefix) {
-        umuWinePrefix.setEnabled(!useGameLocationForPrefix.isSelected());
-    }
-
-    private void addLinuxComponent(JPanel panel, JComponent component) {
-        if (OS.isWindows()) {
-            component.setEnabled(false);
-        }
-        panel.add(component);
-        panel.add(Box.createVerticalStrut(SCALE));
     }
 
     private void loadSettings() {
@@ -146,7 +104,7 @@ class OptionsPanel extends JPanel
             GeneralOptions.setDebug(true);
         }
         inMemoryHashingOption.setSelected(settingsStore.getBoolean(IN_MEMORY_HASHING_KEY, true));
-        mangoHudOption.setSelected(settingsStore.getBoolean(MANGOHUD_KEY, false));
+
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
     }
 
@@ -208,7 +166,10 @@ class OptionsPanel extends JPanel
     }
 
     RunnerOptions getRunnerOptions() {
-        return new RunnerOptions(DEFAULT_SLUG, null, false, mangoHudOption.isSelected());
+        return new RunnerOptions(DEFAULT_SLUG, null, false,
+            new RunnerOptions.LinuxOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isUseClientAsPrefix(),
+                new RunnerOptions.UmuOptions(linuxPanel.getUmuGameId(), linuxPanel.getProtonPath(), linuxPanel.getWinePrefix()))
+        );
     }
 
     public static int showConfirmationWindow(Container parent, String title, String message) {
@@ -221,19 +182,6 @@ class OptionsPanel extends JPanel
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );
-    }
-
-    private static JPanel createColumn(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            title,
-            TitledBorder.LEFT,
-            TitledBorder.DEFAULT_POSITION
-        ), BorderFactory.createEmptyBorder(2, 2, 0, 0)));
-        return panel;
     }
 
 }

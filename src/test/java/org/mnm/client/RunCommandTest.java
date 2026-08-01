@@ -11,6 +11,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.client.LinuxOptionsTestFactory.linuxOptions;
 
 class RunCommandTest {
 
@@ -65,7 +66,7 @@ class RunCommandTest {
         command.run(Arguments.parse());
 
         assertThat(runnerInvoked).isTrue();
-        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, false));
+        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, linuxOptions(false)));
         assertThat(dbFile).exists();
     }
 
@@ -83,7 +84,7 @@ class RunCommandTest {
 
         command.run(Arguments.parse("--enable-mangohud"));
 
-        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, true));
+        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, linuxOptions(true)));
     }
 
 }

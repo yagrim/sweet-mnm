@@ -8,6 +8,8 @@ import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mnm.client.LinuxOptionsTestFactory.defaultLinuxOptions;
+import static org.mnm.client.LinuxOptionsTestFactory.linuxOptions;
 
 class RunnerOptionsTest {
 
@@ -21,7 +23,7 @@ class RunnerOptionsTest {
             RunnerOptions options = RunnerOptions.parse(arguments);
 
             assertThat(options)
-                .isEqualTo(new RunnerOptions(null, null, false, false));
+                .isEqualTo(new RunnerOptions(null, null, false, defaultLinuxOptions()));
         }
 
         @Test
@@ -35,7 +37,7 @@ class RunnerOptionsTest {
             RunnerOptions options = RunnerOptions.parse(arguments);
 
             assertThat(options)
-                .isEqualTo(new RunnerOptions("mnm", 42, true, true));
+                .isEqualTo(new RunnerOptions("mnm", 42, true, linuxOptions(true)));
         }
 
         @Test
@@ -47,4 +49,5 @@ class RunnerOptionsTest {
                 .hasMessage("Invalid token id: not-a-number");
         }
     }
+
 }

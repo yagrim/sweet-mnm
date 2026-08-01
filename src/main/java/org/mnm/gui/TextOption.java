@@ -62,6 +62,10 @@ class TextOption extends JPanel {
         textField.setEnabled(enabled);
     }
 
+    public String getText() {
+        return textField.getText();
+    }
+
     private class SaveListener implements DocumentListener {
 
         private final Timer saveTimer;
