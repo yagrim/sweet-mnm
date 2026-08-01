@@ -5,13 +5,19 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -80,10 +86,6 @@ class OptionsPanel extends JPanel
         mangoHudOption.setActionCommand("mangohud");
         mangoHudOption.addActionListener(_ ->
             settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
-        if (OS.isWindows()) {
-            mangoHudOption.setEnabled(false);
-            mangoHudOption.setText("Enable MangoHud (Linux only)");
-        }
 
         clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
@@ -100,7 +102,17 @@ class OptionsPanel extends JPanel
         left.add(deleteCredentials);
 
         final JPanel right = createColumn("Linux");
-        right.add(mangoHudOption);
+        addLinuxComponent(right, mangoHudOption);
+
+        JPanel option1 = createFieldRow("UMU gameid");
+        JPanel option2 = createFieldRow("UMU protonpath");
+        JPanel option3 = createFieldRow("UMU wineprefix");
+
+        right.add(option1);
+        right.add(Box.createVerticalStrut(SCALE));
+        right.add(option2);
+        right.add(Box.createVerticalStrut(SCALE));
+        right.add(option3);
 
         this.add(left);
         this.add(right);
@@ -109,17 +121,12 @@ class OptionsPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private static JPanel createColumn(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            title,
-            TitledBorder.LEFT,
-            TitledBorder.DEFAULT_POSITION
-        ), BorderFactory.createEmptyBorder(2, 2, 0, 0)));
-        return panel;
+    private void addLinuxComponent(JPanel panel, JComponent component) {
+        if (OS.isWindows()) {
+            component.setEnabled(false);
+        }
+        panel.add(component);
+        panel.add(Box.createVerticalStrut(SCALE));
     }
 
     private void loadSettings() {
@@ -204,5 +211,47 @@ class OptionsPanel extends JPanel
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );
+    }
+
+    private static JPanel createColumn(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            title,
+            TitledBorder.LEFT,
+            TitledBorder.DEFAULT_POSITION
+        ), BorderFactory.createEmptyBorder(2, 2, 0, 0)));
+        return panel;
+    }
+
+    private static JPanel createFieldRow(String label) {
+        JPanel row = new JPanel(new GridBagLayout()) {
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension d = getPreferredSize();
+                return new Dimension(Integer.MAX_VALUE, d.height);
+            }
+        };
+        // Commenting this centers the mangoHud option
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, 0, 5);
+
+        // Label
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        row.add(new JLabel(label), gbc);
+
+        // Text field
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        row.add(new JTextField(), gbc);
+
+        return row;
     }
 }
