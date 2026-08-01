@@ -90,13 +90,12 @@ class OptionsPanel extends JPanel
         this.add(Box.createVerticalStrut(SCALE));
         this.add(mangoHudOption);
         this.add(Box.createVerticalStrut(SCALE));
+        this.add(clearCache);
+        this.add(Box.createVerticalStrut(SCALE));
 
         deleteCredentials.setEnabled(false);
         deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
         this.add(deleteCredentials);
-        this.add(Box.createVerticalStrut(SCALE));
-
-        this.add(clearCache);
 
         ClientEventHandler.getInstance().register(this);
     }

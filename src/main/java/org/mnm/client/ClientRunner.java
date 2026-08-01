@@ -40,19 +40,19 @@ public class ClientRunner {
             Validators.checkVersion(token.token(), client);
         }
 
-        final Path workingDirectory = client.path();
+        final Path clientPath = client.path();
         final boolean isWindows = OS.isWindows();
 
         String[] command = buildCommand(client.slug(), token.token(), isWindows);
-        Map<String, String> environment = buildEnvironment(isWindows, workingDirectory, System.getenv(), options.enableMangoHud());
+        Map<String, String> environment = buildEnvironment(isWindows, clientPath, System.getenv(), options.enableMangoHud());
 
         logger.info("Running: {}", String.join(" ", redactToken(command)));
-        logger.info("Working directory: {}", workingDirectory);
+        logger.info("Working directory: {}", clientPath);
         if (!environment.isEmpty()) {
             logger.info("Environment variables: {}", environment);
         }
 
-        ProcessUtils.run(workingDirectory, command, environment);
+        ProcessUtils.run(clientPath, command, environment);
     }
 
     private static void tokenIsNotExpired(Token token) {
@@ -123,17 +123,17 @@ public class ClientRunner {
         return redacted;
     }
 
-    private static Map<String, String> buildEnvironment(boolean isWindows, Path workingDirectory, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
+    private static Map<String, String> buildEnvironment(boolean isWindows, Path clientPath, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
         return isWindows
             ? buildLinuxWindows(mangoHudEnabled)
-            : buildLinuxEnvironment(workingDirectory, currentEnvironment, mangoHudEnabled);
+            : buildLinuxEnvironment(clientPath, currentEnvironment, mangoHudEnabled);
     }
 
-    private static Map<String, String> buildLinuxEnvironment(Path workingDirectory, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
+    private static Map<String, String> buildLinuxEnvironment(Path clientPath, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
         Map<String, String> environment = new HashMap<>();
         environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", "mnm"));
         environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", "GE-Proton10-33"));
-        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", workingDirectory.toAbsolutePath().resolve("mnm_prefix").toString()));
+        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", clientPath.toAbsolutePath().resolve("mnm_prefix").toString()));
         if (mangoHudEnabled) {
             environment.put("MANGOHUD", "1");
         }
