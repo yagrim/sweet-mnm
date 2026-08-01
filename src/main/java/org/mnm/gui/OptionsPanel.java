@@ -9,15 +9,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -38,6 +33,10 @@ import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
+import static org.mnm.config.SettingsStore.UMU_GAMEID;
+import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
+import static org.mnm.config.SettingsStore.UMU_USE_GAME_AS_PREFIX;
+import static org.mnm.config.SettingsStore.UMU_WINEPREFIX;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
@@ -49,6 +48,7 @@ class OptionsPanel extends JPanel
     private static final Logger logger = LoggerFactory.getLogger(OptionsPanel.class);
 
     private final JCheckBox debugOption = new JCheckBox("Enable debug");
+
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
     private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
@@ -101,24 +101,34 @@ class OptionsPanel extends JPanel
         deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
         left.add(deleteCredentials);
 
-        final JPanel right = createColumn("Linux");
-        addLinuxComponent(right, mangoHudOption);
-
-        JPanel option1 = createFieldRow("UMU gameid");
-        JPanel option2 = createFieldRow("UMU protonpath");
-        JPanel option3 = createFieldRow("UMU wineprefix");
-
-        right.add(option1);
-        right.add(Box.createVerticalStrut(SCALE));
-        right.add(option2);
-        right.add(Box.createVerticalStrut(SCALE));
-        right.add(option3);
+        final JPanel right = linuxOptions();
 
         this.add(left);
         this.add(right);
 
         // pot-init
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private JPanel linuxOptions() {
+        final JPanel right = createColumn("Linux");
+
+        TextOption umuWinePrefix = new TextOption("UMU WinePrefix", settingsStore, UMU_WINEPREFIX);
+        JCheckBox useGameLocationForPrefix = new CheckboxOption("Use game location for WinePrefix", settingsStore, UMU_USE_GAME_AS_PREFIX, true);
+        useGameLocationForPrefix.addActionListener(_ -> refresh(umuWinePrefix, useGameLocationForPrefix));
+        refresh(umuWinePrefix, useGameLocationForPrefix);
+
+        addLinuxComponent(right, mangoHudOption);
+        addLinuxComponent(right, new TextOption("UMU GameId", settingsStore, UMU_GAMEID, "mnm"));
+        addLinuxComponent(right, new TextOption("UMU ProtonPath", settingsStore, UMU_PROTONPATH, "GE-Proton"));
+        addLinuxComponent(right, useGameLocationForPrefix);
+        addLinuxComponent(right, umuWinePrefix);
+
+        return right;
+    }
+
+    private static void refresh(TextOption umuWinePrefix, JCheckBox useGameLocationForPrefix) {
+        umuWinePrefix.setEnabled(!useGameLocationForPrefix.isSelected());
     }
 
     private void addLinuxComponent(JPanel panel, JComponent component) {
@@ -226,32 +236,4 @@ class OptionsPanel extends JPanel
         return panel;
     }
 
-    private static JPanel createFieldRow(String label) {
-        JPanel row = new JPanel(new GridBagLayout()) {
-            @Override
-            public Dimension getMaximumSize() {
-                Dimension d = getPreferredSize();
-                return new Dimension(Integer.MAX_VALUE, d.height);
-            }
-        };
-        // Commenting this centers the mangoHud option
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 0, 0, 5);
-
-        // Label
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        row.add(new JLabel(label), gbc);
-
-        // Text field
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        row.add(new JTextField(), gbc);
-
-        return row;
-    }
 }
