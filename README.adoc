@@ -47,7 +47,6 @@ image::docs/client-panel-login.png[]
 * Multiple clients management.
 * More Linux specific features:
 ** more MANGOHUD,
-** customize https://github.com/Open-Wine-Components/umu-launcher[UMU] configurations
 ** https://github.com/OneCrazyCoder/MMOGamepadOverlay[MMOGamepadOverlay] integration, etc.
 
 == Advanced features
