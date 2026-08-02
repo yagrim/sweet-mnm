@@ -53,8 +53,12 @@ class TextOption extends JPanel {
 
     @Override
     public Dimension getMaximumSize() {
-        Dimension d = getPreferredSize();
-        return new Dimension(Integer.MAX_VALUE, d.height);
+        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return textField.isEnabled();
     }
 
     @Override

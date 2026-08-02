@@ -14,10 +14,10 @@ class CheckboxOption extends JCheckBox {
         this.setSelected(settingsStore.getBoolean(settingKey, defaultValue));
     }
 
+    // UI workaround
     @Override
     public Dimension getMaximumSize() {
-        Dimension d = getPreferredSize();
-        return new Dimension(Integer.MAX_VALUE, d.height);
+        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     }
 
 }

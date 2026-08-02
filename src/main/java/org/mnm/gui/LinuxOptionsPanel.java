@@ -18,7 +18,7 @@ import static org.mnm.gui.ClientPanel.SCALE;
 
 public class LinuxOptionsPanel extends BaseOptionsPanel {
 
-    private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
+    private final JCheckBox mangoHudOption;
     private final JCheckBox useClientAsPrefix;
 
     private final TextOption umuGameId;
@@ -31,6 +31,7 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         super("Linux");
         this.settingsStore = settingsStore;
 
+        mangoHudOption = new JCheckBox("Enable MangoHud");
         mangoHudOption.setActionCommand("mangohud");
         mangoHudOption.addActionListener(_ ->
             this.settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
@@ -75,11 +76,11 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         return umuGameId.getText();
     }
 
-    public String getProtonPath() {
+    public String getUmuProtonPath() {
         return umuProtonPath.getText();
     }
 
-    public String getWinePrefix() {
+    public String getUmuWinePrefix() {
         return umuWinePrefix.getText();
     }
 }
