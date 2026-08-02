@@ -29,7 +29,7 @@ public class MainClazz {
             Arguments arguments = argumentsParser.apply(args);
 
             if (arguments.getBoolean("debug")) {
-                GeneralOptions.setDebug(true);
+                LoggerHandler.setDebug(true);
             }
 
             if (arguments.isHelp() && command.help() != null) {
@@ -38,7 +38,7 @@ public class MainClazz {
             }
             if (command.isAvailable()) {
                 if (!(command instanceof GuiCommand)) {
-                    GeneralOptions.setInfo(true);
+                    LoggerHandler.setInfo(true);
                 }
                 command.run(arguments);
             } else {

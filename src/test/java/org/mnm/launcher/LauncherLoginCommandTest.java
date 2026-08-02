@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
-import org.mnm.GeneralOptions;
+import org.mnm.LoggerHandler;
 import org.mnm.LauncherTestDatabase.TestDatabase;
 import org.mnm.LinuxOnlyCommand;
 import org.mnm.SystemOutCaptureExtension;
@@ -31,12 +31,12 @@ class LauncherLoginCommandTest extends LinuxOnlyCommand {
 
     @BeforeEach
     void beforeEach() {
-        GeneralOptions.setDebug(true);
+        LoggerHandler.setDebug(true);
     }
 
     @AfterEach
     void afterEach() {
-        GeneralOptions.setDebug(false);
+        LoggerHandler.setDebug(false);
     }
 
     @Test

@@ -19,7 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import org.mnm.ConfigTestDatabase;
-import org.mnm.GeneralOptions;
+import org.mnm.LoggerHandler;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.client.ClientInstaller.InstallationResult;
 import org.mnm.client.InstallerOptions.FileCheck;
@@ -189,7 +189,7 @@ class ClientInstallerTest {
     @ParameterizedTest
     @EnumSource(FileCheck.class)
     public void shouldInstallAndRepair(FileCheck fileCheck, SystemOutCaptureExtension out, WireMockRuntimeInfo wiremock, @TempDir Path tempDir) throws SQLException {
-        GeneralOptions.setInfo(true);
+        LoggerHandler.setInfo(true);
 
         shouldInstallClientFromScratch(fileCheck, tempDir, out, wiremock);
         shouldValidateClientAfterInstallation(fileCheck, tempDir, out, wiremock);
