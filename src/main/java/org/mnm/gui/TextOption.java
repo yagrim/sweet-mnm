@@ -79,6 +79,7 @@ class TextOption extends JPanel {
             saveTimer = new Timer(2000, _ -> {
                 settingsStore.put(settingKey, textField.getText());
             });
+            saveTimer.setRepeats(false);
         }
 
         @Override

@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -60,6 +61,38 @@ class TextOptionTest {
         assertThat(settings.get(SETTING_KEY)).isEqualTo("custom-id");
     }
 
+    // Asserts 'saveTimer.setRepeats(false)' to ensure that db is not accessed constantly every 2s
+    @Test
+    void shouldPersistAnEditOnlyOnceUntilTheTextChangesAgain() throws InterruptedException {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        AtomicInteger saveCount = new AtomicInteger();
+        SettingsStore countingSettingsStore = new SettingsStore() {
+            @Override
+            public String get(String key) {
+                return settings.get(key);
+            }
+
+            @Override
+            public void put(String key, String value) {
+                saveCount.incrementAndGet();
+                settings.put(key, value);
+            }
+
+            @Override
+            public void delete(String key) {
+                settings.delete(key);
+            }
+        };
+        TextOption option = new TextOption(GAME_ID, countingSettingsStore, SETTING_KEY);
+
+        textField(option).setText("custom-id");
+
+        waitForSaveCount(saveCount, 1);
+        Thread.sleep(2_500);
+
+        assertThat(saveCount).hasValue(1);
+    }
+
     @Test
     void shouldEnableAndDisableItsTextField() {
         SettingsStore settingsStore = new InMemorySettingsStore(Map.of());
@@ -81,6 +114,14 @@ class TextOptionTest {
         while (!expectedValue.equals(settings.get(SETTING_KEY)) && System.currentTimeMillis() < deadline) {
             Thread.sleep(150);
         }
+    }
+
+    private static void waitForSaveCount(AtomicInteger saveCount, int expectedCount) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 3_000L;
+        while (saveCount.get() < expectedCount && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        assertThat(saveCount).hasValue(expectedCount);
     }
 
 }
