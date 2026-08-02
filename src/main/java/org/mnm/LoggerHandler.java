@@ -5,7 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import org.slf4j.LoggerFactory;
 
-public class GeneralOptions {
+public class LoggerHandler {
 
     public static void setInfo(boolean value) {
         setLevel(value, Level.INFO);

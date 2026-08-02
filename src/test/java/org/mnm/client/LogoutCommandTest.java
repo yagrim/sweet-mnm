@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.ConfigTestDatabase;
-import org.mnm.GeneralOptions;
+import org.mnm.LoggerHandler;
 import org.mnm.SystemOutCaptureExtension;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -55,7 +55,7 @@ class LogoutCommandTest {
 
     @Test
     void shouldDeleteTokensForSlug(@TempDir Path tempDir, SystemOutCaptureExtension out) {
-        GeneralOptions.setInfo(true);
+        LoggerHandler.setInfo(true);
 
         final Path dbFile = tempDir.resolve("config.db");
         initTokens(dbFile);
