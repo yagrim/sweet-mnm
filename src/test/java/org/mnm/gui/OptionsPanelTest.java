@@ -28,9 +28,9 @@ class OptionsPanelTest {
 
         OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
-        assertThat(optionAt(panel, 0).isSelected()).isTrue();
-        assertThat(optionAt(panel, 1).isSelected()).isFalse();
-        assertThat(optionAt(panel, 2).isSelected()).isTrue();
+        assertThat(option(panel, "debugOption").isSelected()).isTrue();
+        assertThat(option(panel, "inMemoryHashingOption").isSelected()).isFalse();
+        assertThat(linuxOption(panel, "mangoHudOption").isSelected()).isTrue();
     }
 
     @Test
@@ -38,8 +38,8 @@ class OptionsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
-        optionAt(panel, 0).doClick();
-        optionAt(panel, 1).doClick();
+        option(panel, "debugOption").doClick();
+        option(panel, "inMemoryHashingOption").doClick();
 
         assertThat(settings.get(DEBUG_KEY)).isEqualTo("true");
         assertThat(settings.get(IN_MEMORY_HASHING_KEY)).isEqualTo("false");
@@ -51,12 +51,12 @@ class OptionsPanelTest {
         SettingsStore settings = new ConfigDbSettingsStore(() -> database);
         OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
-        optionAt(panel, 0).doClick();
-        optionAt(panel, 1).doClick();
+        option(panel, "debugOption").doClick();
+        option(panel, "inMemoryHashingOption").doClick();
 
         OptionsPanel restoredPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
-        assertThat(optionAt(restoredPanel, 0).isSelected()).isTrue();
-        assertThat(optionAt(restoredPanel, 1).isSelected()).isFalse();
+        assertThat(option(restoredPanel, "debugOption").isSelected()).isTrue();
+        assertThat(option(restoredPanel, "inMemoryHashingOption").isSelected()).isFalse();
     }
 
     @Test
@@ -65,13 +65,18 @@ class OptionsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         OptionsPanel panel = new OptionsPanel(settings, new CredentialsHandler(settings));
 
-        optionAt(panel, 2).doClick();
+        linuxOption(panel, "mangoHudOption").doClick();
 
         assertThat(settings.get(MANGOHUD_KEY)).isEqualTo("true");
     }
 
-    private static JCheckBox optionAt(OptionsPanel panel, int index) {
-        return (JCheckBox) panel.getComponent(index * 2);
+    private static JCheckBox option(OptionsPanel panel, String fieldName) {
+        return (JCheckBox) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    private static JCheckBox linuxOption(OptionsPanel panel, String fieldName) {
+        LinuxOptionsPanel linuxPanel = (LinuxOptionsPanel) ReflectionTestTools.get(panel, "linuxPanel");
+        return (JCheckBox) ReflectionTestTools.get(linuxPanel, fieldName);
     }
 
 }

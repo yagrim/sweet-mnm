@@ -3,6 +3,7 @@ package org.mnm.client;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,19 +41,19 @@ public class ClientRunner {
             Validators.checkVersion(token.token(), client);
         }
 
-        final Path workingDirectory = client.path();
+        final Path clientPath = client.path();
         final boolean isWindows = OS.isWindows();
 
         String[] command = buildCommand(client.slug(), token.token(), isWindows);
-        Map<String, String> environment = buildEnvironment(isWindows, workingDirectory, System.getenv(), options.enableMangoHud());
+        Map<String, String> environment = buildEnvironment(isWindows, clientPath, System.getenv(), options.linuxOptions());
 
         logger.info("Running: {}", String.join(" ", redactToken(command)));
-        logger.info("Working directory: {}", workingDirectory);
+        logger.info("Working directory: {}", clientPath);
         if (!environment.isEmpty()) {
             logger.info("Environment variables: {}", environment);
         }
 
-        ProcessUtils.run(workingDirectory, command, environment);
+        ProcessUtils.run(clientPath, command, environment);
     }
 
     private static void tokenIsNotExpired(Token token) {
@@ -123,24 +124,44 @@ public class ClientRunner {
         return redacted;
     }
 
-    private static Map<String, String> buildEnvironment(boolean isWindows, Path workingDirectory, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
+    private Map<String, String> buildEnvironment(boolean isWindows, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
         return isWindows
-            ? buildLinuxWindows(mangoHudEnabled)
-            : buildLinuxEnvironment(workingDirectory, currentEnvironment, mangoHudEnabled);
+            ? buildWine(linuxOptions.enableMangoHud())
+            : buildLinuxEnvironment(clientPath, currentEnvironment, linuxOptions);
     }
 
-    private static Map<String, String> buildLinuxEnvironment(Path workingDirectory, Map<String, String> currentEnvironment, boolean mangoHudEnabled) {
+    private Map<String, String> buildLinuxEnvironment(Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
         Map<String, String> environment = new HashMap<>();
-        environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", "mnm"));
-        environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", "GE-Proton10-33"));
-        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", workingDirectory.toAbsolutePath().resolve("mnm_prefix").toString()));
-        if (mangoHudEnabled) {
+
+        Objects.requireNonNull(linuxOptions, "linuxOptions cannot be null");
+        Objects.requireNonNull(linuxOptions.umuOptions(), "linuxOptions.umuOptions cannot be null");
+
+        environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", linuxOptions.umuOptions().gameId()));
+        environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", linuxOptions.umuOptions().protonPath()));
+
+        String candidateWinePrefixPath;
+        if (linuxOptions.useClientAsPrefix() || isEmpty(linuxOptions.umuOptions().winePrefix())) {
+            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve("mnm_prefix").toString();
+        } else {
+            String prefix = linuxOptions.umuOptions().winePrefix();
+            Path prefixPath = Path.of(prefix);
+            if (prefixPath.isAbsolute()) {
+                candidateWinePrefixPath = prefix;
+            } else {
+                candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(prefixPath).toString();
+            }
+        }
+
+        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", candidateWinePrefixPath));
+
+        if (linuxOptions.enableMangoHud()) {
             environment.put("MANGOHUD", "1");
         }
+
         return Map.copyOf(environment);
     }
 
-    private static Map<String, String> buildLinuxWindows(boolean mangoHudEnabled) {
+    private static Map<String, String> buildWine(boolean mangoHudEnabled) {
         Map<String, String> environment = new HashMap<>();
         if (mangoHudEnabled) {
             environment.put("MANGOHUD", "1");

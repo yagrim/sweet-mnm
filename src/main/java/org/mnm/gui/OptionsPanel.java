@@ -2,7 +2,6 @@ package org.mnm.gui;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -29,12 +28,10 @@ import org.mnm.tools.FileUtils;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
-import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
-// NOTE: so far options can be grouped as repair or run.
 class OptionsPanel extends JPanel
     implements RepairListener, Refreshable {
 
@@ -42,10 +39,11 @@ class OptionsPanel extends JPanel
 
     private final JCheckBox debugOption = new JCheckBox("Enable debug");
     private final JCheckBox inMemoryHashingOption = new JCheckBox("In-memory hashing");
-    private final JCheckBox mangoHudOption = new JCheckBox("Enable MangoHud");
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
+
+    private final LinuxOptionsPanel linuxPanel;
 
     private final SettingsStore settingsStore;
     private final CredentialsHandler credentialsHandler;
@@ -57,8 +55,8 @@ class OptionsPanel extends JPanel
         this.settingsStore = settingsStore;
         this.credentialsHandler = credentialsHandler;
         loadSettings();
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        this.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 0));
+        this.setLayout(new GridLayout(1, 2, 10, 0));
+        this.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
 
         debugOption.setActionCommand("debug");
         debugOption.addActionListener(_ -> {
@@ -74,30 +72,26 @@ class OptionsPanel extends JPanel
         inMemoryHashingOption.addActionListener(_ ->
             settingsStore.putBoolean(IN_MEMORY_HASHING_KEY, inMemoryHashingOption.isSelected()));
 
-        mangoHudOption.setActionCommand("mangohud");
-        mangoHudOption.addActionListener(_ ->
-            settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
-        if (OS.isWindows()) {
-            mangoHudOption.setEnabled(false);
-            mangoHudOption.setText("Enable MangoHud (Linux only)");
-        }
-
         clearCache.addActionListener(_ -> handleClearCache(this, clearCache));
 
-        this.add(debugOption);
-        this.add(Box.createVerticalStrut(SCALE));
-        this.add(inMemoryHashingOption);
-        this.add(Box.createVerticalStrut(SCALE));
-        this.add(mangoHudOption);
-        this.add(Box.createVerticalStrut(SCALE));
+        final JPanel left = new GeneralOptionsPanel();
+        left.add(debugOption);
+        left.add(Box.createVerticalStrut(SCALE));
+        left.add(inMemoryHashingOption);
+        left.add(Box.createVerticalStrut(SCALE));
+        left.add(clearCache);
+        left.add(Box.createVerticalStrut(SCALE));
 
         deleteCredentials.setEnabled(false);
         deleteCredentials.addActionListener(_ -> handleClearCredentials(this));
-        this.add(deleteCredentials);
-        this.add(Box.createVerticalStrut(SCALE));
+        left.add(deleteCredentials);
 
-        this.add(clearCache);
+        linuxPanel = new LinuxOptionsPanel(settingsStore);
 
+        this.add(left);
+        this.add(linuxPanel);
+
+        // post-init
         ClientEventHandler.getInstance().register(this);
     }
 
@@ -108,7 +102,7 @@ class OptionsPanel extends JPanel
             GeneralOptions.setDebug(true);
         }
         inMemoryHashingOption.setSelected(settingsStore.getBoolean(IN_MEMORY_HASHING_KEY, true));
-        mangoHudOption.setSelected(settingsStore.getBoolean(MANGOHUD_KEY, false));
+
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
     }
 
@@ -170,7 +164,10 @@ class OptionsPanel extends JPanel
     }
 
     RunnerOptions getRunnerOptions() {
-        return new RunnerOptions(DEFAULT_SLUG, null, false, mangoHudOption.isSelected());
+        return new RunnerOptions(DEFAULT_SLUG, null, false,
+            new RunnerOptions.LinuxOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isUseClientAsPrefix(),
+                new RunnerOptions.UmuOptions(linuxPanel.getUmuGameId(), linuxPanel.getUmuProtonPath(), linuxPanel.getUmuWinePrefix()))
+        );
     }
 
     public static int showConfirmationWindow(Container parent, String title, String message) {
@@ -184,4 +181,5 @@ class OptionsPanel extends JPanel
             JOptionPane.PLAIN_MESSAGE
         );
     }
+
 }
