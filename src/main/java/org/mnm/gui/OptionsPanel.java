@@ -32,7 +32,6 @@ import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
-// NOTE: so far options can be grouped as repair or run.
 class OptionsPanel extends JPanel
     implements RepairListener, Refreshable {
 
@@ -56,7 +55,6 @@ class OptionsPanel extends JPanel
         this.settingsStore = settingsStore;
         this.credentialsHandler = credentialsHandler;
         loadSettings();
-//        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setLayout(new GridLayout(1, 2, 10, 0));
         this.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
 
@@ -93,7 +91,7 @@ class OptionsPanel extends JPanel
         this.add(left);
         this.add(linuxPanel);
 
-        // pot-init
+        // post-init
         ClientEventHandler.getInstance().register(this);
     }
 

@@ -4,6 +4,7 @@ import javax.swing.JCheckBox;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -11,6 +12,7 @@ import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.condition.OS.LINUX;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
@@ -37,7 +39,7 @@ class LinuxOptionsPanelTest {
         assertThat(panel.isUseClientAsPrefix()).isFalse();
         assertThat(panel.getUmuWinePrefix()).isEqualTo("/home/user/prefix");
 
-        assertThat(textOption(panel, "umuWinePrefix").isEnabled()).isTrue();
+        assertThat(textOption(panel, "umuWinePrefix").isEnabled()).isEqualTo(!OS.isWindows());
     }
 
     @Test
@@ -55,6 +57,7 @@ class LinuxOptionsPanelTest {
     }
 
     @Test
+    @EnabledOnOs(LINUX)
     void shouldPersistMangoHudCheckboxOptions() {
         SettingsStore settings = new InMemorySettingsStore(Map.of());
         LinuxOptionsPanel panel = new LinuxOptionsPanel(settings);
@@ -65,6 +68,7 @@ class LinuxOptionsPanelTest {
     }
 
     @Test
+    @EnabledOnOs(LINUX)
     void shouldPersistUseClientAsPrefixCheckboxOption() {
         SettingsStore settings = new InMemorySettingsStore(Map.of());
         LinuxOptionsPanel panel = new LinuxOptionsPanel(settings);

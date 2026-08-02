@@ -302,7 +302,7 @@ class ClientRunnerTest {
             .containsExactlyInAnyOrderEntriesOf(Map.of(
                 "GAMEID", "mnm",
                 "PROTONPATH", "GE-Proton",
-                "WINEPREFIX", winePrefix
+                "WINEPREFIX", OS.isWindows() ? "C:\\home\\me\\some\\prefix" : winePrefix
             ));
     }
 
