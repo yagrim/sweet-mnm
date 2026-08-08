@@ -25,6 +25,7 @@ import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.Style.ACTION_BUTTON_FONT_SIZE;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientButtonsPanel extends JPanel
@@ -73,7 +74,7 @@ class ClientButtonsPanel extends JPanel
 
     private static JButton createButton(String text) {
         JButton button = new JButton(text);
-        setFontSize(button, 20f);
+        setFontSize(button, ACTION_BUTTON_FONT_SIZE);
         button.setEnabled(false);
         return button;
     }
