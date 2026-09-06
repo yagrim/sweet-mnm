@@ -18,7 +18,7 @@ Even though it's a native Linux app, there are several issues that require tinke
 That's why we created an alternative launcher that should provide an easy end-to-end experience:
 
 * Single self-contained package with all required files: `Download > Extract > Run`.
-* Windows build compatible with Proton (e.g Steam, UMU, PROTON-GE + Lutris).
+* Windows build compatible with Proton 10+ (e.g Steam, UMU, PROTON-GE + Lutris).
 Setup and run the client directly from Sweet Launcher, no need for tinkering.
 * Linux build with dedicated Linux features.
 Not recommended for Steam users since it has the same limitations of the Official Launcher.
