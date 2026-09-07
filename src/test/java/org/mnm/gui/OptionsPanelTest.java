@@ -2,6 +2,8 @@ package org.mnm.gui;
 
 import javax.swing.JCheckBox;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import org.mnm.config.SettingsStore;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
+import static org.mnm.config.SettingsStore.OPTIONS_FONT_SIZE_KEY;
 
 class GeneralOptionsPanelTest {
 
@@ -88,6 +91,36 @@ class GeneralOptionsPanelTest {
         assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
     }
 
+    @Test
+    void shouldOfferAndPersistFontSizes() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        GeneralOptionsPanel panel = panel(settings);
+
+        JComboBox<Integer> selector = fontSizeSelector(panel);
+        assertThat(label(panel, "fontSizeLabel").getText()).isEqualTo("Options Font Size");
+        assertThat(selector.getItemCount()).isEqualTo(29);
+        assertThat(selector.getItemAt(0)).isEqualTo(12);
+        assertThat(selector.getItemAt(selector.getItemCount() - 1)).isEqualTo(40);
+
+        selector.setSelectedItem(20);
+
+        assertThat(settings.get(OPTIONS_FONT_SIZE_KEY)).isEqualTo("20");
+    }
+
+    @Test
+    void shouldApplySavedFontSizeOnlyWhenOptionsPanelIsCreated() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SIZE_KEY, "16"));
+        OptionsPanel optionsPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
+        GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
+
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(16f);
+
+        fontSizeSelector(generalPanel).setSelectedItem(20);
+
+        assertThat(settings.get(OPTIONS_FONT_SIZE_KEY)).isEqualTo("20");
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(16f);
+    }
+
     private static GeneralOptionsPanel panel(SettingsStore settings) {
         return new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new JPanel());
     }
@@ -98,6 +131,15 @@ class GeneralOptionsPanelTest {
 
     private static JButton button(GeneralOptionsPanel panel, String fieldName) {
         return (JButton) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    private static JLabel label(GeneralOptionsPanel panel, String fieldName) {
+        return (JLabel) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JComboBox<Integer> fontSizeSelector(GeneralOptionsPanel panel) {
+        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "fontSizeSelector");
     }
 
 }

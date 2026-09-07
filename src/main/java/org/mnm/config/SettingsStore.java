@@ -6,6 +6,7 @@ public interface SettingsStore {
 
     String DEBUG_KEY = "debug";
     String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
+    String OPTIONS_FONT_SIZE_KEY = "options.font-size";
 
     String MANGOHUD_KEY = "linux.mangohud";
 

@@ -3,10 +3,12 @@ package org.mnm.gui;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.Container;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.nio.file.Path;
 
@@ -26,6 +28,7 @@ import org.mnm.tools.FileUtils;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
+import static org.mnm.config.SettingsStore.OPTIONS_FONT_SIZE_KEY;
 import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
 
@@ -33,12 +36,18 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     implements RepairListener, Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(GeneralOptionsPanel.class);
+    private static final int MIN_FONT_SIZE = 12;
+    private static final int MAX_FONT_SIZE = 40;
+    private static final int DEFAULT_FONT_SIZE = 15;
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
+    private final JLabel fontSizeLabel = new JLabel("Options Font Size");
+    private final JComboBox<Integer> fontSizeSelector = new JComboBox<>();
+    private final JPanel fontSizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
     private final CredentialsHandler credentialsHandler;
 
@@ -71,6 +80,18 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
+        for (int size = MIN_FONT_SIZE; size <= MAX_FONT_SIZE; size++) {
+            fontSizeSelector.addItem(size);
+        }
+        fontSizeSelector.setToolTipText("Font size");
+        fontSizeSelector.setSelectedItem(readFontSize(settingsStore));
+        fontSizeSelector.addActionListener(_ -> {
+            int size = (Integer) fontSizeSelector.getSelectedItem();
+            settingsStore.put(OPTIONS_FONT_SIZE_KEY, Integer.toString(size));
+        });
+        fontSizePanel.add(fontSizeLabel);
+        fontSizePanel.add(fontSizeSelector);
+
         this.add(debugOption);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(inMemoryHashingOption);
@@ -78,6 +99,8 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         this.add(clearCache);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(deleteCredentials);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(fontSizePanel);
 
         // post-init
         ClientEventHandler.getInstance().register(this);
@@ -110,6 +133,19 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     boolean isInMemoryHashing() {
         return inMemoryHashingOption.isSelected();
+    }
+
+    int getFontSize() {
+        return (Integer) fontSizeSelector.getSelectedItem();
+    }
+
+    private static int readFontSize(SettingsStore settingsStore) {
+        try {
+            int size = Integer.parseInt(settingsStore.get(OPTIONS_FONT_SIZE_KEY, Integer.toString(DEFAULT_FONT_SIZE)));
+            return size >= MIN_FONT_SIZE && size <= MAX_FONT_SIZE ? size : DEFAULT_FONT_SIZE;
+        } catch (NumberFormatException e) {
+            return DEFAULT_FONT_SIZE;
+        }
     }
 
     private static Path getDownloadsPath(Client client) {
