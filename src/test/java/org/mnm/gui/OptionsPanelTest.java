@@ -20,7 +20,7 @@ import org.mnm.config.SettingsStore;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
-import static org.mnm.config.SettingsStore.OPTIONS_FONT_SIZE_KEY;
+import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 
 class GeneralOptionsPanelTest {
 
@@ -104,12 +104,12 @@ class GeneralOptionsPanelTest {
 
         selector.setSelectedItem(20);
 
-        assertThat(settings.get(OPTIONS_FONT_SIZE_KEY)).isEqualTo("20");
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("20");
     }
 
     @Test
     void shouldApplySavedFontSizeOnlyWhenOptionsPanelIsCreated() {
-        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SIZE_KEY, "16"));
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SCALING_KEY, "16"));
         OptionsPanel optionsPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
         GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
 
@@ -117,7 +117,7 @@ class GeneralOptionsPanelTest {
 
         fontSizeSelector(generalPanel).setSelectedItem(20);
 
-        assertThat(settings.get(OPTIONS_FONT_SIZE_KEY)).isEqualTo("20");
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("20");
         assertThat(generalPanel.getFont().getSize2D()).isEqualTo(16f);
     }
 

@@ -11,8 +11,6 @@ import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 
 class OptionsPanel extends JPanel {
 
-    private static final int DEFAULT_OPTIONS_FONT_SIZE = 15;
-
     private final GeneralOptionsPanel generalPanel;
     private final LinuxOptionsPanel linuxPanel;
 
@@ -30,8 +28,9 @@ class OptionsPanel extends JPanel {
         setFontSize(generalPanel.getFontSize());
     }
 
-    private void setFontSize(int size) {
-        GuiComponents.setFontSizeRecursively(this, size);
+    private void setFontSize(float size) {
+        int finalSize = Math.round(12 * size);
+        GuiComponents.setFontSizeRecursively(this, finalSize);
     }
 
     boolean useInMemoryHashing() {
