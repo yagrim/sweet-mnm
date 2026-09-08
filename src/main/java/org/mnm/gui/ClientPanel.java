@@ -12,6 +12,8 @@ import java.util.function.Supplier;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
+import static org.mnm.gui.GeneralOptionsPanel.readFontScaling;
+
 class ClientPanel extends JPanel {
 
     static final int SCALE = 8;
@@ -25,7 +27,8 @@ class ClientPanel extends JPanel {
                 GuiCommand.LogoutAction logoutAction,
                 GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
                 GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler,
-                CredentialsHandler credentialsHandler) {
+                CredentialsHandler credentialsHandler,
+                SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
         this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
@@ -38,6 +41,8 @@ class ClientPanel extends JPanel {
         this.add(infoPanel, BorderLayout.CENTER);
         this.add(Box.createVerticalStrut(SCALE * 3));
         this.add(playPanel);
+
+        GuiComponents.scaleFontSizeRecursively(this, readFontScaling(settingsStore));
     }
 
 }

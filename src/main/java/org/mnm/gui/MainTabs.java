@@ -33,7 +33,8 @@ class MainTabs extends JTabbedPane {
             logoutAction,
             repairAction, () -> optionsPanel.useInMemoryHashing(),
             playAction, () -> optionsPanel.getRunnerOptions(),
-            credentialsHandler
+            credentialsHandler,
+            settingsStore
         );
 
         this.addTab("Client", clientPanel);

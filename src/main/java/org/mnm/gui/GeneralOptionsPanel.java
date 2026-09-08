@@ -145,7 +145,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         return (float) fontScalingSelector.getSelectedItem();
     }
 
-    private static float readFontScaling(SettingsStore settingsStore) {
+    static float readFontScaling(SettingsStore settingsStore) {
         Float candidate = null;
         try {
             candidate = settingsStore.getFloat(OPTIONS_FONT_SCALING_KEY, DEFAULT_FONT_SCALING);
