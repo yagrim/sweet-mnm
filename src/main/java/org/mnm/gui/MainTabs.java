@@ -10,6 +10,7 @@ import org.mnm.gui.GuiCommand.PlayAction;
 import org.mnm.gui.GuiCommand.RepairAction;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
+import static org.mnm.gui.GeneralOptionsPanel.readFontScaling;
 
 class MainTabs extends JTabbedPane {
 
@@ -25,7 +26,7 @@ class MainTabs extends JTabbedPane {
              SettingsStore settingsStore,
              CredentialsHandler credentialsHandler) {
 
-        setFontSize(this, 15f);
+        setFontSize(this, 15f * readFontScaling(settingsStore));
 
         this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
         this.clientPanel = new ClientPanel(frame,
