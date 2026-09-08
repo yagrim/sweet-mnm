@@ -7,6 +7,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -36,18 +37,19 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     implements RepairListener, Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(GeneralOptionsPanel.class);
+
     private static final float DEFAULT_FONT_SCALING = 1f;
     private static final float MAX_FONT_SCALING = 4f;
-    private static final float[] SCALING_OPTIONS = new float[]{1f, 1.5f, 2f, 2.5f, 3f, 3.5f, 4f};
+    private static final float[] SCALING_OPTIONS = new float[]{1f, 1.5f, 2f, 2.5f, 3f, 3.5f, 4f, 4.5f, 5f};
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
-    private final JLabel fontSizeLabel = new JLabel("Font Scaling");
-    private final JComboBox<Float> fontSizeSelector = new JComboBox<>();
-    private final JPanel fontSizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    private final JLabel fontScalingLabel = new JLabel("Font Scaling");
+    private final JComboBox<Float> fontScalingSelector = new JComboBox<>();
+    private final JPanel fontScalingPanel = new JPanel();
 
     private final CredentialsHandler credentialsHandler;
 
@@ -81,16 +83,20 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
         for (float scalingOption : SCALING_OPTIONS) {
-            fontSizeSelector.addItem(scalingOption);
+            fontScalingSelector.addItem(scalingOption);
         }
-        fontSizeSelector.setToolTipText("Font scaling");
-        fontSizeSelector.setSelectedItem(readFontSize(settingsStore));
-        fontSizeSelector.addActionListener(_ -> {
-            String scale = fontSizeSelector.getSelectedItem().toString();
-            settingsStore.put(OPTIONS_FONT_SCALING_KEY, scale);
+        fontScalingSelector.setToolTipText("Font scaling");
+        fontScalingSelector.setSelectedItem(readFontScaling(settingsStore));
+        fontScalingSelector.addActionListener(_ -> {
+            Float scale = (Float) fontScalingSelector.getSelectedItem();
+            settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
         });
-        fontSizePanel.add(fontSizeLabel);
-        fontSizePanel.add(fontSizeSelector);
+
+        fontScalingPanel.add(fontScalingLabel);
+        fontScalingPanel.add(fontScalingSelector);
+        // must go after adding the label and selector:
+        fontScalingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        fontScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         this.add(debugOption);
         this.add(Box.createVerticalStrut(SCALE));
@@ -100,7 +106,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         this.add(Box.createVerticalStrut(SCALE));
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
-        this.add(fontSizePanel);
+        this.add(fontScalingPanel);
 
         // post-init
         ClientEventHandler.getInstance().register(this);
@@ -136,14 +142,18 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     float getFontSize() {
-        return (float) fontSizeSelector.getSelectedItem();
+        return (float) fontScalingSelector.getSelectedItem();
     }
 
-    private static float readFontSize(SettingsStore settingsStore) {
+    private static float readFontScaling(SettingsStore settingsStore) {
+        Float candidate = null;
         try {
-            float scale = settingsStore.getFloat(OPTIONS_FONT_SCALING_KEY, DEFAULT_FONT_SCALING);
-            return scale >= DEFAULT_FONT_SCALING && scale <= MAX_FONT_SCALING ? scale : DEFAULT_FONT_SCALING;
+            candidate = settingsStore.getFloat(OPTIONS_FONT_SCALING_KEY, DEFAULT_FONT_SCALING);
+            return candidate >= DEFAULT_FONT_SCALING && candidate <= MAX_FONT_SCALING ? candidate : DEFAULT_FONT_SCALING;
         } catch (NumberFormatException e) {
+            if (candidate != null) {
+                logger.debug("Invalid font-scaling found in db {}", candidate);
+            }
             return DEFAULT_FONT_SCALING;
         }
     }

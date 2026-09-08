@@ -2,6 +2,7 @@ package org.mnm.gui;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import java.awt.Container;
 import java.awt.GridLayout;
 
 import org.mnm.client.RunnerOptions;
@@ -28,9 +29,9 @@ class OptionsPanel extends JPanel {
         setFontSize(generalPanel.getFontSize());
     }
 
-    private void setFontSize(float size) {
-        int finalSize = Math.round(12 * size);
-        GuiComponents.setFontSizeRecursively(this, finalSize);
+    private void setFontSize(float scale) {
+//        Container parent = this.getParent();
+        GuiComponents.scaleFontSizeRecursively(this, scale);
     }
 
     boolean useInMemoryHashing() {
