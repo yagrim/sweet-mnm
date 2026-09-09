@@ -30,8 +30,8 @@ import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
-import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel
     implements RepairListener, Refreshable {

@@ -14,7 +14,8 @@ import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
 import static org.mnm.config.SettingsStore.UMU_WINEPREFIX;
-import static org.mnm.gui.ClientPanel.SCALE;
+import static org.mnm.gui.Style.SCALE;
+
 
 public class LinuxOptionsPanel extends BaseOptionsPanel {
 

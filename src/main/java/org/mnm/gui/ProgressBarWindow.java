@@ -39,10 +39,10 @@ public class ProgressBarWindow extends JDialog
         footer.add(closeBtn);
 
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-//        setResizable(false);
         add(panel, BorderLayout.CENTER);
         add(footer, BorderLayout.SOUTH);
-//        pack();
+        // TODO do we need pack?
+        pack();
         setSize((int) (owner.getWidth() * 0.9), getHeight());
         setLocationRelativeTo(owner);
 

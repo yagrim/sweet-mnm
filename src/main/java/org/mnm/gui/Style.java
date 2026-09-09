@@ -2,6 +2,9 @@ package org.mnm.gui;
 
 class Style {
 
+    // Base ratio for spacing
+    static final int SCALE = 8;
+
     // For main action buttons like Play, Login, ...
     // UI scales correctly with it
     static final float ACTION_BUTTON_FONT_SIZE = 20f;

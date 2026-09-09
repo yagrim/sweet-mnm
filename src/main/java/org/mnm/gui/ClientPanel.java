@@ -13,10 +13,9 @@ import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
 import static org.mnm.gui.GeneralOptionsPanel.readFontScaling;
+import static org.mnm.gui.Style.SCALE;
 
 class ClientPanel extends JPanel {
-
-    static final int SCALE = 8;
 
     private final ClientButtonsPanel clientButtons;
     private final InfoPanel infoPanel;
