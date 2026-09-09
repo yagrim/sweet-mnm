@@ -6,7 +6,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -16,6 +18,7 @@ import static org.mnm.tools.StringUtils.isEmpty;
 class CredentialsPanel {
 
     private final CredentialsHandler credentialsHandler;
+    private final float fontScaling;
 
     private final JPanel panel;
     private final JTextField username;
@@ -25,6 +28,7 @@ class CredentialsPanel {
     // TODO Simplify this Grid
     CredentialsPanel(CredentialsHandler credentialsHandler, float fontScaling) {
         this.credentialsHandler = credentialsHandler;
+        this.fontScaling = fontScaling;
 
         final JTextField emailField = new JTextField(20);
         final JPasswordField passwordField = new JPasswordField(20);
@@ -117,13 +121,22 @@ class CredentialsPanel {
     }
 
     public int show(Container parent) {
-        return JOptionPane.showConfirmDialog(
-            parent,
-            panel,
-            "Account credentials",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.PLAIN_MESSAGE
-        );
+        Font originalButtonFont = UIManager.getFont("OptionPane.buttonFont");
+        try {
+            UIManager.put(
+                "OptionPane.buttonFont",
+                originalButtonFont.deriveFont(originalButtonFont.getSize2D() * fontScaling)
+            );
+            return JOptionPane.showConfirmDialog(
+                parent,
+                panel,
+                "Account credentials",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+            );
+        } finally {
+            UIManager.put("OptionPane.buttonFont", originalButtonFont);
+        }
     }
 
 }
