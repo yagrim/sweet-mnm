@@ -148,7 +148,7 @@ class ClientButtonsPanel extends JPanel
                 final ClientStatus client = loginAction.login(credentialsHandler.getEmail(), credentialsHandler.getPassword());
                 eventHandler.loginDone(client);
             } else {
-                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
+                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler, fontScaling);
                 final int result = credentialsPanel.show(parent);
                 if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
                     final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());

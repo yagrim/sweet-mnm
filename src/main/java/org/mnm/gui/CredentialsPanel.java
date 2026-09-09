@@ -23,7 +23,7 @@ class CredentialsPanel {
     private final JCheckBox storeCredentials;
 
     // TODO Simplify this Grid
-    CredentialsPanel(CredentialsHandler credentialsHandler) {
+    CredentialsPanel(CredentialsHandler credentialsHandler, float fontScaling) {
         this.credentialsHandler = credentialsHandler;
 
         final JTextField emailField = new JTextField(20);
@@ -64,6 +64,11 @@ class CredentialsPanel {
         constraints.anchor = GridBagConstraints.CENTER;
         constraints.fill = GridBagConstraints.NONE;
         panel.add(storeCredentialsOption, constraints);
+
+        GuiComponents.scaleFontSize(panel, fontScaling);
+        GuiComponents.scaleFontSize(emailField, fontScaling);
+        GuiComponents.scaleFontSize(passwordField, fontScaling);
+        GuiComponents.scaleFontSize(storeCredentialsOption, fontScaling);
 
         this.panel = panel;
         this.username = emailField;

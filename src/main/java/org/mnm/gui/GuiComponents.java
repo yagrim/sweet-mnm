@@ -14,6 +14,12 @@ public class GuiComponents {
         component.setFont(component.getFont().deriveFont(size));
     }
 
+    static void scaleFontSize(JComponent component, float scale) {
+        Font font = component.getFont();
+        int size = font.getSize();
+        component.setFont(font.deriveFont(size * scale));
+    }
+
     static void scaleFontSizeRecursively(Component component, float scale) {
         if (component instanceof JComponent swingComponent) {
             Font font1 = swingComponent.getFont();
