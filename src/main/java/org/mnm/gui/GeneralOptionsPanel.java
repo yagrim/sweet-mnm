@@ -27,6 +27,9 @@ import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
+import static org.mnm.config.Settings.MAX_FONT_SCALING;
+import static org.mnm.config.Settings.readFontScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -37,10 +40,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     implements RepairListener, Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(GeneralOptionsPanel.class);
-
-    private static final float DEFAULT_FONT_SCALING = 1f;
-    private static final float MAX_FONT_SCALING = 4f;
-    private static final float[] SCALING_OPTIONS = new float[]{1f, 1.5f, 2f, 2.5f, 3f, 3.5f, 4f, 4.5f, 5f};
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
@@ -82,8 +81,8 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
-        for (float scalingOption : SCALING_OPTIONS) {
-            fontScalingSelector.addItem(scalingOption);
+        for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
+            fontScalingSelector.addItem(i);
         }
         fontScalingSelector.setToolTipText("Font scaling");
         fontScalingSelector.setSelectedItem(readFontScaling(settingsStore));
@@ -143,19 +142,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     float getFontSize() {
         return (float) fontScalingSelector.getSelectedItem();
-    }
-
-    static float readFontScaling(SettingsStore settingsStore) {
-        Float candidate = null;
-        try {
-            candidate = settingsStore.getFloat(OPTIONS_FONT_SCALING_KEY, DEFAULT_FONT_SCALING);
-            return candidate >= DEFAULT_FONT_SCALING && candidate <= MAX_FONT_SCALING ? candidate : DEFAULT_FONT_SCALING;
-        } catch (NumberFormatException e) {
-            if (candidate != null) {
-                logger.debug("Invalid font-scaling found in db {}", candidate);
-            }
-            return DEFAULT_FONT_SCALING;
-        }
     }
 
     private static Path getDownloadsPath(Client client) {

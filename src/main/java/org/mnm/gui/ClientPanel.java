@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
-import static org.mnm.gui.GeneralOptionsPanel.readFontScaling;
+import static org.mnm.config.Settings.readFontScaling;
 import static org.mnm.gui.Style.SCALE;
 
 class ClientPanel extends JPanel {
@@ -29,6 +29,8 @@ class ClientPanel extends JPanel {
                 CredentialsHandler credentialsHandler,
                 SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
+
+        readFontScaling(settingsStore);
 
         this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());

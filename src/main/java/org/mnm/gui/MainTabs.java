@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.mnm.config.Settings;
 import org.mnm.config.SettingsStore;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
@@ -10,7 +11,6 @@ import org.mnm.gui.GuiCommand.PlayAction;
 import org.mnm.gui.GuiCommand.RepairAction;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
-import static org.mnm.gui.GeneralOptionsPanel.readFontScaling;
 
 class MainTabs extends JTabbedPane {
 
@@ -26,7 +26,7 @@ class MainTabs extends JTabbedPane {
              SettingsStore settingsStore,
              CredentialsHandler credentialsHandler) {
 
-        setFontSize(this, 15f * readFontScaling(settingsStore));
+        setFontSize(this, 15f * Settings.readFontScaling(settingsStore));
 
         this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
         this.clientPanel = new ClientPanel(frame,
