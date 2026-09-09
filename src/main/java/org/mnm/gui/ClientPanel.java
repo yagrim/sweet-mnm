@@ -33,8 +33,8 @@ class ClientPanel extends JPanel {
         float fontScaling = readFontScaling(settingsStore);
 
         this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, fontScaling);
-        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * fontScaling), this.getBackground());
-        this.playPanel = new PlayPanel(playAction, optionsSuppler);
+        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * fontScaling), this.getBackground(), fontScaling);
+        this.playPanel = new PlayPanel(playAction, optionsSuppler, fontScaling);
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(clientButtons);
@@ -42,8 +42,6 @@ class ClientPanel extends JPanel {
         this.add(infoPanel, BorderLayout.CENTER);
         this.add(Box.createVerticalStrut(SCALE * 3));
         this.add(playPanel);
-
-        GuiComponents.scaleFontSizeRecursively(this, fontScaling);
     }
 
 }

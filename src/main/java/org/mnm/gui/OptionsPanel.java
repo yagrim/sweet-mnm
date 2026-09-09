@@ -25,11 +25,6 @@ class OptionsPanel extends JPanel {
         this.add(generalPanel);
         this.add(linuxPanel);
 
-        setFontSize(generalPanel.getFontSize());
-    }
-
-    private void setFontSize(float scale) {
-        GuiComponents.scaleFontSizeRecursively(this, scale);
     }
 
     boolean useInMemoryHashing() {

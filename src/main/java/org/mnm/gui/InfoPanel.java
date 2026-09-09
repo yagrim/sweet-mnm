@@ -32,9 +32,13 @@ public class InfoPanel extends JPanel
     private final JLabel versionLabel;
 
     public InfoPanel(int width, int height, Color color) {
+        this(width, height, color, 1f);
+    }
+
+    public InfoPanel(int width, int height, Color color, float fontScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         textArea = new JTextPane();
-        GuiComponents.setFontSize(textArea, INFO_PANEL_FONT_SIZE);
+        GuiComponents.setFontSize(textArea, INFO_PANEL_FONT_SIZE * fontScaling);
         textArea.setText("Checking data...");
         textArea.setEditable(false);
         textArea.setBackground(color);
@@ -42,7 +46,7 @@ public class InfoPanel extends JPanel
         textArea.setPreferredSize(new Dimension(width, height));
 
         versionLabel = new JLabel(" ", SwingConstants.RIGHT);
-        GuiComponents.setFontSize(versionLabel, INFO_PANEL_FONT_SIZE);
+        GuiComponents.setFontSize(versionLabel, INFO_PANEL_FONT_SIZE * fontScaling);
         versionLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, versionLabel.getPreferredSize().height));
 
         StyledDocument doc = textArea.getStyledDocument();

@@ -55,10 +55,10 @@ class ClientButtonsPanel extends JPanel
 
         super(new GridLayout(1, 2, SCALE, 0));
 
-        install = createButton("Install");
-        repair = createButton("Repair");
-        login = createButton("Refresh");
-        logout = createButton("Logout");
+        install = createButton("Install", fontScaling);
+        repair = createButton("Repair", fontScaling);
+        login = createButton("Refresh", fontScaling);
+        logout = createButton("Logout", fontScaling);
         this.credentialsHandler = credentialsHandler;
         this.fontScaling = fontScaling;
 
@@ -75,9 +75,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private static JButton createButton(String text) {
+    private static JButton createButton(String text, float fontScaling) {
         JButton button = new JButton(text);
-        setFontSize(button, ACTION_BUTTON_FONT_SIZE);
+        setFontSize(button, ACTION_BUTTON_FONT_SIZE * fontScaling);
         button.setEnabled(false);
         return button;
     }
@@ -148,7 +148,7 @@ class ClientButtonsPanel extends JPanel
                 final ClientStatus client = loginAction.login(credentialsHandler.getEmail(), credentialsHandler.getPassword());
                 eventHandler.loginDone(client);
             } else {
-                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler, fontScaling);
+                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
                 final int result = credentialsPanel.show(parent);
                 if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
                     final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());
