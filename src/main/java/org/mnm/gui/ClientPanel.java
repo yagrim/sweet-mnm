@@ -30,10 +30,10 @@ class ClientPanel extends JPanel {
                 SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        readFontScaling(settingsStore);
+        float fontScaling = readFontScaling(settingsStore);
 
         this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
-        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
+        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * fontScaling), this.getBackground());
         this.playPanel = new PlayPanel(playAction, optionsSuppler);
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -43,7 +43,7 @@ class ClientPanel extends JPanel {
         this.add(Box.createVerticalStrut(SCALE * 3));
         this.add(playPanel);
 
-        GuiComponents.scaleFontSizeRecursively(this, readFontScaling(settingsStore));
+        GuiComponents.scaleFontSizeRecursively(this, fontScaling);
     }
 
 }
