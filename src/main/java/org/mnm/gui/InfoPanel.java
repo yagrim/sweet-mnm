@@ -43,7 +43,7 @@ public class InfoPanel extends JPanel
 
         versionLabel = new JLabel(" ", SwingConstants.RIGHT);
         GuiComponents.setFontSize(versionLabel, INFO_PANEL_FONT_SIZE);
-        versionLabel.setMaximumSize(new Dimension(width, versionLabel.getPreferredSize().height));
+        versionLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, versionLabel.getPreferredSize().height));
 
         StyledDocument doc = textArea.getStyledDocument();
         SimpleAttributeSet center = new SimpleAttributeSet();
