@@ -32,7 +32,7 @@ class ClientPanel extends JPanel {
 
         float fontScaling = readFontScaling(settingsStore);
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, fontScaling);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * fontScaling), this.getBackground());
         this.playPanel = new PlayPanel(playAction, optionsSuppler);
 

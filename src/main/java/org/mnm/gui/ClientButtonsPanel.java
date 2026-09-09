@@ -39,6 +39,8 @@ class ClientButtonsPanel extends JPanel
     private final JButton login;
     private final JButton logout;
     private final CredentialsHandler credentialsHandler;
+    // Store the original one to avoid size changes when uses modifies values before restart
+    private final float fontScaling;
 
     private ClientStatus clientStatus;
     private boolean refreshToken = false;
@@ -48,8 +50,8 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LoginAction loginAction,
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
-        CredentialsHandler credentialsHandler
-    ) {
+        CredentialsHandler credentialsHandler,
+        float fontScaling) {
 
         super(new GridLayout(1, 2, SCALE, 0));
 
@@ -58,6 +60,7 @@ class ClientButtonsPanel extends JPanel
         login = createButton("Refresh");
         logout = createButton("Logout");
         this.credentialsHandler = credentialsHandler;
+        this.fontScaling = fontScaling;
 
         this.add(login);
         this.add(install);
@@ -174,9 +177,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().repairStart();
         ProgressBarWindow progressWindow;
         if (status == REPAIRING) {
-            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching");
+            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching", fontScaling);
         } else {
-            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching");
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching", fontScaling);
         }
 
         progressWindow.resetProgress();

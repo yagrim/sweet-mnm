@@ -198,7 +198,7 @@ class ClientButtonsHandlerTest {
             @Override
             public void delete(String key) {
             }
-        }));
+        }), fontScaling);
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         login = getButton(handler, "login");

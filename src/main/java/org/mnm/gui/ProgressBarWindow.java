@@ -13,6 +13,8 @@ import java.awt.Frame;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.RepairListener;
 
+import static org.mnm.gui.Style.BASE_FONT_SIZE;
+
 /**
  * A modal JDialog that hosts a DualProgressPanel.
  * Shown by calling show(parent); hidden by the built-in close button.
@@ -25,13 +27,14 @@ public class ProgressBarWindow extends JDialog
     private final DualProgressPanel panel;
     private final JButton closeBtn;
 
-    public ProgressBarWindow(Frame owner, String label1, String label2) {
+    public ProgressBarWindow(Frame owner, String label1, String label2, float fontScaling) {
         super(owner, "Progress", true); // true = modal
-        panel = new DualProgressPanel(label1, label2, backgroundColor);
+        panel = new DualProgressPanel(label1, label2, backgroundColor, fontScaling);
 
         closeBtn = new JButton("Close");
         closeBtn.setEnabled(false);
         closeBtn.addActionListener(e -> close());
+        GuiComponents.setFontSize(closeBtn, BASE_FONT_SIZE * fontScaling);
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
         footer.setBackground(backgroundColor);
