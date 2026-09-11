@@ -1529,6 +1529,23 @@
       ]
     },
     {
+      "type": "javax.swing.plaf.basic.BasicListUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        },
+        {
+          "name": "loadActionMap",
+          "parameterTypes": [
+            "javax.swing.plaf.basic.LazyActionMap"
+          ]
+        }
+      ]
+    },
+    {
       "type": "javax.swing.plaf.basic.BasicOptionPaneUI",
       "methods": [
         {
@@ -1568,7 +1585,29 @@
       ]
     },
     {
+      "type": "javax.swing.plaf.basic.BasicPopupMenuUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
       "type": "javax.swing.plaf.basic.BasicTextPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javax.swing.plaf.basic.BasicViewportUI",
       "methods": [
         {
           "name": "createUI",
@@ -1591,6 +1630,17 @@
     },
     {
       "type": "javax.swing.plaf.metal.MetalCheckBoxUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javax.swing.plaf.metal.MetalComboBoxUI",
       "methods": [
         {
           "name": "createUI",
@@ -1624,6 +1674,28 @@
     },
     {
       "type": "javax.swing.plaf.metal.MetalRootPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javax.swing.plaf.metal.MetalScrollBarUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javax.swing.plaf.metal.MetalScrollPaneUI",
       "methods": [
         {
           "name": "createUI",
