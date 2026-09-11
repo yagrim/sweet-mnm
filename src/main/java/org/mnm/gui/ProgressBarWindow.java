@@ -27,14 +27,14 @@ public class ProgressBarWindow extends JDialog
     private final DualProgressPanel panel;
     private final JButton closeBtn;
 
-    public ProgressBarWindow(Frame owner, String label1, String label2, float fontScaling) {
+    public ProgressBarWindow(Frame owner, String label1, String label2, float uiScaling) {
         super(owner, "Progress", true); // true = modal
-        panel = new DualProgressPanel(label1, label2, backgroundColor, fontScaling);
+        panel = new DualProgressPanel(label1, label2, backgroundColor, uiScaling);
 
         closeBtn = new JButton("Close");
         closeBtn.setEnabled(false);
         closeBtn.addActionListener(e -> close());
-        GuiComponents.setFontSize(closeBtn, BASE_FONT_SIZE * fontScaling);
+        GuiComponents.setFontSize(closeBtn, BASE_FONT_SIZE * uiScaling);
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
         footer.setBackground(backgroundColor);

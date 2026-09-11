@@ -29,7 +29,7 @@ import org.mnm.tools.FileUtils;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
-import static org.mnm.config.Settings.readFontScaling;
+import static org.mnm.config.Settings.readUIScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -46,9 +46,9 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
-    private final JLabel fontScalingLabel = new JLabel("Font Scaling");
-    private final JComboBox<Float> fontScalingSelector = new JComboBox<>();
-    private final JPanel fontScalingPanel = new JPanel();
+    private final JLabel uiScalingLabel = new JLabel("Font Scaling");
+    private final JComboBox<Float> uiScalingSelector = new JComboBox<>();
+    private final JPanel uiScalingPanel = new JPanel();
 
     private final CredentialsHandler credentialsHandler;
 
@@ -82,20 +82,20 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
         for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
-            fontScalingSelector.addItem(i);
+            uiScalingSelector.addItem(i);
         }
-        fontScalingSelector.setToolTipText("Font scaling");
-        fontScalingSelector.setSelectedItem(readFontScaling(settingsStore));
-        fontScalingSelector.addActionListener(_ -> {
-            Float scale = (Float) fontScalingSelector.getSelectedItem();
+        uiScalingSelector.setToolTipText("UI scaling");
+        uiScalingSelector.setSelectedItem(readUIScaling(settingsStore));
+        uiScalingSelector.addActionListener(_ -> {
+            Float scale = (Float) uiScalingSelector.getSelectedItem();
             settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
         });
 
-        fontScalingPanel.add(fontScalingLabel);
-        fontScalingPanel.add(fontScalingSelector);
+        uiScalingPanel.add(uiScalingLabel);
+        uiScalingPanel.add(uiScalingSelector);
         // must go after adding the label and selector:
-        fontScalingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        fontScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        uiScalingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        uiScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         this.add(debugOption);
         this.add(Box.createVerticalStrut(SCALE));
@@ -105,7 +105,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         this.add(Box.createVerticalStrut(SCALE));
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
-        this.add(fontScalingPanel);
+        this.add(uiScalingPanel);
 
         // post-init
         ClientEventHandler.getInstance().register(this);
@@ -141,7 +141,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     float getFontSize() {
-        return (float) fontScalingSelector.getSelectedItem();
+        return (float) uiScalingSelector.getSelectedItem();
     }
 
     private static Path getDownloadsPath(Client client) {

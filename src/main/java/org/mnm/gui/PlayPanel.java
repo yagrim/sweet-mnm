@@ -36,10 +36,10 @@ public class PlayPanel extends JPanel
     public PlayPanel(
         GuiCommand.PlayAction runAction,
         Supplier<RunnerOptions> optionsSupplier,
-        float fontScaling) {
+        float uiScaling) {
 
         super(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        play = createButton("Play", fontScaling);
+        play = createButton("Play", uiScaling);
         play.addActionListener(_ -> {
             try {
                 runAction.run(optionsSupplier.get());
@@ -53,10 +53,10 @@ public class PlayPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private static JButton createButton(String text, float fontScaling) {
+    private static JButton createButton(String text, float uiScaling) {
         JButton button = new JButton(text);
         button.setEnabled(false);
-        setFontSize(button, ACTION_BUTTON_FONT_SIZE * fontScaling);
+        setFontSize(button, ACTION_BUTTON_FONT_SIZE * uiScaling);
         return button;
     }
 

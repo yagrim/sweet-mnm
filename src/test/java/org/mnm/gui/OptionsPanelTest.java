@@ -92,19 +92,23 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
-    void shouldOfferAndPersistFontSizes() {
+    void shouldOfferAndPersistUIScaling() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         GeneralOptionsPanel panel = panel(settings);
 
-        JComboBox<Integer> selector = fontSizeSelector(panel);
-        assertThat(label(panel, "fontSizeLabel").getText()).isEqualTo("Options Font Size");
-        assertThat(selector.getItemCount()).isEqualTo(29);
-        assertThat(selector.getItemAt(0)).isEqualTo(12);
-        assertThat(selector.getItemAt(selector.getItemCount() - 1)).isEqualTo(40);
+        JComboBox<Integer> selector = uiScalingelector(panel);
+        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(selector.getItemCount()).isEqualTo(7);
 
-        selector.setSelectedItem(20);
+        selector.setSelectedIndex(0);
+        Float firstItem = (Float) selector.getSelectedItem();
+        assertThat(firstItem).isEqualTo(1.0f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("1.0");
 
-        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("20");
+        selector.setSelectedIndex(selector.getItemCount() - 1);
+        Float lastItem = (Float) selector.getSelectedItem();
+        assertThat(lastItem).isEqualTo(4.0f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("4.0");
     }
 
     @Test
@@ -113,12 +117,12 @@ class GeneralOptionsPanelTest {
         OptionsPanel optionsPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
         GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
 
-        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(16f);
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
 
-        fontSizeSelector(generalPanel).setSelectedItem(20);
+        uiScalingelector(generalPanel).setSelectedItem(20);
 
-        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("20");
-        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(16f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("16");
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
     }
 
     private static GeneralOptionsPanel panel(SettingsStore settings) {
@@ -138,8 +142,8 @@ class GeneralOptionsPanelTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static JComboBox<Integer> fontSizeSelector(GeneralOptionsPanel panel) {
-        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "fontSizeSelector");
+    private static JComboBox<Integer> uiScalingelector(GeneralOptionsPanel panel) {
+        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "uiScalingSelector");
     }
 
 }

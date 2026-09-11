@@ -26,7 +26,7 @@ class MainTabs extends JTabbedPane {
              SettingsStore settingsStore,
              CredentialsHandler credentialsHandler) {
 
-        setFontSize(this, 15f * Settings.readFontScaling(settingsStore));
+        setFontSize(this, 15f * Settings.readUIScaling(settingsStore));
 
         this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
         this.clientPanel = new ClientPanel(frame,

@@ -36,7 +36,7 @@ import org.mnm.tools.ProcessUtils;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
-import static org.mnm.config.Settings.readFontScaling;
+import static org.mnm.config.Settings.readUIScaling;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
@@ -167,7 +167,7 @@ public class GuiCommand implements Command {
                 // For message windows
                 UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
                 UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, 15));
-                GuiComponents.scaleUiFontSizes(readFontScaling(settingsStore));
+                GuiComponents.scaleUiFontSizes(readUIScaling(settingsStore));
 
                 this.frame = new JFrame("Sweet GUI");
                 final MainTabs tabs = new MainTabs(

@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
-import static org.mnm.config.Settings.readFontScaling;
+import static org.mnm.config.Settings.readUIScaling;
 import static org.mnm.gui.Style.SCALE;
 
 class ClientPanel extends JPanel {
@@ -30,11 +30,11 @@ class ClientPanel extends JPanel {
                 SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        float fontScaling = readFontScaling(settingsStore);
+        float uiScaling = readUIScaling(settingsStore);
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, fontScaling);
-        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * fontScaling), this.getBackground(), fontScaling);
-        this.playPanel = new PlayPanel(playAction, optionsSuppler, fontScaling);
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, uiScaling);
+        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * uiScaling), this.getBackground(), uiScaling);
+        this.playPanel = new PlayPanel(playAction, optionsSuppler, uiScaling);
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(clientButtons);

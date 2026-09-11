@@ -40,7 +40,7 @@ class ClientButtonsPanel extends JPanel
     private final JButton logout;
     private final CredentialsHandler credentialsHandler;
     // Store the original one to avoid size changes when uses modifies values before restart
-    private final float fontScaling;
+    private final float uiScaling;
 
     private ClientStatus clientStatus;
     private boolean refreshToken = false;
@@ -51,16 +51,16 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
         CredentialsHandler credentialsHandler,
-        float fontScaling) {
+        float uiScaling) {
 
         super(new GridLayout(1, 2, SCALE, 0));
 
-        install = createButton("Install", fontScaling);
-        repair = createButton("Repair", fontScaling);
-        login = createButton("Refresh", fontScaling);
-        logout = createButton("Logout", fontScaling);
+        install = createButton("Install", uiScaling);
+        repair = createButton("Repair", uiScaling);
+        login = createButton("Refresh", uiScaling);
+        logout = createButton("Logout", uiScaling);
         this.credentialsHandler = credentialsHandler;
-        this.fontScaling = fontScaling;
+        this.uiScaling = uiScaling;
 
         this.add(login);
         this.add(install);
@@ -75,9 +75,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private static JButton createButton(String text, float fontScaling) {
+    private static JButton createButton(String text, float uiScaling) {
         JButton button = new JButton(text);
-        setFontSize(button, ACTION_BUTTON_FONT_SIZE * fontScaling);
+        setFontSize(button, ACTION_BUTTON_FONT_SIZE * uiScaling);
         button.setEnabled(false);
         return button;
     }
@@ -177,9 +177,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().repairStart();
         ProgressBarWindow progressWindow;
         if (status == REPAIRING) {
-            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching", fontScaling);
+            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching", uiScaling);
         } else {
-            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching", fontScaling);
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching", uiScaling);
         }
 
         progressWindow.resetProgress();

@@ -22,9 +22,9 @@ public class DualProgressPanel extends JPanel
     private final ProgressLabel progressLabel1;
     private final ProgressLabel progressLabel2;
 
-    public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor, float fontScaling) {
-        this(new ProgressLabel(labelText1, new Color(70, 130, 220), fontScaling),
-            new ProgressLabel(labelText2, new Color(70, 190, 140), fontScaling),
+    public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor, float uiScaling) {
+        this(new ProgressLabel(labelText1, new Color(70, 130, 220), uiScaling),
+            new ProgressLabel(labelText2, new Color(70, 190, 140), uiScaling),
             backgroundColor);
     }
 
@@ -79,30 +79,28 @@ public class DualProgressPanel extends JPanel
         private final JLabel label;
         private final JProgressBar bar;
         private final String labelText;
-        private final float fontScaling;
 
-        ProgressLabel(String labelText, Color barColor, float fontScaling) {
+        ProgressLabel(String labelText, Color barColor, float uiScaling) {
             this.labelText = labelText;
-            this.bar = createProgressBar(barColor, fontScaling);
-            this.label = createLabel(labelText, fontScaling);
-            this.fontScaling = fontScaling;
+            this.bar = createProgressBar(barColor, uiScaling);
+            this.label = createLabel(labelText, uiScaling);
         }
 
-        private static JProgressBar createProgressBar(Color fill,  float fontScaling) {
+        private static JProgressBar createProgressBar(Color fill,  float uiScaling) {
             JProgressBar bar = new JProgressBar(0, 100);
             bar.setValue(0);
             bar.setStringPainted(true);
             bar.setAlignmentX(Component.LEFT_ALIGNMENT);
-            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, Math.round(22 * fontScaling)));
+            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, Math.round(22 * uiScaling)));
             bar.setForeground(fill);
-            GuiComponents.setFontSize(bar, BASE_FONT_SIZE * fontScaling);
+            GuiComponents.setFontSize(bar, BASE_FONT_SIZE * uiScaling);
             return bar;
         }
 
-        private static JLabel createLabel(String text, float fontScaling) {
+        private static JLabel createLabel(String text, float uiScaling) {
             JLabel label = new JLabel(text);
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
-            GuiComponents.setFontSize(label, BASE_FONT_SIZE * fontScaling);
+            GuiComponents.setFontSize(label, BASE_FONT_SIZE * uiScaling);
             return label;
         }
 
