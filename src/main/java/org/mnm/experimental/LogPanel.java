@@ -1,17 +1,23 @@
 package org.mnm.experimental;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.awt.*;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 public class LogPanel extends JPanel {
 
@@ -61,7 +67,10 @@ public class LogPanel extends JPanel {
     }
 
     private class SwingAppender extends AppenderBase<ILoggingEvent> {
-        @Override protected void append(ILoggingEvent e) { onEvent(e); }
+        @Override
+        protected void append(ILoggingEvent e) {
+            onEvent(e);
+        }
     }
 
     public static void main(String[] args) {
@@ -82,7 +91,7 @@ public class LogPanel extends JPanel {
 
             JFrame frame = new JFrame("LogPanel");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.getContentPane().add(btn,   BorderLayout.NORTH);
+            frame.getContentPane().add(btn, BorderLayout.NORTH);
             frame.getContentPane().add(panel, BorderLayout.CENTER);
             frame.pack();
             frame.setSize(800, 500);

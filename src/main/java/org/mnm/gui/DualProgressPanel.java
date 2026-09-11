@@ -93,14 +93,14 @@ public class DualProgressPanel extends JPanel
             bar.setAlignmentX(Component.LEFT_ALIGNMENT);
             bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, Math.round(22 * uiScaling)));
             bar.setForeground(fill);
-            GuiComponents.setFontSize(bar, BASE_FONT_SIZE * uiScaling);
+//            GuiComponents.setFontSize(bar, 20 * uiScaling);
             return bar;
         }
 
         private static JLabel createLabel(String text, float uiScaling) {
             JLabel label = new JLabel(text);
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
-            GuiComponents.setFontSize(label, BASE_FONT_SIZE * uiScaling);
+//            GuiComponents.setFontSize(label, BASE_FONT_SIZE * uiScaling);
             return label;
         }
 

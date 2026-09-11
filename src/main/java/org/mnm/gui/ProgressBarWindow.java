@@ -34,7 +34,7 @@ public class ProgressBarWindow extends JDialog
         closeBtn = new JButton("Close");
         closeBtn.setEnabled(false);
         closeBtn.addActionListener(e -> close());
-        GuiComponents.setFontSize(closeBtn, BASE_FONT_SIZE * uiScaling);
+//        GuiComponents.setFontSize(closeBtn, BASE_FONT_SIZE * uiScaling);
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
         footer.setBackground(backgroundColor);

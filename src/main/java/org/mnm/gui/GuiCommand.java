@@ -164,7 +164,7 @@ public class GuiCommand implements Command {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
-                // For message windows
+                // For popup windows
                 UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
                 UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, 15));
                 GuiComponents.scaleUiFontSizes(readUIScaling(settingsStore));
