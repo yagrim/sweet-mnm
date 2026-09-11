@@ -83,7 +83,7 @@ public class DualProgressPanel extends JPanel
         ProgressLabel(String labelText, Color barColor, float uiScaling) {
             this.labelText = labelText;
             this.bar = createProgressBar(barColor, uiScaling);
-            this.label = createLabel(labelText, uiScaling);
+            this.label = createLabel(labelText);
         }
 
         private static JProgressBar createProgressBar(Color fill,  float uiScaling) {
@@ -93,14 +93,12 @@ public class DualProgressPanel extends JPanel
             bar.setAlignmentX(Component.LEFT_ALIGNMENT);
             bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, Math.round(22 * uiScaling)));
             bar.setForeground(fill);
-//            GuiComponents.setFontSize(bar, 20 * uiScaling);
             return bar;
         }
 
-        private static JLabel createLabel(String text, float uiScaling) {
+        private static JLabel createLabel(String text) {
             JLabel label = new JLabel(text);
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
-//            GuiComponents.setFontSize(label, BASE_FONT_SIZE * uiScaling);
             return label;
         }
 
