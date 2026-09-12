@@ -167,7 +167,7 @@ public class GuiCommand implements Command {
                 // For popup windows
                 UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
                 UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, 15));
-                GuiComponents.scaleUiFontSizes(readUIScaling(settingsStore));
+                GuiComponents.scaleUi(readUIScaling(settingsStore));
 
                 this.frame = new JFrame("Sweet GUI");
                 final MainTabs tabs = new MainTabs(

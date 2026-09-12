@@ -18,6 +18,8 @@ public interface SettingsStore {
     String UMU_USE_CLIENT_AS_PREFIX = "linux.umu.use-client-as-prefix";
     String UMU_WINEPREFIX = "linux.umu.wineprefix";
 
+    // To avoid popups in testing
+    String SKIP_UI_WARNINGS = "ui.skip-warnings";
 
     String get(String key);
 

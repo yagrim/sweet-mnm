@@ -2385,6 +2385,27 @@
       ]
     },
     {
+      "type": "sun.awt.image.ByteComponentRaster",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "sun.awt.image.ByteInterleavedRaster",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "sun.awt.image.GifImageDecoder",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "sun.awt.image.ImageRepresentation",
       "jniAccessible": true,
       "fields": [
@@ -4262,11 +4283,59 @@
     },
     {
       "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/close-pressed.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/close.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/collapsed-rtl.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/collapsed.gif"
+    },
+    {
+      "module": "java.desktop",
       "glob": "javax/swing/plaf/metal/icons/ocean/error.png"
     },
     {
       "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/iconify-pressed.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/iconify.gif"
+    },
+    {
+      "module": "java.desktop",
       "glob": "javax/swing/plaf/metal/icons/ocean/info.png"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/maximize-pressed.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/maximize.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/minimize-pressed.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/minimize.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/paletteClose-pressed.gif"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/paletteClose.gif"
     },
     {
       "module": "java.base",

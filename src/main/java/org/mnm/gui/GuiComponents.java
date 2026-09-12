@@ -13,14 +13,20 @@ import java.util.Enumeration;
 
 public class GuiComponents {
 
-    static void scaleUiFontSizes(float scale) {
+    static void scaleUi(float scale) {
         UIDefaults defaults = UIManager.getDefaults();
         Enumeration<Object> keys = defaults.keys();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
-            Object value = defaults.get(key);
-            if (value instanceof Font font) {
-                defaults.put(key, new FontUIResource(font.deriveFont(font.getSize2D() * scale)));
+//            System.out.println("key: " + key);
+            try {
+                Object value = defaults.get(key);
+                if (value instanceof Font font) {
+                    defaults.put(key, new FontUIResource(font.deriveFont(font.getSize2D() * scale)));
+                }
+            } catch (Exception e) {
+                System.out.println("Could not process: " + key);
+                e.printStackTrace();
             }
         }
         scaleIcons(scale);

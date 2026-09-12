@@ -33,6 +33,7 @@ import static org.mnm.config.Settings.readUIScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
+import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.SCALE;
 
@@ -52,11 +53,15 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     private final CredentialsHandler credentialsHandler;
 
+    private final boolean skipUIWarnings;
+
     private ClientStatus clientStatus;
+
 
     public GeneralOptionsPanel(SettingsStore settingsStore, CredentialsHandler credentialsHandler, Container parent) {
         super("General");
         this.credentialsHandler = credentialsHandler;
+        skipUIWarnings = settingsStore.getBoolean(SKIP_UI_WARNINGS, false);
 
         debugOption = new CheckboxOption("Enable debug", settingsStore, DEBUG_KEY, false);
         if (debugOption.isSelected()) {
@@ -91,7 +96,9 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
             if (evt.getStateChange() == ItemEvent.SELECTED) {
                 Float scale = (Float) uiScalingSelector.getSelectedItem();
                 settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
-                MessageDialog.showInfoMessageDialogSync("Close and relaunch Sweet to update UI", scale);
+                if (!skipUIWarnings) {
+                    MessageDialog.showInfoMessageDialogSync("Close and relaunch Sweet to update UI", scale);
+                }
             }
         });
 
