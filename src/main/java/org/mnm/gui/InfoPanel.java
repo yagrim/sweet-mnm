@@ -21,7 +21,7 @@ import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
+import static org.mnm.gui.MessageDialog.showInfoMessageDialogSync;
 import static org.mnm.gui.Style.INFO_PANEL_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
 

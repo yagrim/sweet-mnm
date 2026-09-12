@@ -17,7 +17,7 @@ import org.mnm.tools.PanicException;
 
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
-import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.ACTION_BUTTON_FONT_SIZE;
 
 public class PlayPanel extends JPanel
