@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ import static org.mnm.config.Settings.readUIScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
-import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel
@@ -86,9 +86,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         }
         uiScalingSelector.setToolTipText("UI scaling");
         uiScalingSelector.setSelectedItem(readUIScaling(settingsStore));
-        uiScalingSelector.addActionListener(_ -> {
-            Float scale = (Float) uiScalingSelector.getSelectedItem();
-            settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
+        // triggers only when value changes
+        uiScalingSelector.addItemListener(evt -> {
+            if (evt.getStateChange() == ItemEvent.SELECTED) {
+                Float scale = (Float) uiScalingSelector.getSelectedItem();
+                settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
+                MessageDialog.showInfoMessageDialogSync("Close and relaunch Sweet to update UI", scale);
+            }
         });
 
         uiScalingPanel.add(uiScalingLabel);
@@ -140,17 +144,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         return inMemoryHashingOption.isSelected();
     }
 
-    float getFontSize() {
-        return (float) uiScalingSelector.getSelectedItem();
-    }
-
     private static Path getDownloadsPath(Client client) {
         return new Installation(client.path(), MainTabs.DEFAULT_SLUG).getDownloadsPath();
     }
 
     // This is quick enough, we don't bother running async and disabling button in the meantime
     private void handleClearCache(Container parent, JButton clearCache) {
-        final int result = showConfirmationWindow(parent, "Clear download cache", "Delete all temporal downloads cache?");
+        final int result = ConfirmationDialog.showConfirmationDialog(parent, "Clear download cache", "Delete all temporal downloads cache?");
         if (result == JOptionPane.OK_OPTION) {
             try {
                 final Path downloadsPath = getDownloadsPath(clientStatus.client());
@@ -165,23 +165,11 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     private void handleClearCredentials(Container parent) {
-        final int result = showConfirmationWindow(parent, "Delete login information", "Delete stored email and password?");
+        final int result = ConfirmationDialog.showConfirmationDialog(parent, "Delete login information", "Delete stored email and password?");
         if (result == JOptionPane.OK_OPTION) {
             credentialsHandler.clearCredentials();
             ClientEventHandler.getInstance().refresh(clientStatus);
         }
-    }
-
-    private static int showConfirmationWindow(Container parent, String title, String message) {
-        final JPanel panel = new JPanel(new GridLayout(1, 1, 8, 8));
-        panel.add(new JLabel(message));
-        return JOptionPane.showConfirmDialog(
-            parent,
-            panel,
-            title,
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.PLAIN_MESSAGE
-        );
     }
 
 }

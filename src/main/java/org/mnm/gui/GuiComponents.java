@@ -4,12 +4,8 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.plaf.FontUIResource;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -27,12 +23,21 @@ public class GuiComponents {
                 defaults.put(key, new FontUIResource(font.deriveFont(font.getSize2D() * scale)));
             }
         }
-        scaleIcon("CheckBox.icon", scale);
-        scaleIcon("RadioButton.icon", scale);
+        scaleIcons(scale);
     }
 
-    private static void scaleIcon(String key, float scale) {
+    static void scaleIcons(float scale) {
+        scaleIcon("CheckBox.icon", scale);
+        scaleIcon("RadioButton.icon", scale);
+        scaleIcon("OptionPane.errorIcon", scale);
+        scaleIcon("OptionPane.informationIcon", scale);
+    }
+
+    static void scaleIcon(String key, float scale) {
         Icon icon = UIManager.getIcon(key);
+        if (icon instanceof ScaledIcon scaledIcon) {
+            icon = scaledIcon.delegate();
+        }
         if (icon != null) {
             UIManager.put(key, new ScaledIcon(icon, scale));
         }
