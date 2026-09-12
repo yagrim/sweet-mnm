@@ -3,11 +3,9 @@ package org.mnm.gui;
 import javax.swing.JFrame;
 
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import org.mnm.client.RunnerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.SettingsStore;
 
@@ -18,7 +16,6 @@ class MainTabsTest {
     @Test
     @EnabledOnOs(OS.WINDOWS)
     void shouldCreateTabbedPanelWithMainAndOptionsTabs() {
-        JFrame root = new JFrame();
         SettingsStore settingsStore = new SettingsStore() {
             @Override
             public String get(String key) {
@@ -33,7 +30,10 @@ class MainTabsTest {
             public void delete(String key) {
             }
         };
-        var tabs = new MainTabs(root,
+
+        JFrame root = new JFrame();
+        CredentialsHandler credentialsHandler = new CredentialsHandler(settingsStore);
+        ClientPanel clientPanel = new ClientPanel(root,
             new GuiCommand.LoginAction() {
                 @Override
                 public ClientStatus login(String username, String password) {
@@ -51,15 +51,9 @@ class MainTabsTest {
                 public ClientStatus repair(String slug, Client.Status status, boolean inMemoryHashing) {
                     return null;
                 }
-            },
-            new GuiCommand.PlayAction() {
-                @Override
-                public void run(RunnerOptions options) {
+            }, () -> false, credentialsHandler, 1f);
 
-                }
-            },
-            settingsStore,
-            new CredentialsHandler(settingsStore));
+        var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(settingsStore, credentialsHandler));
 
         assertThat(tabs).isNotNull();
     }
