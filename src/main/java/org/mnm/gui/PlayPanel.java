@@ -1,5 +1,6 @@
 package org.mnm.gui;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import java.awt.FlowLayout;
@@ -19,6 +20,7 @@ import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.ACTION_BUTTON_FONT_SIZE;
+import static org.mnm.gui.Style.SCALE;
 
 public class PlayPanel extends JPanel
     implements LoginListener, RepairListener, Refreshable {
@@ -39,6 +41,8 @@ public class PlayPanel extends JPanel
         float uiScaling) {
 
         super(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder(2 * SCALE, 0, 2 * SCALE, 0));
+
         play = createButton("Play", uiScaling);
         play.addActionListener(_ -> {
             try {

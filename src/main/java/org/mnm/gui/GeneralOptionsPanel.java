@@ -1,5 +1,6 @@
 package org.mnm.gui;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -7,6 +8,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
@@ -29,7 +31,7 @@ import org.mnm.tools.FileUtils;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
-import static org.mnm.config.Settings.readUIScaling;
+import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -90,7 +92,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
             uiScalingSelector.addItem(i);
         }
         uiScalingSelector.setToolTipText("UI scaling");
-        uiScalingSelector.setSelectedItem(readUIScaling(settingsStore));
+        uiScalingSelector.setSelectedItem(readUiScaling(settingsStore));
         // triggers only when value changes
         uiScalingSelector.addItemListener(evt -> {
             if (evt.getStateChange() == ItemEvent.SELECTED) {
@@ -117,6 +119,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(uiScalingPanel);
+        this.add(Box.createVerticalStrut(SCALE));
 
         // post-init
         ClientEventHandler.getInstance().register(this);

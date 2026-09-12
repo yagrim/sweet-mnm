@@ -1,16 +1,13 @@
 package org.mnm.gui;
 
-import javax.swing.JFrame;
+import javax.swing.BorderFactory;
 import javax.swing.JTabbedPane;
 
 import org.mnm.config.Settings;
 import org.mnm.config.SettingsStore;
-import org.mnm.gui.GuiCommand.LoginAction;
-import org.mnm.gui.GuiCommand.LogoutAction;
-import org.mnm.gui.GuiCommand.PlayAction;
-import org.mnm.gui.GuiCommand.RepairAction;
 
 import static org.mnm.gui.GuiComponents.setFontSize;
+import static org.mnm.gui.Style.SCALE;
 
 class MainTabs extends JTabbedPane {
 
@@ -19,24 +16,16 @@ class MainTabs extends JTabbedPane {
     private final ClientPanel clientPanel;
     private final OptionsPanel optionsPanel;
 
-    MainTabs(JFrame frame,
-             LoginAction loginAction, LogoutAction logoutAction,
-             RepairAction repairAction,
-             PlayAction playAction,
-             SettingsStore settingsStore,
-             CredentialsHandler credentialsHandler) {
+    MainTabs(SettingsStore settingsStore,
+             ClientPanel clientPanel,
+             OptionsPanel optionsPanel) {
+        setBorder(BorderFactory.createEmptyBorder(1 * SCALE, SCALE, 0, SCALE));
 
-        setFontSize(this, 15f * Settings.readUIScaling(settingsStore));
+        float uiScaling = Settings.readUiScaling(settingsStore);
+        setFontSize(this, 15f * uiScaling);
 
-        this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
-        this.clientPanel = new ClientPanel(frame,
-            loginAction,
-            logoutAction,
-            repairAction, () -> optionsPanel.useInMemoryHashing(),
-            playAction, () -> optionsPanel.getRunnerOptions(),
-            credentialsHandler,
-            settingsStore
-        );
+        this.optionsPanel = optionsPanel;
+        this.clientPanel = clientPanel;
 
         this.addTab("Client", clientPanel);
         this.addTab("Options", optionsPanel);

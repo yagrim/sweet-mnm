@@ -1,9 +1,12 @@
 package org.mnm.gui;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
@@ -33,12 +36,14 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
+import static javax.swing.SwingConstants.CENTER;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
-import static org.mnm.config.Settings.readUIScaling;
+import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
+import static org.mnm.gui.Style.SCALE;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -164,19 +169,28 @@ public class GuiCommand implements Command {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
+                final CredentialsHandler credentialsHandler = new CredentialsHandler(settingsStore);
+                float uiScaling = readUiScaling(settingsStore);
+
                 // For popup windows
                 UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.PLAIN, 18));
                 UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, 15));
-                GuiComponents.scaleUi(readUIScaling(settingsStore));
+                GuiComponents.scaleUi(uiScaling);
 
                 this.frame = new JFrame("Sweet GUI");
-                final MainTabs tabs = new MainTabs(
-                    frame, loginAction, logoutAction, repairAction, runAction,
-                    settingsStore,
-                    new CredentialsHandler(settingsStore));
+
+                final var optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
+                final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), credentialsHandler, uiScaling);
+                final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(), uiScaling);
+
+                final MainTabs tabs = new MainTabs(settingsStore, clientPanel, optionsPanel);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.getContentPane().add(tabs, BorderLayout.CENTER);
+                Container contentPane = frame.getContentPane();
+                contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+                contentPane.add(tabs);
+                contentPane.add(playPanel);
+
                 frame.setResizable(false);
                 frame.pack();
                 frame.setLocationRelativeTo(null);

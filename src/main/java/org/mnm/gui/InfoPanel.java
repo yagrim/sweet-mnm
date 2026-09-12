@@ -1,5 +1,6 @@
 package org.mnm.gui;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -33,12 +34,18 @@ public class InfoPanel extends JPanel
 
     public InfoPanel(int width, int height, Color color, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.setBorder(BorderFactory.createEmptyBorder(2 * SCALE, 0, 0, 0));
+
         textArea = new JTextPane();
         GuiComponents.setFontSize(textArea, INFO_PANEL_FONT_SIZE * uiScaling);
         textArea.setText("Checking data...");
         textArea.setEditable(false);
         textArea.setBackground(color);
-        textArea.setBorder(new LineBorder(Color.GRAY, 1));
+        textArea.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(Color.GRAY, 1),
+            BorderFactory.createEmptyBorder(SCALE / 2, 0, SCALE / 2, 0)
+        ));
+
         textArea.setPreferredSize(new Dimension(width, height));
 
         versionLabel = new JLabel(" ", SwingConstants.RIGHT);

@@ -12,7 +12,7 @@ public class Settings {
     public static final float DEFAULT_FONT_SCALING = 1f;
     public static final float MAX_FONT_SCALING = 4f;
 
-    public static float readUIScaling(SettingsStore settingsStore) {
+    public static float readUiScaling(SettingsStore settingsStore) {
         Float candidate = null;
         try {
             candidate = settingsStore.getFloat(OPTIONS_FONT_SCALING_KEY, DEFAULT_FONT_SCALING);
