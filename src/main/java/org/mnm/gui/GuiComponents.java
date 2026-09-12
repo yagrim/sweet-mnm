@@ -11,22 +11,25 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Enumeration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GuiComponents {
+
+    private static final Logger logger = LoggerFactory.getLogger(GuiComponents.class);
 
     static void scaleUi(float scale) {
         UIDefaults defaults = UIManager.getDefaults();
         Enumeration<Object> keys = defaults.keys();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
-//            System.out.println("key: " + key);
             try {
                 Object value = defaults.get(key);
                 if (value instanceof Font font) {
                     defaults.put(key, new FontUIResource(font.deriveFont(font.getSize2D() * scale)));
                 }
             } catch (Exception e) {
-                System.out.println("Could not process: " + key);
-                e.printStackTrace();
+                logger.debug("Could not initialize UI component: " + key, e);
             }
         }
         scaleIcons(scale);
