@@ -11,6 +11,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import org.mnm.client.RunnerOptions.LinuxOptions;
+import org.mnm.client.RunnerOptions.ToolsOptions;
 import org.mnm.client.RunnerOptions.UmuOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -174,6 +175,7 @@ class ClientRunnerTest {
         assertThat(result.environment).isEmpty();
     }
 
+    // TODO with gameMode
     @Test
     void shouldRunWindowsClientCommandWithMangoHud(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
@@ -204,7 +206,8 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var linuxOptions = new LinuxOptions(true, true, null);
+        var toolsOptions = new ToolsOptions(true, false);
+        var linuxOptions = new LinuxOptions(true, toolsOptions, null);
         var options = new RunnerOptions(null, null, true, linuxOptions);
 
         assertThatThrownBy(() -> runClient(installPath, token, false, options))
@@ -236,7 +239,7 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var options = new RunnerOptions(null, null, true, linuxOptions(true));
+        var options = new RunnerOptions(null, null, true, linuxOptions(true, false));
 
         var result = runClient(installPath, token, false, options);
 
@@ -246,6 +249,30 @@ class ClientRunnerTest {
                 "PROTONPATH", "GE-Proton",
                 "WINEPREFIX", clientRelativeWinePrefix(installPath),
                 "MANGOHUD", "1"
+            ));
+    }
+
+    @Test
+    void shouldRunLinuxClientWithGameMode(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var options = new RunnerOptions(null, null, true, linuxOptions(false, true));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.command)
+            .containsExactly(
+                "gamemoderun",
+                "umu-run",
+                "mnm/mnm.exe",
+                "--token",
+                token);
+        assertThat(result.environment)
+            .containsExactlyInAnyOrderEntriesOf(Map.of(
+                "GAMEID", SLUG,
+                "PROTONPATH", "GE-Proton",
+                "WINEPREFIX", clientRelativeWinePrefix(installPath)
             ));
     }
 

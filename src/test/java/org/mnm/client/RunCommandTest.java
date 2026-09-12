@@ -66,7 +66,8 @@ class RunCommandTest {
         command.run(Arguments.parse());
 
         assertThat(runnerInvoked).isTrue();
-        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, linuxOptions(false)));
+        assertThat(receivedOptions.get())
+            .isEqualTo(new RunnerOptions(null, null, false, linuxOptions(false, false)));
         assertThat(dbFile).exists();
     }
 
@@ -84,7 +85,26 @@ class RunCommandTest {
 
         command.run(Arguments.parse("--enable-mangohud"));
 
-        assertThat(receivedOptions.get()).isEqualTo(new RunnerOptions(null, null, false, linuxOptions(true)));
+        assertThat(receivedOptions.get())
+            .isEqualTo(new RunnerOptions(null, null, false, linuxOptions(true, false)));
+    }
+
+    @Test
+    void shouldParseGameModeFlagIntoRunnerOptions(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        final AtomicReference<RunnerOptions> receivedOptions = new AtomicReference<>();
+
+        Command command = new RunCommand(
+            () -> dbFile,
+            (runOptions, configDb) -> {
+                receivedOptions.set(runOptions);
+                assertThat(configDb.getClients()).isEmpty();
+            });
+
+        command.run(Arguments.parse("--enable-gamemode"));
+
+        assertThat(receivedOptions.get())
+            .isEqualTo(new RunnerOptions(null, null, false, linuxOptions(false, true)));
     }
 
 }

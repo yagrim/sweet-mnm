@@ -33,7 +33,8 @@ class OptionsPanel extends JPanel {
 
     RunnerOptions getRunnerOptions() {
         return new RunnerOptions(DEFAULT_SLUG, null, false,
-            new RunnerOptions.LinuxOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isUseClientAsPrefix(),
+            new RunnerOptions.LinuxOptions(linuxPanel.isUseClientAsPrefix(),
+                new RunnerOptions.ToolsOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isGameModeEnabled()),
                 new RunnerOptions.UmuOptions(linuxPanel.getUmuGameId(), linuxPanel.getUmuProtonPath(), linuxPanel.getUmuWinePrefix()))
         );
     }

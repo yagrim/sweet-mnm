@@ -9,6 +9,7 @@ public interface SettingsStore {
     String OPTIONS_FONT_SCALING_KEY = "ui.scaling";
 
     String MANGOHUD_KEY = "linux.mangohud";
+    String GAMEMODE_KEY = "linux.gameMode";
 
     String UMU_GAMEID = "linux.umu.gameid";
     String DEFAULT_UMU_GAMEID = "mnm";

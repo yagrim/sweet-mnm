@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.client.RunnerOptions.ToolsOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
@@ -44,7 +45,7 @@ public class ClientRunner {
         final Path clientPath = client.path();
         final boolean isWindows = OS.isWindows();
 
-        String[] command = buildCommand(client.slug(), token.token(), isWindows);
+        String[] command = buildCommand(client.slug(), token.token(), isWindows, options.linuxOptions().toolsOptions());
         Map<String, String> environment = buildEnvironment(isWindows, clientPath, System.getenv(), options.linuxOptions());
 
         logger.info("Running: {}", String.join(" ", redactToken(command)));
@@ -102,12 +103,16 @@ public class ClientRunner {
         return tokens.get(0);
     }
 
-    private String[] buildCommand(String slug, String token, boolean isWindows) {
+    private String[] buildCommand(String slug, String token, boolean isWindows, ToolsOptions tools) {
         final String clientPath = concatPath(slug, "mnm.exe");
         if (isWindows) {
             return new String[]{clientPath, "--token", token};
         }
-        return new String[]{"umu-run", clientPath, "--token", token};
+        if (tools.gameMode()) {
+            return new String[]{"gamemoderun", "umu-run", clientPath, "--token", token};
+        } else {
+            return new String[]{"umu-run", clientPath, "--token", token};
+        }
     }
 
     private static String concatPath(String... parts) {
@@ -126,7 +131,7 @@ public class ClientRunner {
 
     private Map<String, String> buildEnvironment(boolean isWindows, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
         return isWindows
-            ? buildWine(linuxOptions.enableMangoHud())
+            ? buildWine(linuxOptions.toolsOptions())
             : buildLinuxEnvironment(clientPath, currentEnvironment, linuxOptions);
     }
 
@@ -154,16 +159,16 @@ public class ClientRunner {
 
         environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", candidateWinePrefixPath));
 
-        if (linuxOptions.enableMangoHud()) {
+        if (linuxOptions.toolsOptions().mangoHud()) {
             environment.put("MANGOHUD", "1");
         }
 
         return Map.copyOf(environment);
     }
 
-    private static Map<String, String> buildWine(boolean mangoHudEnabled) {
+    private static Map<String, String> buildWine(ToolsOptions tools) {
         Map<String, String> environment = new HashMap<>();
-        if (mangoHudEnabled) {
+        if (tools.mangoHud()) {
             environment.put("MANGOHUD", "1");
         }
         return Map.copyOf(environment);

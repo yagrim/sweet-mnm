@@ -9,6 +9,7 @@ import org.mnm.config.SettingsStore;
 
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
+import static org.mnm.config.SettingsStore.GAMEMODE_KEY;
 import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
 import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
@@ -20,6 +21,7 @@ import static org.mnm.gui.Style.SCALE;
 public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     private final JCheckBox mangoHudOption;
+    private final JCheckBox gameModeOption;
     private final JCheckBox useClientAsPrefix;
 
     private final TextOption umuGameId;
@@ -33,11 +35,14 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         this.settingsStore = settingsStore;
 
         mangoHudOption = new JCheckBox("Enable MangoHud");
-        mangoHudOption.setActionCommand("mangohud");
         mangoHudOption.addActionListener(_ ->
             this.settingsStore.putBoolean(MANGOHUD_KEY, mangoHudOption.isSelected()));
-
         mangoHudOption.setSelected(this.settingsStore.getBoolean(MANGOHUD_KEY, false));
+
+        gameModeOption = new JCheckBox("Enable GameMode");
+        gameModeOption.addActionListener(_ ->
+            this.settingsStore.putBoolean(GAMEMODE_KEY, gameModeOption.isSelected()));
+        gameModeOption.setSelected(this.settingsStore.getBoolean(GAMEMODE_KEY, false));
 
         umuWinePrefix = new TextOption("UMU WinePrefix", this.settingsStore, UMU_WINEPREFIX);
         useClientAsPrefix = new CheckboxOption("Use game location for WinePrefix", this.settingsStore, UMU_USE_CLIENT_AS_PREFIX, true);
@@ -45,6 +50,7 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         refresh(umuWinePrefix, useClientAsPrefix);
 
         addLinuxComponent(mangoHudOption);
+        addLinuxComponent(gameModeOption);
         umuGameId = new TextOption("UMU GameId", this.settingsStore, UMU_GAMEID, DEFAULT_UMU_GAMEID);
         addLinuxComponent(umuGameId);
         umuProtonPath = new TextOption("UMU ProtonPath", this.settingsStore, UMU_PROTONPATH, DEFAULT_UMU_PROTONPATH);
@@ -67,6 +73,10 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     public boolean isMangoHudEnabled() {
         return mangoHudOption.isSelected();
+    }
+
+    public boolean isGameModeEnabled() {
+        return gameModeOption.isSelected();
     }
 
     public Boolean isUseClientAsPrefix() {

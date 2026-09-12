@@ -32,12 +32,13 @@ class RunnerOptionsTest {
                 "--slug", "mnm",
                 "--id", "42",
                 "--skip-version-check",
-                "--enable-mangohud");
+                "--enable-mangohud",
+                "--enable-gamemode");
 
             RunnerOptions options = RunnerOptions.parse(arguments);
 
             assertThat(options)
-                .isEqualTo(new RunnerOptions("mnm", 42, true, linuxOptions(true)));
+                .isEqualTo(new RunnerOptions("mnm", 42, true, linuxOptions(true, true)));
         }
 
         @Test
