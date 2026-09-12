@@ -12,9 +12,10 @@ import java.util.function.Supplier;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
-class ClientPanel extends JPanel {
+import static org.mnm.config.Settings.readUIScaling;
+import static org.mnm.gui.Style.SCALE;
 
-    static final int SCALE = 8;
+class ClientPanel extends JPanel {
 
     private final ClientButtonsPanel clientButtons;
     private final InfoPanel infoPanel;
@@ -25,12 +26,15 @@ class ClientPanel extends JPanel {
                 GuiCommand.LogoutAction logoutAction,
                 GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
                 GuiCommand.PlayAction playAction, Supplier<RunnerOptions> optionsSuppler,
-                CredentialsHandler credentialsHandler) {
+                CredentialsHandler credentialsHandler,
+                SettingsStore settingsStore) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler);
-        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, SCALE * 6, this.getBackground());
-        this.playPanel = new PlayPanel(playAction, optionsSuppler);
+        float uiScaling = readUIScaling(settingsStore);
+
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, uiScaling);
+        this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * uiScaling), this.getBackground(), uiScaling);
+        this.playPanel = new PlayPanel(playAction, optionsSuppler, uiScaling);
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.add(clientButtons);

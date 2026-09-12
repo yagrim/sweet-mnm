@@ -3,6 +3,7 @@ package org.mnm.gui;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.mnm.config.Settings;
 import org.mnm.config.SettingsStore;
 import org.mnm.gui.GuiCommand.LoginAction;
 import org.mnm.gui.GuiCommand.LogoutAction;
@@ -25,7 +26,7 @@ class MainTabs extends JTabbedPane {
              SettingsStore settingsStore,
              CredentialsHandler credentialsHandler) {
 
-        setFontSize(this, 15f);
+        setFontSize(this, 15f * Settings.readUIScaling(settingsStore));
 
         this.optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
         this.clientPanel = new ClientPanel(frame,
@@ -33,7 +34,8 @@ class MainTabs extends JTabbedPane {
             logoutAction,
             repairAction, () -> optionsPanel.useInMemoryHashing(),
             playAction, () -> optionsPanel.getRunnerOptions(),
-            credentialsHandler
+            credentialsHandler,
+            settingsStore
         );
 
         this.addTab("Client", clientPanel);

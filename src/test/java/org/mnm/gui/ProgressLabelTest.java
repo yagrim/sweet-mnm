@@ -21,7 +21,7 @@ class ProgressLabelTest {
     @BeforeEach
     void setUp() {
         final Color color = new Color(229, 145, 75);
-        progressLabel = new ProgressLabel("Test label", color);
+        progressLabel = new ProgressLabel("Test label", color, 1f);
         label = ReflectionTestTools.getLabel(progressLabel, "label");
         bar = ReflectionTestTools.getProgressBar(progressLabel, "bar");
     }

@@ -25,9 +25,9 @@ public class ProgressBarWindow extends JDialog
     private final DualProgressPanel panel;
     private final JButton closeBtn;
 
-    public ProgressBarWindow(Frame owner, String label1, String label2) {
+    public ProgressBarWindow(Frame owner, String label1, String label2, float uiScaling) {
         super(owner, "Progress", true); // true = modal
-        panel = new DualProgressPanel(label1, label2, backgroundColor);
+        panel = new DualProgressPanel(label1, label2, backgroundColor, uiScaling);
 
         closeBtn = new JButton("Close");
         closeBtn.setEnabled(false);
@@ -39,9 +39,9 @@ public class ProgressBarWindow extends JDialog
         footer.add(closeBtn);
 
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setResizable(false);
         add(panel, BorderLayout.CENTER);
         add(footer, BorderLayout.SOUTH);
+        // TODO do we need pack?
         pack();
         setSize((int) (owner.getWidth() * 0.9), getHeight());
         setLocationRelativeTo(owner);

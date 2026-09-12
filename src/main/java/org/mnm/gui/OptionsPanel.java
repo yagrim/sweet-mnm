@@ -24,6 +24,7 @@ class OptionsPanel extends JPanel {
 
         this.add(generalPanel);
         this.add(linuxPanel);
+
     }
 
     boolean useInMemoryHashing() {

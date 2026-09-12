@@ -21,8 +21,9 @@ import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
-import static org.mnm.gui.ClientPanel.SCALE;
-import static org.mnm.gui.MessageWindow.showInfoMessageDialogSync;
+import static org.mnm.gui.MessageDialog.showInfoMessageDialogSync;
+import static org.mnm.gui.Style.INFO_PANEL_FONT_SIZE;
+import static org.mnm.gui.Style.SCALE;
 
 public class InfoPanel extends JPanel
     implements LoginListener, RepairListener, Refreshable {
@@ -30,10 +31,10 @@ public class InfoPanel extends JPanel
     private final JTextPane textArea;
     private final JLabel versionLabel;
 
-    public InfoPanel(int width, int height, Color color) {
+    public InfoPanel(int width, int height, Color color, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         textArea = new JTextPane();
-        GuiComponents.setFontSize(textArea, 15);
+        GuiComponents.setFontSize(textArea, INFO_PANEL_FONT_SIZE * uiScaling);
         textArea.setText("Checking data...");
         textArea.setEditable(false);
         textArea.setBackground(color);
@@ -41,8 +42,8 @@ public class InfoPanel extends JPanel
         textArea.setPreferredSize(new Dimension(width, height));
 
         versionLabel = new JLabel(" ", SwingConstants.RIGHT);
-        GuiComponents.setFontSize(versionLabel, 15);
-        versionLabel.setMaximumSize(new Dimension(width, versionLabel.getPreferredSize().height));
+        GuiComponents.setFontSize(versionLabel, INFO_PANEL_FONT_SIZE * uiScaling);
+        versionLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, versionLabel.getPreferredSize().height));
 
         StyledDocument doc = textArea.getStyledDocument();
         SimpleAttributeSet center = new SimpleAttributeSet();

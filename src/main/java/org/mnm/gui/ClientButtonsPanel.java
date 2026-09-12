@@ -21,10 +21,11 @@ import org.mnm.events.RepairListener;
 import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.Client.Status.REPAIRING;
-import static org.mnm.gui.ClientPanel.SCALE;
 import static org.mnm.gui.GuiComponents.setFontSize;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
-import static org.mnm.gui.MessageWindow.showErrorMessageDialogSync;
+import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
+import static org.mnm.gui.Style.ACTION_BUTTON_FONT_SIZE;
+import static org.mnm.gui.Style.SCALE;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientButtonsPanel extends JPanel
@@ -38,6 +39,8 @@ class ClientButtonsPanel extends JPanel
     private final JButton login;
     private final JButton logout;
     private final CredentialsHandler credentialsHandler;
+    // Store the original one to avoid size changes when uses modifies values before restart
+    private final float uiScaling;
 
     private ClientStatus clientStatus;
     private boolean refreshToken = false;
@@ -47,16 +50,17 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LoginAction loginAction,
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
-        CredentialsHandler credentialsHandler
-    ) {
+        CredentialsHandler credentialsHandler,
+        float uiScaling) {
 
         super(new GridLayout(1, 2, SCALE, 0));
 
-        install = createButton("Install");
-        repair = createButton("Repair");
-        login = createButton("Refresh");
-        logout = createButton("Logout");
+        install = createButton("Install", uiScaling);
+        repair = createButton("Repair", uiScaling);
+        login = createButton("Refresh", uiScaling);
+        logout = createButton("Logout", uiScaling);
         this.credentialsHandler = credentialsHandler;
+        this.uiScaling = uiScaling;
 
         this.add(login);
         this.add(install);
@@ -71,9 +75,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().register(this);
     }
 
-    private static JButton createButton(String text) {
+    private static JButton createButton(String text, float uiScaling) {
         JButton button = new JButton(text);
-        setFontSize(button, 20f);
+        setFontSize(button, ACTION_BUTTON_FONT_SIZE * uiScaling);
         button.setEnabled(false);
         return button;
     }
@@ -173,9 +177,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().repairStart();
         ProgressBarWindow progressWindow;
         if (status == REPAIRING) {
-            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching");
+            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching", uiScaling);
         } else {
-            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching");
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching", uiScaling);
         }
 
         progressWindow.resetProgress();

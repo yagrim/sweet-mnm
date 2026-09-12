@@ -1,7 +1,9 @@
 package org.mnm.gui;
 
-import javax.swing.JCheckBox;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,13 +13,15 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.Client;
+import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
+import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
+import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
 
 class GeneralOptionsPanelTest {
 
@@ -25,7 +29,8 @@ class GeneralOptionsPanelTest {
     void shouldRestorePersistedOptions() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
             DEBUG_KEY, "true",
-            IN_MEMORY_HASHING_KEY, "false"));
+            IN_MEMORY_HASHING_KEY, "false",
+            SKIP_UI_WARNINGS, "true"));
 
         GeneralOptionsPanel panel = panel(settings);
 
@@ -72,7 +77,7 @@ class GeneralOptionsPanelTest {
 
     @Test
     void shouldEnableClearCacheAndShowDownloadSizeWhenCacheContainsFiles(@TempDir Path tempDir) throws IOException {
-        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
         CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
         credentialsHandler.saveStoreCredentials(true);
         GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new JPanel());
@@ -88,6 +93,61 @@ class GeneralOptionsPanelTest {
         assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
     }
 
+    @Test
+    void shouldNotUpdateUIScalingWhenNotModified() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        GeneralOptionsPanel panel = panel(settings);
+
+        JComboBox<Integer> selector = uiScalingSelector(panel);
+        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(selector.getItemCount()).isEqualTo(7);
+
+        // 1.0 is the default
+        selector.setSelectedIndex(0);
+        Float firstItem = (Float) selector.getSelectedItem();
+        assertThat(firstItem).isEqualTo(1.0f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isNull();
+
+        selector.setSelectedIndex(0);
+        Float currentItem = (Float) selector.getSelectedItem();
+        assertThat(currentItem).isEqualTo(1.0f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isNull();
+    }
+
+    @Test
+    void shouldUpdateAndPersistUIScaling() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
+        GeneralOptionsPanel panel = panel(settings);
+
+        JComboBox<Integer> selector = uiScalingSelector(panel);
+        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(selector.getItemCount()).isEqualTo(7);
+
+        selector.setSelectedIndex(1);
+        Float secondItem = (Float) selector.getSelectedItem();
+        assertThat(secondItem).isEqualTo(1.5f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("1.5");
+
+        selector.setSelectedIndex(selector.getItemCount() - 1);
+        Float lastItem = (Float) selector.getSelectedItem();
+        assertThat(lastItem).isEqualTo(4.0f);
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("4.0");
+    }
+
+    @Test
+    void shouldApplySavedFontSizeOnlyWhenOptionsPanelIsCreated() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SCALING_KEY, "16"));
+        OptionsPanel optionsPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
+        GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
+
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
+
+        uiScalingSelector(generalPanel).setSelectedItem(20);
+
+        assertThat(settings.get(OPTIONS_FONT_SCALING_KEY)).isEqualTo("16");
+        assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
+    }
+
     private static GeneralOptionsPanel panel(SettingsStore settings) {
         return new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new JPanel());
     }
@@ -98,6 +158,15 @@ class GeneralOptionsPanelTest {
 
     private static JButton button(GeneralOptionsPanel panel, String fieldName) {
         return (JButton) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    private static JLabel label(GeneralOptionsPanel panel, String fieldName) {
+        return (JLabel) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JComboBox<Integer> uiScalingSelector(GeneralOptionsPanel panel) {
+        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "uiScalingSelector");
     }
 
 }

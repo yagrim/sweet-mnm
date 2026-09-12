@@ -14,15 +14,17 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.FilesValidationListener;
 import org.mnm.events.RepairFilesListener;
 
+import static org.mnm.gui.Style.BASE_FONT_SIZE;
+
 public class DualProgressPanel extends JPanel
     implements FilesValidationListener, RepairFilesListener {
 
     private final ProgressLabel progressLabel1;
     private final ProgressLabel progressLabel2;
 
-    public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor) {
-        this(new ProgressLabel(labelText1, new Color(70, 130, 220)),
-            new ProgressLabel(labelText2, new Color(70, 190, 140)),
+    public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor, float uiScaling) {
+        this(new ProgressLabel(labelText1, new Color(70, 130, 220), uiScaling),
+            new ProgressLabel(labelText2, new Color(70, 190, 140), uiScaling),
             backgroundColor);
     }
 
@@ -78,18 +80,18 @@ public class DualProgressPanel extends JPanel
         private final JProgressBar bar;
         private final String labelText;
 
-        ProgressLabel(String labelText, Color barColor) {
+        ProgressLabel(String labelText, Color barColor, float uiScaling) {
             this.labelText = labelText;
-            this.bar = createProgressBar(barColor);
+            this.bar = createProgressBar(barColor, uiScaling);
             this.label = createLabel(labelText);
         }
 
-        private static JProgressBar createProgressBar(Color fill) {
+        private static JProgressBar createProgressBar(Color fill,  float uiScaling) {
             JProgressBar bar = new JProgressBar(0, 100);
             bar.setValue(0);
             bar.setStringPainted(true);
             bar.setAlignmentX(Component.LEFT_ALIGNMENT);
-            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
+            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, Math.round(22 * uiScaling)));
             bar.setForeground(fill);
             return bar;
         }

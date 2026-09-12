@@ -6,6 +6,7 @@ public interface SettingsStore {
 
     String DEBUG_KEY = "debug";
     String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
+    String OPTIONS_FONT_SCALING_KEY = "ui.scaling";
 
     String MANGOHUD_KEY = "linux.mangohud";
 
@@ -17,6 +18,8 @@ public interface SettingsStore {
     String UMU_USE_CLIENT_AS_PREFIX = "linux.umu.use-client-as-prefix";
     String UMU_WINEPREFIX = "linux.umu.wineprefix";
 
+    // To avoid popups in testing
+    String SKIP_UI_WARNINGS = "ui.skip-warnings";
 
     String get(String key);
 
@@ -38,4 +41,12 @@ public interface SettingsStore {
         put(key, Boolean.toString(value));
     }
 
+    default float getFloat(String key, float defaultValue) {
+        String value = get(key);
+        return value == null ? defaultValue : Float.parseFloat(value);
+    }
+
+    default void putFloat(String key, float value) {
+        put(key, Float.toString(value));
+    }
 }
