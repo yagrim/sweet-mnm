@@ -31,7 +31,7 @@ class ApiConnectionTest {
         } else {
             final String username = "";
             final String password = "";
-            connection = apiConnector.login(username, password);
+            connection = apiConnector.login(username, password, null);
         }
     }
 

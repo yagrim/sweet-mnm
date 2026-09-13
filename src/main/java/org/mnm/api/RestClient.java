@@ -59,7 +59,7 @@ public class RestClient {
         return JsonParser.read(response.body());
     }
 
-    record HttpJsonResponse(int statusCode, Map<String, Object> body) {
+    public record HttpJsonResponse(int statusCode, Map<String, Object> body) {
     }
 
 }

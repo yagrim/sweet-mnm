@@ -35,7 +35,8 @@ public class Session {
         }
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-        ApiConnection connection = apiConnector.login(username, password);
+        // TODO
+        ApiConnection connection = apiConnector.login(username, password, null);
 
         return buildSession(connection);
     }
