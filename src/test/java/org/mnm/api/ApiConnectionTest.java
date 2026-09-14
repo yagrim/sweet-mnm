@@ -39,7 +39,7 @@ class ApiConnectionTest {
     void should_validateToken() {
         if (mock) {
             Mockito.when(restConnector.get(anyString(), anyMap()))
-                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L)));
+                .thenReturn(new ApiResponse(200, Map.of("status", 0L)));
         }
 
         connection.isTokenValid();
@@ -51,7 +51,7 @@ class ApiConnectionTest {
     void should_getGamesInfo() {
         if (mock) {
             Mockito.when(restConnector.get(anyString(), anyMap()))
-                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L,
+                .thenReturn(new ApiResponse(200, Map.of("status", 0L,
                     "games", Map.of(
                         "mnm", Map.of(
                             "dir", "mnm",
@@ -79,7 +79,7 @@ class ApiConnectionTest {
     void should_getGamesVersions() {
         if (mock) {
             Mockito.when(restConnector.get(anyString()))
-                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
+                .thenReturn(new ApiResponse(200, Map.of(
                     "versions", List.of(Map.of(
                         "slug", "mnm",
                         "version", "publish-0.21.2.0-95f37c2aba9b89a27bd3ac54ddb52b58970beb54",

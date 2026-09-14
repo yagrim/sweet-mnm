@@ -40,7 +40,7 @@ class ApiConnectorTest {
 
             if (mock) {
                 Mockito.when(restConnector.post(anyString(), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L, "token", "123.456.789")));
+                    .thenReturn(new ApiResponse(200, Map.of("status", 0L, "token", "123.456.789")));
             }
 
             ApiConnection connection = apiConnector.login(username, password, null);
@@ -60,7 +60,7 @@ class ApiConnectorTest {
 
             if (mock) {
                 Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
+                    .thenReturn(new ApiResponse(200, Map.of(
                         "error", "Two-factor authentication required. Update your launcher if no verification prompt appears.",
                         "code", "two_factor_required",
                         "status", 6L,
@@ -70,7 +70,7 @@ class ApiConnectorTest {
                         "expires_in", 300
                     )));
                 Mockito.when(restConnector.post(Mockito.eq("account/login/2fa"), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of("status", 0L, "token", "123.456.789")));
+                    .thenReturn(new ApiResponse(200, Map.of("status", 0L, "token", "123.456.789")));
             }
 
             ApiConnection connection = apiConnector.login(username, password, new VerificationCodeSupplier() {
@@ -93,7 +93,7 @@ class ApiConnectorTest {
 
             if (mock) {
                 Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
-                    .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
+                    .thenReturn(new ApiResponse(200, Map.of(
                         "code", "something_else",
                         "status", 6L
                     )));
@@ -103,7 +103,7 @@ class ApiConnectorTest {
 
             assertThat(t)
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Response error: 200, {code=something_else, status=6}");
+                .hasMessage("API Error: 200 {code=something_else, status=6}");
         }
 
     }
@@ -115,7 +115,7 @@ class ApiConnectorTest {
 
         if (mock) {
             Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
-                .thenReturn(new RestClient.HttpJsonResponse(200, Map.of(
+                .thenReturn(new ApiResponse(200, Map.of(
                     "status", 4L,
                     "error", "Incorrect Email/Password")));
         }
@@ -124,7 +124,7 @@ class ApiConnectorTest {
 
         assertThat(t)
             .isInstanceOf(RuntimeException.class)
-            .hasMessage("Response error: 200, {error=Incorrect Email/Password, status=4}");
+            .hasMessage("API Error: 200 {error=Incorrect Email/Password, status=4}");
     }
 
     @Test
@@ -134,7 +134,7 @@ class ApiConnectorTest {
 
         if (mock) {
             Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
-                .thenReturn(new RestClient.HttpJsonResponse(429, Map.of(
+                .thenReturn(new ApiResponse(429, Map.of(
                     "error", "Too many sign-in attempts for this account. Wait a minute and try again.",
                     "message", "Rate limit exceeded. Maximum 5 requests per 60 seconds.")));
         }
@@ -143,7 +143,7 @@ class ApiConnectorTest {
 
         assertThat(t)
             .isInstanceOf(RuntimeException.class)
-            .hasMessage("Response error: 429, {error=Too many sign-in attempts for this account. Wait a minute and try again., message=Rate limit exceeded. Maximum 5 requests per 60 seconds.}");
+            .hasMessage("API Error: 429 {error=Too many sign-in attempts for this account. Wait a minute and try again., message=Rate limit exceeded. Maximum 5 requests per 60 seconds.}");
     }
 
 }

@@ -6,11 +6,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.mnm.api.RestClient.HttpJsonResponse;
-
-import static org.mnm.api.HttpHelper.exception;
-import static org.mnm.api.HttpHelper.parseLoginResponse;
-import static org.mnm.api.HttpHelper.parseResponse;
+import static org.mnm.api.ApiHelper.exception;
+import static org.mnm.api.ApiHelper.parseLoginResponse;
+import static org.mnm.api.ApiHelper.parseResponse;
 
 public class ApiConnector {
 
@@ -25,12 +23,12 @@ public class ApiConnector {
     }
 
     public ApiConnection login(String username, String password, VerificationCodeSupplier verificationCodeSupplier) {
-        HttpJsonResponse httpResponse = restClient.post("account/login", Map.of(
+        ApiResponse httpResponse = restClient.post("account/login", Map.of(
             "email", username,
             "password", password,
             "version", API_VERSION
         ));
-        JsonResponse response = parseLoginResponse(httpResponse);
+        var response = parseLoginResponse(httpResponse);
 
         Long status = response.getStatus();
         String token;
@@ -50,7 +48,7 @@ public class ApiConnector {
         return new ApiConnection(new ApiSession(token), restClient);
     }
 
-    private String handleTwoFactorAuthentication(JsonResponse response, VerificationCodeSupplier verificationCodeSupplier) {
+    private String handleTwoFactorAuthentication(ApiResponse response, VerificationCodeSupplier verificationCodeSupplier) {
         String method = response.get("method");
         List<String> methods = response.getList("methods");
         String challengeToken = response.get("challenge_token").toString();
@@ -60,12 +58,12 @@ public class ApiConnector {
     }
 
     private String verifyTwoFactorAuthentication(String code, String method, String challengeToken) {
-        HttpJsonResponse httpResponse = restClient.post("account/login/2fa", Map.of(
+        ApiResponse httpResponse = restClient.post("account/login/2fa", Map.of(
             "challenge_token", challengeToken,
             "method", method,
             "code", code
         ));
-        // TODO custom handling of errors for better UI
+        // TODO custom handling of errors for better UX
         return parseResponse(httpResponse).get("token");
     }
 

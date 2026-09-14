@@ -3,7 +3,10 @@ package org.mnm.api;
 import java.util.List;
 import java.util.Map;
 
-public record JsonResponse(Map<String, Object> body) {
+/**
+ * Simple and convenient HTTP JSON response wrapper with utility methods for M&M API.
+ */
+record ApiResponse(int statusCode, Map<String, Object> body) {
 
     Long getStatus() {
         return (Long) body.get("status");
@@ -24,4 +27,5 @@ public record JsonResponse(Map<String, Object> body) {
     public Map<String, Object> getObject(String key) {
         return (Map<String, Object>) body.get(key);
     }
+
 }

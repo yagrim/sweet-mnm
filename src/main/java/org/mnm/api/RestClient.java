@@ -19,7 +19,7 @@ public class RestClient {
         this.baseUrl = baseUrl;
     }
 
-    public HttpJsonResponse post(String url, Map<String, Object> body) {
+    public ApiResponse post(String url, Map<String, Object> body) {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(buildUrl(baseUrl, url))
             .header("Content-Type", "application/json; charset=utf-8")
@@ -29,11 +29,11 @@ public class RestClient {
         return send(request);
     }
 
-    public HttpJsonResponse get(String url) {
+    public ApiResponse get(String url) {
         return get(url, Map.of());
     }
 
-    public HttpJsonResponse get(String url, Map<String, Object> headers) {
+    public ApiResponse get(String url, Map<String, Object> headers) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
             .uri(buildUrl(baseUrl, url))
             .GET();
@@ -44,11 +44,11 @@ public class RestClient {
         return send(builder.build());
     }
 
-    private static HttpJsonResponse send(HttpRequest request) {
+    private static ApiResponse send(HttpRequest request) {
         try (HttpClient httpClient = HttpClient.newHttpClient()) {
             HttpResponse<byte[]> response = httpClient
                 .send(request, BodyHandlers.ofByteArray());
-            return new HttpJsonResponse(response.statusCode(), toMap(response));
+            return new ApiResponse(response.statusCode(), toMap(response));
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -57,9 +57,6 @@ public class RestClient {
 
     private static Map<String, Object> toMap(HttpResponse<byte[]> response) {
         return JsonParser.read(response.body());
-    }
-
-    public record HttpJsonResponse(int statusCode, Map<String, Object> body) {
     }
 
 }

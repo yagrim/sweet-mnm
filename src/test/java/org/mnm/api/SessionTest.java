@@ -39,6 +39,6 @@ class SessionTest {
 
         assertThat(t)
             .isInstanceOf(RuntimeException.class)
-            .hasMessage("Response error: 200, {error=Incorrect Email/Password, status=4}");
+            .hasMessage("API Error: 200 {error=Incorrect Email/Password, status=4}");
     }
 }
