@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.mnm.gui.PopUpVerificationCodeSupplier;
-import org.mnm.gui.PopUpVerificationCodeSupplierOption2;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +37,8 @@ public class Session {
         }
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-        // TODO
-        var verificationCodeSupplier = new PopUpVerificationCodeSupplierOption2();
+
+        VerificationCodeSupplier verificationCodeSupplier = new PopUpVerificationCodeSupplier();
         ApiConnection connection = apiConnector.login(username, password, verificationCodeSupplier);
 
         return buildSession(connection);
