@@ -20,6 +20,8 @@ import java.util.List;
 import org.mnm.api.RestClient;
 import org.mnm.api.VerificationCodeSupplier;
 
+import static org.mnm.gui.Style.SCALE;
+
 public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
 
     private static final String ACCOUNT_API_URL = "https://account.monstersandmemories.com/api";
@@ -37,7 +39,7 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
     @Override
     public String getVerificationCode(String method, List<String> methods, String challengeToken) {
 
-        VerificationDialog dialog = new VerificationDialog();
+        VerificationDialog dialog = new VerificationDialog(method);
         dialog.setVisible(true);
 
         // TODO close login process without a popup or error window
@@ -53,18 +55,20 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
     private static class VerificationDialog extends JDialog {
 
         private final JTextField codeField = new JTextField(20);
+        private final JLabel methodLabel = new JLabel();
+        private final JLabel instructionsLabel = new JLabel();
         private final JLabel errorLabel = new JLabel();
 
         private boolean confirmed;
 
-        VerificationDialog() {
+        VerificationDialog(String method) {
             super(
                 null,
-                "Input verification code",
+                "Enter verification code",
                 Dialog.ModalityType.APPLICATION_MODAL
             );
 
-            createUi();
+            createUi(method);
 
             setDefaultCloseOperation(
                 JDialog.DISPOSE_ON_CLOSE
@@ -75,19 +79,31 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             setLocationRelativeTo(null);
         }
 
-        private void createUi() {
-            errorLabel.setForeground(Color.RED);
-            errorLabel.setText("");
+        private void createUi(String method) {
 
-            JPanel codePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+            methodLabel.setAlignmentX(CENTER_ALIGNMENT);
+            methodLabel.setText("Authentication method: " + method);
+            instructionsLabel.setAlignmentX(CENTER_ALIGNMENT);
+            instructionsLabel.setText("Enter the six-digit code sent to your email. Check spam if it hasn't arrived.");
+
+            errorLabel.setAlignmentX(CENTER_ALIGNMENT);
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText(" ");
+
+            JPanel codePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
             codePanel.add(new JLabel("Code"));
+            codePanel.add(Box.createHorizontalStrut(SCALE*3));
             codePanel.add(codeField);
 
             JPanel inputPanel = new JPanel();
             inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 
+            inputPanel.add(methodLabel);
+            inputPanel.add(Box.createVerticalStrut(SCALE));
+            inputPanel.add(instructionsLabel);
+            inputPanel.add(Box.createVerticalStrut(SCALE*3));
             inputPanel.add(codePanel);
-            inputPanel.add(Box.createVerticalStrut(5));
+            inputPanel.add(Box.createVerticalStrut(SCALE));
             inputPanel.add(errorLabel);
 
             JButton okButton = new JButton("OK");
@@ -108,8 +124,7 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
                 String code = getCode();
 
                 if (code.isEmpty()) {
-                    errorLabel.setText("Empty code found");
-                    pack();
+                    errorLabel.setText("Validation code is required");
                     return;
                 }
 
