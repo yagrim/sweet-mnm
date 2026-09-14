@@ -16,23 +16,23 @@ public class HttpHelper {
     // 429, {"error":"Too many requests","message":"Rate limit exceeded. Maximum 5 requests per 60 seconds."}
     // 429, {"error":"Too many sign-in attempts for this account. Wait a minute and try again.","message":"Rate limit exceeded. Maximum 5 requests per 60 seconds."}
     // 429, {"error":"Too many attempts. Wait a minute and try again.","code":"two_factor_rate_limited", "status": 6}
-    static Map<String, Object> parseLoginResponse(RestClient.HttpJsonResponse response) {
-        int statusCode = response.statusCode();
+    static JsonResponse parseLoginResponse(RestClient.HttpJsonResponse httpResponse) {
+        int statusCode = httpResponse.statusCode();
         if (statusCode != 200) {
-            throw exception(response);
+            throw exception(httpResponse);
         }
-        Map<String, Object> body = response.body();
-        logger.debug("Http Response: {} - {}", statusCode, body);
-        return body;
+        Map<String, Object> body = httpResponse.body();
+        logger.debug("Http Response: {} - {}", httpResponse, body);
+        return new JsonResponse(body);
     }
 
-    public static Map<String, Object> parseResponse(RestClient.HttpJsonResponse response) {
-        Map<String, Object> body = parseLoginResponse(response);
-        Long status = (Long) body.get("status");
+    public static JsonResponse parseResponse(RestClient.HttpJsonResponse httpResponse) {
+        JsonResponse response = parseLoginResponse(httpResponse);
+        Long status = response.getStatus();
         if (status != 0) {
-            throw exception(response);
+            throw exception(httpResponse);
         }
-        return body;
+        return response;
     }
 
     static RuntimeException exception(RestClient.HttpJsonResponse response) {

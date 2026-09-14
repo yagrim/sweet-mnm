@@ -16,12 +16,9 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.List;
-import java.util.Map;
 
 import org.mnm.api.RestClient;
 import org.mnm.api.VerificationCodeSupplier;
-
-import static org.mnm.api.HttpHelper.parseResponse;
 
 public class PopUpVerificationCodeSupplierOption2 implements VerificationCodeSupplier {
 
@@ -52,19 +49,8 @@ public class PopUpVerificationCodeSupplierOption2 implements VerificationCodeSup
         }
 
         String code = dialog.getCode();
-
-        Map<String, Object> response = parseResponse(
-            restClient.post(
-                "account/login/2fa",
-                Map.of(
-                    "challenge_token", challengeToken,
-                    "method", method,
-                    "code", code
-                )
-            )
-        );
-
-        return (String) response.get("token");
+        // TODO any validation?
+        return code;
     }
 
     private static class VerificationDialog extends JDialog {

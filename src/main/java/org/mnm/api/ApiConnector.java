@@ -25,47 +25,48 @@ public class ApiConnector {
     }
 
     public ApiConnection login(String username, String password, VerificationCodeSupplier verificationCodeSupplier) {
-        HttpJsonResponse response = restClient.post("account/login", Map.of(
+        HttpJsonResponse httpResponse = restClient.post("account/login", Map.of(
             "email", username,
             "password", password,
             "version", API_VERSION
         ));
-        Map<String, Object> responseMap = parseLoginResponse(response);
+        JsonResponse response = parseLoginResponse(httpResponse);
 
-        Long status = (Long) responseMap.get("status");
+        Long status = response.getStatus();
         String token;
         if (status == 6) {
-            String code = responseMap.get("code").toString();
+            String code = response.getCode();
             if ("two_factor_required".equals(code)) {
-                token = handleTwoFactorAuthentication(responseMap, verificationCodeSupplier);
+                token = handleTwoFactorAuthentication(response, verificationCodeSupplier);
             } else {
-                throw exception(response);
+                throw exception(httpResponse);
             }
         } else if (status != 0) {
-            throw exception(response);
+            throw exception(httpResponse);
         } else {
-            token = (String) responseMap.get("token");
+            token = response.get("token");
         }
 
         return new ApiConnection(new ApiSession(token), restClient);
     }
 
-    private String handleTwoFactorAuthentication(Map<String, Object> responseMap, VerificationCodeSupplier verificationCodeSupplier) {
-        String method = responseMap.get("method").toString();
-        List<String> methods = (List<String>) responseMap.get("methods");
-        String challengeToken = responseMap.get("challenge_token").toString();
+    private String handleTwoFactorAuthentication(JsonResponse response, VerificationCodeSupplier verificationCodeSupplier) {
+        String method = response.get("method");
+        List<String> methods = response.getList("methods");
+        String challengeToken = response.get("challenge_token").toString();
 
         String verificationCode = verificationCodeSupplier.getVerificationCode(method, methods, challengeToken);
         return verifyTwoFactorAuthentication(verificationCode, method, challengeToken);
     }
 
     private String verifyTwoFactorAuthentication(String code, String method, String challengeToken) {
-        HttpJsonResponse response = restClient.post("account/login/2fa", Map.of(
+        HttpJsonResponse httpResponse = restClient.post("account/login/2fa", Map.of(
             "challenge_token", challengeToken,
             "method", method,
             "code", code
         ));
-        return (String) parseResponse(response).get("token");
+        // TODO custom handling of errors for better UI
+        return parseResponse(httpResponse).get("token");
     }
 
     public ApiConnection login(String token) {

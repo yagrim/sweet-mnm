@@ -31,10 +31,9 @@ public class ApiConnection {
 
     public List<GameInfo> getGamesInfo() {
         Map<String, Object> headers = Map.of("Authorization", session.token());
-        HttpJsonResponse response = restClient.get("account/games", headers);
-        Map<String, Object> responseMap = parseResponse(response);
+        JsonResponse response = parseResponse(restClient.get("account/games", headers));
 
-        Map<String, Object> games = (Map<String, Object>) responseMap.get("games");
+        Map<String, Object> games = response.getObject("games");
 
         return games.entrySet().stream()
             .map(entry -> {

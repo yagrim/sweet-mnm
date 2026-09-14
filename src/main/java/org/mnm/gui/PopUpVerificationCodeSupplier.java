@@ -12,6 +12,7 @@ import java.awt.GridLayout;
 import java.util.List;
 import java.util.Map;
 
+import org.mnm.api.JsonResponse;
 import org.mnm.api.RestClient;
 import org.mnm.api.VerificationCodeSupplier;
 
@@ -66,7 +67,7 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             JOptionPane.PLAIN_MESSAGE,
             JOptionPane.DEFAULT_OPTION,
             null,
-            new Object[] {okButton, cancelButton},
+            new Object[]{okButton, cancelButton},
             okButton
         );
         JDialog dialog = optionPane.createDialog("Input verification code");
@@ -77,11 +78,11 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             throw new RuntimeException("Login cancelled");
         }
 
-        Map<String, Object> response = parseResponse(restClient.post("account/login/2fa", Map.of(
+        JsonResponse response = parseResponse(restClient.post("account/login/2fa", Map.of(
             "challenge_token", challengeToken,
             "method", method,
             "code", codeField.getText()
         )));
-        return (String) response.get("token");
+        return response.get("token");
     }
 }

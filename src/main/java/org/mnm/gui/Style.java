@@ -14,6 +14,6 @@ class Style {
 
     // Info area and version label
     // UI does NOT SCALE with size
-    static final float INFO_PANEL_FONT_SIZE = 15f;
+    static final float INFO_PANEL_FONT_SIZE = 16f;
 }
 
