@@ -16,6 +16,11 @@ record ApiResponse(int statusCode, Map<String, Object> body) {
         return body.get("code").toString();
     }
 
+    public String getError() {
+        Object o = body.get("error");
+        return o != null ? o.toString() : "";
+    }
+
     public String get(String key) {
         return body.get(key).toString();
     }

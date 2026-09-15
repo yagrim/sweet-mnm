@@ -38,7 +38,7 @@ public class Session {
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
 
-        VerificationCodeSupplier verificationCodeSupplier = new PopUpVerificationCodeSupplier();
+        VerificationCodeSupplier verificationCodeSupplier = new PopUpVerificationCodeSupplier(apiConnector);
         ApiConnection connection = apiConnector.login(username, password, verificationCodeSupplier);
 
         return buildSession(connection);

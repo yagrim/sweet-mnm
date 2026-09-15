@@ -42,15 +42,8 @@ class ApiHelper {
     }
 
     static RuntimeException exception(ApiResponse response) {
-        throw new RuntimeException("API Error: " + response.statusCode() + " " + serializeSortedMap(response.body()));
-    }
 
-    private static String serializeSortedMap(Map<String, Object> inputMap) {
-        if (inputMap == null) {
-            return "{}";
-        }
-        Map<String, Object> sortedMap = new TreeMap<>(inputMap);
-        return sortedMap.toString();
+        throw new ApiException(response);
     }
 
 }

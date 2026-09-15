@@ -17,29 +17,27 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.List;
 
-import org.mnm.api.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.mnm.api.ApiConnector;
+import org.mnm.api.ApiException;
 import org.mnm.api.VerificationCodeSupplier;
 
 import static org.mnm.gui.Style.SCALE;
 
 public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
 
-    private static final String ACCOUNT_API_URL = "https://account.monstersandmemories.com/api";
+    private final ApiConnector apiConnector;
 
-    private final RestClient restClient;
-
-    public PopUpVerificationCodeSupplier() {
-        this(new RestClient(ACCOUNT_API_URL));
-    }
-
-    PopUpVerificationCodeSupplier(RestClient restClient) {
-        this.restClient = restClient;
+    public PopUpVerificationCodeSupplier(ApiConnector apiConnector) {
+        this.apiConnector = apiConnector;
     }
 
     @Override
     public String getVerificationCode(String method, List<String> methods, String challengeToken) {
 
-        VerificationDialog dialog = new VerificationDialog(method);
+        VerificationDialog dialog = new VerificationDialog(method, challengeToken, apiConnector);
         dialog.setVisible(true);
 
         // TODO close login process without a popup or error window
@@ -54,6 +52,9 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
 
     private static class VerificationDialog extends JDialog {
 
+        private static final Logger logger = LoggerFactory.getLogger(VerificationDialog.class);
+
+        public static final String EMAIL_METHOD = "email";
         private final JTextField codeField = new JTextField(20);
         private final JLabel methodLabel = new JLabel();
         private final JLabel instructionsLabel = new JLabel();
@@ -61,39 +62,63 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
 
         private boolean confirmed;
 
-        VerificationDialog(String method) {
+        VerificationDialog(String method, String challengeToken, ApiConnector apiConnector) {
             super(
                 null,
                 "Enter verification code",
                 Dialog.ModalityType.APPLICATION_MODAL
             );
 
-            createUi(method);
-
-            setDefaultCloseOperation(
-                JDialog.DISPOSE_ON_CLOSE
-            );
+            setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            createUi(method, challengeToken, apiConnector);
 
             pack();
             setMinimumSize(new Dimension(0, 0));
             setLocationRelativeTo(null);
         }
 
-        private void createUi(String method) {
+        private void createUi(String method, String challengeToken, ApiConnector apiConnector) {
 
             methodLabel.setAlignmentX(CENTER_ALIGNMENT);
-            methodLabel.setText("Authentication method: " + method);
             instructionsLabel.setAlignmentX(CENTER_ALIGNMENT);
-            instructionsLabel.setText("Enter the six-digit code sent to your email. Check spam if it hasn't arrived.");
+            if (EMAIL_METHOD.equals(method)) {
+                methodLabel.setText("Authentication method: " + method);
+                instructionsLabel.setText("Enter the six-digit code sent to your email. Check spam if it hasn't arrived.");
+            } else {
+                methodLabel.setText("Authentication method UNKNOWN: " + method);
+                instructionsLabel.setText(" ");
+            }
 
             errorLabel.setAlignmentX(CENTER_ALIGNMENT);
             errorLabel.setForeground(Color.RED);
             errorLabel.setText(" ");
 
             JPanel codePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            codePanel.add(new JLabel("Code"));
-            codePanel.add(Box.createHorizontalStrut(SCALE*3));
+            codePanel.add(new JLabel("CODE"));
+            codePanel.add(Box.createHorizontalStrut(SCALE * 3));
             codePanel.add(codeField);
+            if (EMAIL_METHOD.equals(method)) {
+                JButton resendButton = new JButton("Resend email code");
+                codePanel.add(Box.createHorizontalStrut(SCALE * 3));
+                codePanel.add(resendButton);
+                resendButton.addActionListener(e -> {
+                    try {
+                        apiConnector.resendVerificationCode(challengeToken, method);
+                        errorLabel.setForeground(Color.GREEN);
+                        errorLabel.setText("Verification code sent");
+                    } catch (Exception ex) {
+                        logger.error("Error calling API", ex);
+                        if (ex instanceof ApiException) {
+                            errorLabel.setText(((ApiException) ex).getError());
+                        } else {
+                            // TODO handle messages that are too long and don't fit a Label
+                            errorLabel.setText(ex.getMessage());
+                        }
+                    }
+                });
+            } else {
+                // TODO implement support for other with a visitor or subclasses for each method
+            }
 
             JPanel inputPanel = new JPanel();
             inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
@@ -101,7 +126,7 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             inputPanel.add(methodLabel);
             inputPanel.add(Box.createVerticalStrut(SCALE));
             inputPanel.add(instructionsLabel);
-            inputPanel.add(Box.createVerticalStrut(SCALE*3));
+            inputPanel.add(Box.createVerticalStrut(SCALE * 3));
             inputPanel.add(codePanel);
             inputPanel.add(Box.createVerticalStrut(SCALE));
             inputPanel.add(errorLabel);
@@ -121,9 +146,7 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             setContentPane(content);
 
             okButton.addActionListener(event -> {
-                String code = getCode();
-
-                if (code.isEmpty()) {
+                if (getCode().isEmpty()) {
                     errorLabel.setText("Validation code is required");
                     return;
                 }
@@ -178,4 +201,5 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
             return codeField.getText().trim();
         }
     }
+
 }

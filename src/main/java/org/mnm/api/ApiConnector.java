@@ -71,4 +71,9 @@ public class ApiConnector {
         return new ApiConnection(new ApiSession(token), restClient);
     }
 
+    public void resendVerificationCode(String challengeToken, String method) {
+        ApiResponse response = restClient.post("account/login/2fa/" + method, Map.of("challenge_token", challengeToken));
+        // Beware! Success is reported as status=6
+        parseLoginResponse(response);
+    }
 }
