@@ -19,7 +19,8 @@ class TokenUpdater {
     void update(String apiEndpoint, Options options) {
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(apiEndpoint));
-        ApiConnection apiConnection = apiConnector.login(options.username(), options.password());
+        // TODO
+        ApiConnection apiConnection = apiConnector.login(options.username(), options.password(), null);
 
         final String newToken = apiConnection.getToken();
         if (!options.ignoreUpdate()) {
