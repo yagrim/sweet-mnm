@@ -3,8 +3,6 @@ package org.mnm.api;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.mnm.gui.PopUpTwoFactorTokenSupplier;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,19 +25,13 @@ public class Session {
         this.token = token;
     }
 
-    public static Session login(String username, String password, String baseUrl) {
+    public static Session login(String username, String password, ApiConnector apiConnector, TokenSupplier tokenSupplier) {
         logger.info("Authenticating with account: {}", mask(username));
         if (isEmpty(username) || isEmpty(password)) {
             panic("Username or password is empty");
         }
-        if (isEmpty(baseUrl)) {
-            panic("Base URL is empty");
-        }
 
-        ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-
-        TokenSupplier verificationCodeSupplier = new PopUpTwoFactorTokenSupplier(apiConnector);
-        ApiConnection connection = apiConnector.login(username, password, verificationCodeSupplier);
+        ApiConnection connection = apiConnector.login(username, password, tokenSupplier);
 
         return buildSession(connection);
     }

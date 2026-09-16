@@ -22,6 +22,7 @@ import org.mnm.api.ApiConnector;
 import org.mnm.api.ApiException;
 import org.mnm.api.TokenSupplier;
 
+import static org.mnm.config.Messages.TwoFactorAuthentication.EMAIL_INSTRUCTIONS;
 import static org.mnm.gui.Style.SCALE;
 import static org.mnm.tools.StringUtils.isEmpty;
 
@@ -82,7 +83,7 @@ public class PopUpTwoFactorTokenSupplier implements TokenSupplier {
             instructionsLabel.setAlignmentX(CENTER_ALIGNMENT);
             if (EMAIL_METHOD.equals(method)) {
                 methodLabel.setText("Authentication method: " + method);
-                instructionsLabel.setText("Enter the six-digit code sent to your email. Check spam if it hasn't arrived.");
+                instructionsLabel.setText(EMAIL_INSTRUCTIONS);
             } else {
                 methodLabel.setText("Authentication method UNKNOWN: " + method);
                 instructionsLabel.setText(" ");

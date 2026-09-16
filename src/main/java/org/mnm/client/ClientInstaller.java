@@ -8,7 +8,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.api.ApiConnector;
 import org.mnm.api.Session;
+import org.mnm.api.TokenSupplier;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
@@ -34,6 +36,7 @@ public class ClientInstaller {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientInstaller.class);
 
+
     @FunctionalInterface
     interface Installer {
         // TODO having to pass status seems a smell.
@@ -42,14 +45,17 @@ public class ClientInstaller {
     }
 
     private final ConfigDb configDb;
+    private final ApiConnector apiConnector;
 
-    public ClientInstaller(ConfigDb configDb) {
+    public ClientInstaller(ConfigDb configDb, ApiConnector apiConnector) {
         this.configDb = configDb;
+        this.apiConnector = apiConnector;
     }
 
     public InstallationResult install(InstallerOptions options,
                                       Path workDir, String apiBaseUrl,
-                                      Client.Status status) {
+                                      Client.Status status,
+                                      TokenSupplier tokenSupplier) {
 
         Client currentClient;
         Session session;
@@ -71,7 +77,7 @@ public class ClientInstaller {
             session = Session.login(token, apiBaseUrl);
             installDir = currentClient.path();
         } else {
-            session = Session.login(options.username(), options.password(), apiBaseUrl);
+            session = Session.login(options.username(), options.password(), apiConnector, tokenSupplier);
             currentClient = configDb.getClient(session.getSlug());
             installDir = workDir;
         }
@@ -80,7 +86,7 @@ public class ClientInstaller {
         final String slug = session.getSlug();
         final Installation installation = new Installation(installDir, slug);
 
-        new LoginService(configDb)
+        new LoginService(configDb, apiConnector)
             .updateClientAndToken(session, currentClient, installDir, status);
 
         final List<Manifest.File> invalid = new ArrayList<>();
@@ -136,7 +142,7 @@ public class ClientInstaller {
             currentFiles.forEach(path -> path.toFile().delete());
         }
 
-        configDb.updateClient(slug, session.getVersion(),UPDATED);
+        configDb.updateClient(slug, session.getVersion(), UPDATED);
         logger.info("Installation completed");
 
         // Force to clean memory

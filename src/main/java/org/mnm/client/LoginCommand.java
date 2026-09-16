@@ -6,11 +6,14 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.api.ApiConnector;
+import org.mnm.api.RestClient;
+import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
-import org.mnm.config.Environment;
 
+import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.getWorkDir;
 
 public class LoginCommand implements Command {
@@ -30,8 +33,12 @@ public class LoginCommand implements Command {
         credentials.validate();
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
-            String slug = new LoginService(configDb)
-                .login(credentials.username(), credentials.password(), getWorkDir(), Environment.API_BASE_URL);
+            ApiConnector apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
+            TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector);
+
+
+            String slug = new LoginService(configDb, apiConnector)
+                .login(credentials.username(), credentials.password(), getWorkDir(), tokenSupplier);
 
             logger.info("Stored token for slug '{}'", slug);
         }
