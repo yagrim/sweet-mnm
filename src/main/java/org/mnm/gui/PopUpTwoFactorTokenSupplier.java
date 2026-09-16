@@ -8,8 +8,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dialog;
@@ -22,32 +20,33 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.api.ApiConnector;
 import org.mnm.api.ApiException;
-import org.mnm.api.VerificationCodeSupplier;
+import org.mnm.api.TokenSupplier;
 
 import static org.mnm.gui.Style.SCALE;
+import static org.mnm.tools.StringUtils.isEmpty;
 
-public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
+/**
+ * Handles full 2FA flow, including errors and requesting a code resend.
+ */
+public class PopUpTwoFactorTokenSupplier implements TokenSupplier {
 
     private final ApiConnector apiConnector;
 
-    public PopUpVerificationCodeSupplier(ApiConnector apiConnector) {
+    public PopUpTwoFactorTokenSupplier(ApiConnector apiConnector) {
         this.apiConnector = apiConnector;
     }
 
     @Override
-    public String getVerificationCode(String method, List<String> methods, String challengeToken) {
+    public String getToken(String method, List<String> methods, String challengeToken) {
 
         VerificationDialog dialog = new VerificationDialog(method, challengeToken, apiConnector);
         dialog.setVisible(true);
 
-        // TODO close login process without a popup or error window
         if (!dialog.isConfirmed()) {
             throw new CancelException("2FA cancelled");
         }
 
-        String code = dialog.getCode();
-        // TODO any validation?
-        return code;
+        return dialog.getToken();
     }
 
     private static class VerificationDialog extends JDialog {
@@ -60,24 +59,24 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
         private final JLabel instructionsLabel = new JLabel();
         private final JLabel errorLabel = new JLabel();
 
+        private final ApiConnector apiConnector;
+
         private boolean confirmed;
+        private String token;
 
         VerificationDialog(String method, String challengeToken, ApiConnector apiConnector) {
-            super(
-                null,
-                "Enter verification code",
-                Dialog.ModalityType.APPLICATION_MODAL
-            );
+            super(null, "Enter verification code", Dialog.ModalityType.APPLICATION_MODAL);
+            this.apiConnector = apiConnector;
 
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            createUi(method, challengeToken, apiConnector);
+            createUi(method, challengeToken);
 
             pack();
             setMinimumSize(new Dimension(0, 0));
             setLocationRelativeTo(null);
         }
 
-        private void createUi(String method, String challengeToken, ApiConnector apiConnector) {
+        private void createUi(String method, String challengeToken) {
 
             methodLabel.setAlignmentX(CENTER_ALIGNMENT);
             instructionsLabel.setAlignmentX(CENTER_ALIGNMENT);
@@ -104,20 +103,15 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
                 resendButton.addActionListener(e -> {
                     try {
                         apiConnector.resendVerificationCode(challengeToken, method);
-                        errorLabel.setForeground(Color.GREEN);
-                        errorLabel.setText("Verification code sent");
+                        setInfoMessage("Verification code sent");
                     } catch (Exception ex) {
                         logger.error("Error calling API", ex);
-                        if (ex instanceof ApiException) {
-                            errorLabel.setText(((ApiException) ex).getError());
-                        } else {
-                            // TODO handle messages that are too long and don't fit a Label
-                            errorLabel.setText(ex.getMessage());
-                        }
+                        String message = ex instanceof ApiException ? ((ApiException) ex).getError() : ex.getMessage();
+                        setErrorMessage(message);
                     }
                 });
             } else {
-                // TODO implement support for other with a visitor or subclasses for each method
+                // TODO implement support for others with a visitor or subclasses for each method
             }
 
             JPanel inputPanel = new JPanel();
@@ -151,54 +145,52 @@ public class PopUpVerificationCodeSupplier implements VerificationCodeSupplier {
                     return;
                 }
 
-                confirmed = true;
-                dispose();
-            });
+                this.token = getToken(method, codeField.getText(), challengeToken);
+                if (token != null) {
+                    confirmed = true;
+                    dispose();
+                }
 
+            });
 
             cancelButton.addActionListener(event -> {
                 confirmed = false;
                 dispose();
             });
+        }
 
-            codeField.addActionListener(event -> {
-                okButton.doClick();
-            });
-
-            codeField.getDocument().addDocumentListener(
-                new DocumentListener() {
-
-                    private void updateError() {
-                        if (!codeField.getText().trim().isEmpty()) {
-                            errorLabel.setText("");
-                            pack();
-                        }
-                    }
-
-                    @Override
-                    public void insertUpdate(DocumentEvent event) {
-                        updateError();
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent event) {
-                        updateError();
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent event) {
-                        updateError();
-                    }
+        private String getToken(String method, String code, String challengeToken) {
+            try {
+                return apiConnector.twoFactorAuthentication(method, code, challengeToken);
+            } catch (ApiException ex) {
+                String error = ex.getError();
+                if (!isEmpty(error)) {
+                    setErrorMessage(error);
                 }
-            );
+                return null;
+            }
         }
 
         boolean isConfirmed() {
             return confirmed;
         }
 
-        String getCode() {
+        private String getCode() {
             return codeField.getText().trim();
+        }
+
+        void setErrorMessage(String message) {
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText(message);
+        }
+
+        void setInfoMessage(String message) {
+            errorLabel.setForeground(Color.DARK_GRAY);
+            errorLabel.setText(message);
+        }
+
+        String getToken() {
+            return token;
         }
     }
 

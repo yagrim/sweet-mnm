@@ -73,9 +73,9 @@ class ApiConnectorTest {
                     .thenReturn(new ApiResponse(200, Map.of("status", 0L, "token", "123.456.789")));
             }
 
-            ApiConnection connection = apiConnector.login(username, password, new VerificationCodeSupplier() {
+            ApiConnection connection = apiConnector.login(username, password, new TokenSupplier() {
                 @Override
-                public String getVerificationCode(String method, List<String> methods, String challengeToken) {
+                public String getToken(String method, List<String> methods, String challengeToken) {
                     assertThat(method).isEqualTo("email");
                     assertThat(methods).containsExactly("email");
                     assertThat(challengeToken).isEqualTo("my-challenge-token");
@@ -104,6 +104,69 @@ class ApiConnectorTest {
             assertThat(t)
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("API Error: 200 {code=something_else, status=6}");
+        }
+
+        @Test
+        void should_get_2fa_token() {
+            final String method = "email";
+            final String code = "123456";
+            final String challengeToken = "12345678";
+            final String testToken = TestUtils.validToken();
+
+            if (mock) {
+                Mockito.when(restConnector.post(Mockito.eq("account/login/2fa"), anyMap()))
+                    .thenReturn(new ApiResponse(200, Map.of(
+                        "status", 0L,
+                        "token", testToken
+                    )));
+            }
+
+            String token = apiConnector.twoFactorAuthentication(method, code, challengeToken);
+
+            assertThat(token).isEqualTo(testToken);
+        }
+
+        @Test
+        void should_handle_2fa_http_status_error() {
+            final String method = "email";
+            final String code = "123456";
+            final String challengeToken = "12345678";
+
+            if (mock) {
+                Mockito.when(restConnector.post(Mockito.eq("account/login/2fa"), anyMap()))
+                    .thenReturn(new ApiResponse(429, Map.of(
+                        "error", "Too many sign-in attempts",
+                        "message", "Rate limit exceeded."
+                    )));
+            }
+
+            Throwable t = catchThrowable(() -> apiConnector.twoFactorAuthentication(method, code, challengeToken));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("API Error: 429 {error=Too many sign-in attempts, message=Rate limit exceeded.}");
+        }
+
+        @Test
+        void should_handle_2fa_api_status_error() {
+            final String method = "email";
+            final String code = "123456";
+            final String challengeToken = "12345678";
+
+            if (mock) {
+                Mockito.when(restConnector.post(Mockito.eq("account/login/2fa"), anyMap()))
+                    .thenReturn(new ApiResponse(200, Map.of(
+                        "error", "Invalid verification code. Please try again.",
+                        "code", "two_factor_invalid",
+                        "status", 6L
+                    )));
+            }
+
+            Throwable t = catchThrowable(() -> apiConnector.twoFactorAuthentication(method, code, challengeToken));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("API Error: 200 {code=two_factor_invalid, error=Invalid verification code. Please try again., status=6}");
         }
 
     }

@@ -3,16 +3,11 @@ package org.mnm.api;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static org.mnm.api.ApiHelper.exception;
 import static org.mnm.api.ApiHelper.parseLoginResponse;
 import static org.mnm.api.ApiHelper.parseResponse;
 
 public class ApiConnector {
-
-    private static final Logger logger = LoggerFactory.getLogger(ApiConnector.class);
 
     private final RestClient restClient;
 
@@ -22,7 +17,7 @@ public class ApiConnector {
         this.restClient = restConnector;
     }
 
-    public ApiConnection login(String username, String password, VerificationCodeSupplier verificationCodeSupplier) {
+    public ApiConnection login(String username, String password, TokenSupplier verificationCodeSupplier) {
         ApiResponse httpResponse = restClient.post("account/login", Map.of(
             "email", username,
             "password", password,
@@ -48,23 +43,11 @@ public class ApiConnector {
         return new ApiConnection(new ApiSession(token), restClient);
     }
 
-    private String handleTwoFactorAuthentication(ApiResponse response, VerificationCodeSupplier verificationCodeSupplier) {
+    private String handleTwoFactorAuthentication(ApiResponse response, TokenSupplier tokenSupplier) {
         String method = response.get("method");
         List<String> methods = response.getList("methods");
         String challengeToken = response.get("challenge_token").toString();
-
-        String verificationCode = verificationCodeSupplier.getVerificationCode(method, methods, challengeToken);
-        return verifyTwoFactorAuthentication(verificationCode, method, challengeToken);
-    }
-
-    private String verifyTwoFactorAuthentication(String code, String method, String challengeToken) {
-        ApiResponse httpResponse = restClient.post("account/login/2fa", Map.of(
-            "challenge_token", challengeToken,
-            "method", method,
-            "code", code
-        ));
-        // TODO custom handling of errors for better UX
-        return parseResponse(httpResponse).get("token");
+        return tokenSupplier.getToken(method, methods, challengeToken);
     }
 
     public ApiConnection login(String token) {
@@ -75,5 +58,15 @@ public class ApiConnector {
         ApiResponse response = restClient.post("account/login/2fa/" + method, Map.of("challenge_token", challengeToken));
         // Beware! Success is reported as status=6
         parseLoginResponse(response);
+    }
+
+    public String twoFactorAuthentication(String method, String code, String challengeToken) {
+        ApiResponse response = restClient.post("account/login/2fa", Map.of(
+            "method", method,
+            "code", code,
+            "challenge_token", challengeToken
+        ));
+
+        return parseResponse(response).get("token");
     }
 }

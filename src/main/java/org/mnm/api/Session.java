@@ -3,7 +3,7 @@ package org.mnm.api;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.mnm.gui.PopUpVerificationCodeSupplier;
+import org.mnm.gui.PopUpTwoFactorTokenSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class Session {
 
         ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
 
-        VerificationCodeSupplier verificationCodeSupplier = new PopUpVerificationCodeSupplier(apiConnector);
+        TokenSupplier verificationCodeSupplier = new PopUpTwoFactorTokenSupplier(apiConnector);
         ApiConnection connection = apiConnector.login(username, password, verificationCodeSupplier);
 
         return buildSession(connection);

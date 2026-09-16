@@ -1,8 +1,5 @@
 package org.mnm.api;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +39,6 @@ class ApiHelper {
     }
 
     static RuntimeException exception(ApiResponse response) {
-
         throw new ApiException(response);
     }
 
