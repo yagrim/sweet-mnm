@@ -17,7 +17,7 @@ public class ApiConnector {
         this.restClient = restConnector;
     }
 
-    public ApiConnection login(String username, String password, TokenSupplier verificationCodeSupplier) {
+    public ApiConnection login(String username, String password, TokenSupplier tokenSupplier) {
         ApiResponse httpResponse = restClient.post("account/login", Map.of(
             "email", username,
             "password", password,
@@ -30,7 +30,7 @@ public class ApiConnector {
         if (status == 6) {
             String code = response.getCode();
             if ("two_factor_required".equals(code)) {
-                token = handleTwoFactorAuthentication(response, verificationCodeSupplier);
+                token = handleTwoFactorAuthentication(response, tokenSupplier);
             } else {
                 throw exception(httpResponse);
             }

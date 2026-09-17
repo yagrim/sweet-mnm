@@ -10,7 +10,9 @@ import org.mnm.api.ApiConnector;
 import org.mnm.api.RestClient;
 import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
+import org.mnm.cli.CliTwoFactorTokenSupplier;
 import org.mnm.cli.Command;
+import org.mnm.cli.LineReader;
 import org.mnm.config.ConfigDb;
 
 import static org.mnm.config.Environment.API_BASE_URL;
@@ -34,8 +36,7 @@ public class LoginCommand implements Command {
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
             ApiConnector apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
-            TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector);
-
+            TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, new LineReader());
 
             String slug = new LoginService(configDb, apiConnector)
                 .login(credentials.username(), credentials.password(), getWorkDir(), tokenSupplier);

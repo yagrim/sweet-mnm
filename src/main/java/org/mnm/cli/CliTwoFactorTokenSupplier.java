@@ -1,4 +1,4 @@
-package org.mnm.client;
+package org.mnm.cli;
 
 import java.util.List;
 import java.util.Scanner;
@@ -15,9 +15,11 @@ public class CliTwoFactorTokenSupplier implements TokenSupplier {
     private static final Logger logger = LoggerFactory.getLogger(CliTwoFactorTokenSupplier.class);
 
     private final ApiConnector apiConnector;
+    private final LineReader lineReader;
 
-    public CliTwoFactorTokenSupplier(ApiConnector apiConnector) {
+    public CliTwoFactorTokenSupplier(ApiConnector apiConnector, LineReader lineReader) {
         this.apiConnector = apiConnector;
+        this.lineReader = lineReader;
     }
 
     @Override
@@ -27,7 +29,7 @@ public class CliTwoFactorTokenSupplier implements TokenSupplier {
             logger.info("Authentication method: {}", method);
             System.out.println(Messages.TwoFactorAuthentication.EMAIL_INSTRUCTIONS);
             System.out.print("Code: ");
-            String line = readLine();
+            String line = lineReader.readLine();
             String token = apiConnector.twoFactorAuthentication(method, line, challengeToken);
             System.out.println("Successfully authenticated");
             return token;
@@ -37,11 +39,4 @@ public class CliTwoFactorTokenSupplier implements TokenSupplier {
     }
 
 
-    private String readLine() {
-        Scanner s = new Scanner(System.in);
-        String line = s.nextLine().trim();
-
-        s.close();
-        return line;
-    }
 }

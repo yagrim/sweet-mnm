@@ -2,7 +2,15 @@ package org.mnm;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.mnm.tools.FileUtils.readFromClasspathAsArray;
 
 public class ApiServerStubs {
@@ -18,9 +26,7 @@ public class ApiServerStubs {
         stubFor(post(urlEqualTo("/account/login"))
             .willReturn(ResponseDefinitionBuilder.responseDefinition()
                 .withStatus(200)
-                .withBody("""
-                    {"status": 0, "token": "%s"}
-                    """.formatted(token))));
+                .withBody(token(token))));
     }
 
     public static void stubGameVersions() {
@@ -85,4 +91,49 @@ public class ApiServerStubs {
                 .withBody(chunk)));
     }
 
+    public static void stubTwoFactorAuthentication(String method, String challengeToken, String code, String token) {
+        stubFor(post(urlEqualTo("/account/login/2fa"))
+            .withRequestBody(matchingJsonPath("$.challenge_token", equalTo(challengeToken)))
+            .withRequestBody(matchingJsonPath("$.code", equalTo(code)))
+            .withRequestBody(matchingJsonPath("$.method", equalTo(method)))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withBody(token(token))));
+    }
+
+    private static String token(String token) {
+        return "{\"status\": 0, \"token\": \"%s\"}".formatted(token);
+    }
+
+    public static void stubTooManyRequests(String method, String challengeToken, String code) {
+        stubFor(post(urlEqualTo("/account/login/2fa"))
+            .withRequestBody(matchingJsonPath("$.challenge_token", equalTo(challengeToken)))
+            .withRequestBody(matchingJsonPath("$.code", equalTo(code)))
+            .withRequestBody(matchingJsonPath("$.method", equalTo(method)))
+            .willReturn(aResponse()
+                .withStatus(429)
+                .withBody("""
+                    {
+                        "error":"Too many attempts. Wait a minute and try again.",
+                        "code":"two_factor_rate_limited",
+                        "status":6
+                    }
+                    """)));
+    }
+
+    public static void stubInvalidCode(String method, String challengeToken, String code) {
+        stubFor(post(urlEqualTo("/account/login/2fa"))
+            .withRequestBody(matchingJsonPath("$.challenge_token", equalTo(challengeToken)))
+            .withRequestBody(matchingJsonPath("$.code", equalTo(code)))
+            .withRequestBody(matchingJsonPath("$.method", equalTo(method)))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withBody("""
+                    {
+                        "error":"Invalid verification code. Please try again.",
+                        "code":"two_factor_rate_limited",
+                        "status":6
+                    }
+                    """)));
+    }
 }
