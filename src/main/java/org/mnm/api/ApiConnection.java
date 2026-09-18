@@ -3,10 +3,8 @@ package org.mnm.api;
 import java.util.List;
 import java.util.Map;
 
-import org.mnm.api.RestClient.HttpJsonResponse;
-
-import static org.mnm.api.HttpHelper.exception;
-import static org.mnm.api.HttpHelper.parseResponse;
+import static org.mnm.api.ApiHelper.exception;
+import static org.mnm.api.ApiHelper.parseResponse;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ApiConnection {
@@ -25,16 +23,15 @@ public class ApiConnection {
 
     void isTokenValid() {
         Map<String, Object> headers = Map.of("Authorization", session.token());
-        HttpJsonResponse response = restClient.get("account/me", headers);
+        ApiResponse response = restClient.get("account/me", headers);
         parseResponse(response);
     }
 
     public List<GameInfo> getGamesInfo() {
         Map<String, Object> headers = Map.of("Authorization", session.token());
-        HttpJsonResponse response = restClient.get("account/games", headers);
-        Map<String, Object> responseMap = parseResponse(response);
+        var response = parseResponse(restClient.get("account/games", headers));
 
-        Map<String, Object> games = (Map<String, Object>) responseMap.get("games");
+        Map<String, Object> games = response.getObject("games");
 
         return games.entrySet().stream()
             .map(entry -> {
@@ -52,7 +49,7 @@ public class ApiConnection {
     }
 
     public List<GameVersion> getGamesVersions() {
-        HttpJsonResponse response = restClient.get("game/versions?token=" + session.token());
+        ApiResponse response = restClient.get("game/versions?token=" + session.token());
         if (response.statusCode() != 200) {
             exception(response);
         }

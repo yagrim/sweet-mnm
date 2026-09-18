@@ -25,17 +25,13 @@ public class Session {
         this.token = token;
     }
 
-    public static Session login(String username, String password, String baseUrl) {
+    public static Session login(String username, String password, ApiConnector apiConnector, TokenSupplier tokenSupplier) {
         logger.info("Authenticating with account: {}", mask(username));
         if (isEmpty(username) || isEmpty(password)) {
             panic("Username or password is empty");
         }
-        if (isEmpty(baseUrl)) {
-            panic("Base URL is empty");
-        }
 
-        ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-        ApiConnection connection = apiConnector.login(username, password);
+        ApiConnection connection = apiConnector.login(username, password, tokenSupplier);
 
         return buildSession(connection);
     }

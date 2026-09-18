@@ -7,7 +7,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.api.ApiConnector;
 import org.mnm.api.Session;
+import org.mnm.api.TokenSupplier;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
@@ -21,15 +23,17 @@ public class LoginService {
     private final Logger logger = LoggerFactory.getLogger(LoginService.class);
 
     private final ConfigDb configDb;
+    private final ApiConnector apiConnector;
 
-    public LoginService(ConfigDb configDb) {
+    public LoginService(ConfigDb configDb, ApiConnector apiConnector) {
         this.configDb = configDb;
+        this.apiConnector = apiConnector;
     }
 
     public String login(String username, String password,
-                        Path workDir, String apiBaseUrl) {
+                        Path workDir, TokenSupplier tokenSupplier) {
 
-        final Session session = Session.login(username, password, apiBaseUrl);
+        final Session session = Session.login(username, password, apiConnector, tokenSupplier);
         final Client client = configDb.getClient(session.getSlug());
         return updateClientAndToken(session, client, workDir, null).slug();
     }

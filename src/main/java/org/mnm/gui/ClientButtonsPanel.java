@@ -157,9 +157,13 @@ class ClientButtonsPanel extends JPanel
                 }
             }
         } catch (Exception e) {
-            logger.error("", e);
-            showErrorMessageDialogSync("Error: " + e.getMessage());
-            eventHandler.refresh(clientStatus);
+            if (!(e instanceof CancelException)) {
+                logger.error("", e);
+                showErrorMessageDialogSync("Error: " + e.getMessage());
+                eventHandler.refresh(clientStatus);
+            } else {
+                logger.debug("Cancel detected: {}", e.getMessage());
+            }
         }
 
         eventHandler.refresh(clientStatus);
