@@ -1,11 +1,9 @@
 package org.mnm.gui;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.WindowEvent;
@@ -17,6 +15,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.api.ApiConnector;
+import org.mnm.api.RestClient;
+import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
@@ -36,14 +37,12 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
-import static javax.swing.SwingConstants.CENTER;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
 import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.gui.ClientStatus.getClientStatus;
 import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
-import static org.mnm.gui.Style.SCALE;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -93,6 +92,9 @@ public class GuiCommand implements Command {
     private final LoginAction loginAction;
     private final LogoutAction logoutAction;
 
+    private final ApiConnector apiConnector;
+    private final TokenSupplier tokenSupplier;
+
     private JFrame frame;
 
     public GuiCommand() {
@@ -108,6 +110,9 @@ public class GuiCommand implements Command {
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
         this.postInitAction = this::postInitializeSwing;
+
+        this.apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
+        this.tokenSupplier = new PopUpTwoFactorTokenSupplier(apiConnector);
     }
 
     @Override
@@ -222,21 +227,23 @@ public class GuiCommand implements Command {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
-    private static ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, Client.Status status, boolean inMemoryHashing) {
+    private ClientStatus repairClient(Supplier<Path> configDbLocator, String slug, Client.Status status, boolean inMemoryHashing) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
             final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
-            new ClientInstaller(configDb)
-                .install(options, getWorkDir(), API_BASE_URL, status);
+
+            new ClientInstaller(configDb, apiConnector)
+                .install(options, getWorkDir(), API_BASE_URL, status, tokenSupplier);
 
             return buildClientStatus(configDb, slug);
         }
     }
 
-    private static ClientStatus login(Supplier<Path> configDbLocator, String username, String password) {
+    private ClientStatus login(Supplier<Path> configDbLocator, String username, String password) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            String slug = new LoginService(configDb)
-                .login(username, password, getWorkDir(), API_BASE_URL);
+
+            String slug = new LoginService(configDb, apiConnector)
+                .login(username, password, getWorkDir(), tokenSupplier);
 
             return buildClientStatus(configDb, slug);
         }

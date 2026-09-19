@@ -5,6 +5,8 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -19,7 +21,11 @@ class SessionTest {
         stubAccountLogin();
         stubGameVersions();
 
-        Session session = Session.login("username", "password", wiremock.getHttpBaseUrl());
+        String httpBaseUrl = wiremock.getHttpBaseUrl();
+        ApiConnector apiConnector = new ApiConnector(new RestClient(httpBaseUrl));
+        TestTokenSupplier tokenSupplier = new TestTokenSupplier();
+
+        Session session = Session.login("username", "password", apiConnector, tokenSupplier);
 
         assertThat(session).isNotNull();
         assertThat(session.getSlug()).isEqualTo("mnm");
@@ -35,10 +41,22 @@ class SessionTest {
                     {"status":4, "error": "Incorrect Email/Password"}
                     """)));
 
-        Throwable t = catchThrowable(() -> Session.login("username", "password", wiremock.getHttpBaseUrl()));
+        String httpBaseUrl = wiremock.getHttpBaseUrl();
+        ApiConnector apiConnector = new ApiConnector(new RestClient(httpBaseUrl));
+        TestTokenSupplier tokenSupplier = new TestTokenSupplier();
+
+        Throwable t = catchThrowable(() -> Session.login("username", "password", apiConnector, tokenSupplier));
 
         assertThat(t)
             .isInstanceOf(RuntimeException.class)
-            .hasMessage("Response error: 200, {status=4, error=Incorrect Email/Password}");
+            .hasMessage("API Error: 200 {error=Incorrect Email/Password, status=4}");
+    }
+
+    class TestTokenSupplier implements TokenSupplier {
+
+        @Override
+        public String getToken(String method, List<String> methods, String challengeToken) {
+            return "";
+        }
     }
 }
