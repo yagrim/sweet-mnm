@@ -91,7 +91,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
             uiScalingSelector.addItem(i);
         }
-        uiScalingSelector.setToolTipText("UI scaling");
         uiScalingSelector.setSelectedItem(readUiScaling(settingsStore));
         // triggers only when value changes
         uiScalingSelector.addItemListener(evt -> {
