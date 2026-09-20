@@ -82,6 +82,13 @@
       ]
     },
     {
+      "type": "javax.swing.Popup$HeavyWeightWindow",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "com.sun.crypto.provider.AESCipher$General",
       "methods": [
         {
