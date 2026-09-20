@@ -112,6 +112,7 @@ graalvmNative {
         '--initialize-at-run-time=sun.font.FontDesignMetrics',
         '--initialize-at-run-time=sun.font.PlatformFontInfo',
         '--initialize-at-build-time=org.mnm.config.Environment',
+        '-march=x86-64-v1',
         '-Dsweet_native=true',
         '-R:MaxHeapSize=2304m'
       )
