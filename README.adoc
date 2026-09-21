@@ -10,6 +10,9 @@ endif::[]
 
 Alternative Launcher for https://monstersandmemories.com/[Monsters and Memories] game.
 
+NOTE: If you are looking for macOS help, that is the place -> https://github.com/seathasky/MnM-on-Mac
+
+
 == Motivation
 
 The current https://account.monstersandmemories.com/launcher[official launcher] does not play nice with Linux.
