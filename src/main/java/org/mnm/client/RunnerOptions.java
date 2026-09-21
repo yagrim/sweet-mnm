@@ -3,11 +3,17 @@ package org.mnm.client;
 import org.mnm.cli.Arguments;
 import org.mnm.config.SettingsStore;
 
+import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
+import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
+import static org.mnm.config.SettingsStore.UMU_GAMEID;
+import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
+import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
+import static org.mnm.config.SettingsStore.UMU_WINEPREFIX;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 /**
- * Records to pass paramaters to {@see Client}
+ * Records to pass parameters to {@see Client}.
  */
 public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionCheck, LinuxOptions linuxOptions) {
 
@@ -17,15 +23,22 @@ public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionChe
     public record UmuOptions(String gameId, String protonPath, String winePrefix) {
     }
 
-    public static RunnerOptions parse(Arguments args) {
+    public static RunnerOptions parse(Arguments args, SettingsStore settingsStore) {
         return new RunnerOptions(
             args.get("slug"),
             parseTokenId(args.get("id")),
             args.getBoolean("skip-version-check"),
-            // TODO add cli arg for useClientAsPrefix
+            // TODO add cli arg for UMU and useClientAsPrefix
             new LinuxOptions(args.getBoolean("enable-mangohud"), true,
-                new UmuOptions(SettingsStore.DEFAULT_UMU_GAMEID, SettingsStore.DEFAULT_UMU_PROTONPATH, null))
-        );
+                new UmuOptions(
+                    settingsStore.get(UMU_GAMEID, DEFAULT_UMU_GAMEID),
+                    settingsStore.get(UMU_PROTONPATH, DEFAULT_UMU_PROTONPATH),
+                    getWinePrefix(settingsStore))));
+    }
+
+    private static String getWinePrefix(SettingsStore settingsStore) {
+        boolean useClientAsPrefix = settingsStore.getBoolean(UMU_USE_CLIENT_AS_PREFIX, true);
+        return useClientAsPrefix ? null : settingsStore.get(UMU_WINEPREFIX, null);
     }
 
     private static Integer parseTokenId(String tokenId) {

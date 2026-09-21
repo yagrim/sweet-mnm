@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.ConfigDbSettingsStore;
+import org.mnm.config.SettingsStore;
 
 public class RunCommand implements Command {
 
@@ -24,8 +26,10 @@ public class RunCommand implements Command {
 
     @Override
     public void run(Arguments args) {
+        // TODO rework how we handle DB access, in this point we are opening it twice
         try (ConfigDb configDb = ConfigDb.open(configFileLocator.get())) {
-            runner.accept(RunnerOptions.parse(args), configDb);
+            SettingsStore settingsStore = new ConfigDbSettingsStore(configFileLocator);
+            runner.accept(RunnerOptions.parse(args, settingsStore), configDb);
         }
     }
 
