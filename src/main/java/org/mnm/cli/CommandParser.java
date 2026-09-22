@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.mnm.client.ClientRunner;
 import org.mnm.client.ClientsCommand;
 import org.mnm.client.InstallCommand;
 import org.mnm.client.LoginCommand;
@@ -12,7 +13,9 @@ import org.mnm.client.RepairCommand;
 import org.mnm.client.RunCommand;
 import org.mnm.client.TokenCommand;
 import org.mnm.client.TokensCommand;
+import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
+import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.Environment;
 import org.mnm.launcher.LauncherLoginCommand;
 import org.mnm.gui.GuiCommand;

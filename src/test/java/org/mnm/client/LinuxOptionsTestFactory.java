@@ -13,8 +13,7 @@ public class LinuxOptionsTestFactory {
     }
 
     public static LinuxOptions linuxOptions(boolean mangoHud) {
-        return new LinuxOptions(mangoHud, true,
-            new UmuOptions(DEFAULT_UMU_GAMEID, DEFAULT_UMU_PROTONPATH, null));
+        return new LinuxOptions(mangoHud, true, umuOptions());
     }
 
     public static LinuxOptions linuxOptions(boolean useClientAsPrefix, UmuOptions umuOptions) {
@@ -23,5 +22,9 @@ public class LinuxOptionsTestFactory {
 
     public static LinuxOptions linuxOptions(UmuOptions umuOptions) {
         return linuxOptions(true, umuOptions);
+    }
+
+    public static UmuOptions umuOptions() {
+        return new UmuOptions(DEFAULT_UMU_GAMEID, DEFAULT_UMU_PROTONPATH, null);
     }
 }
