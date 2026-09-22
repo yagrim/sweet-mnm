@@ -5,6 +5,8 @@ import org.mnm.config.SettingsStore;
 
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
+import static org.mnm.config.SettingsStore.DEFAULT_UMU_USE_CLIENT_AS_PREFIX;
+import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
 import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
@@ -24,20 +26,30 @@ public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionChe
     }
 
     public static RunnerOptions parse(Arguments args, SettingsStore settingsStore) {
+        boolean useClientAsPrefix = settingsStore.getBoolean(UMU_USE_CLIENT_AS_PREFIX, DEFAULT_UMU_USE_CLIENT_AS_PREFIX);
+        boolean mangoHud = getMangoHud(args, settingsStore);
+
         return new RunnerOptions(
             args.get("slug"),
             parseTokenId(args.get("id")),
             args.getBoolean("skip-version-check"),
             // TODO add cli arg for UMU and useClientAsPrefix
-            new LinuxOptions(args.getBoolean("enable-mangohud"), true,
+
+            new LinuxOptions(mangoHud, useClientAsPrefix,
                 new UmuOptions(
                     settingsStore.get(UMU_GAMEID, DEFAULT_UMU_GAMEID),
                     settingsStore.get(UMU_PROTONPATH, DEFAULT_UMU_PROTONPATH),
-                    getWinePrefix(settingsStore))));
+                    getWinePrefix(useClientAsPrefix, settingsStore))));
     }
 
-    private static String getWinePrefix(SettingsStore settingsStore) {
-        boolean useClientAsPrefix = settingsStore.getBoolean(UMU_USE_CLIENT_AS_PREFIX, true);
+    private static boolean getMangoHud(Arguments args, SettingsStore settingsStore) {
+        if (args.contains("enable-mangohud")) {
+            return args.getBoolean("enable-mangohud");
+        }
+        return settingsStore.getBoolean(MANGOHUD_KEY, false);
+    }
+
+    private static String getWinePrefix(boolean useClientAsPrefix, SettingsStore settingsStore) {
         return useClientAsPrefix ? null : settingsStore.get(UMU_WINEPREFIX, null);
     }
 

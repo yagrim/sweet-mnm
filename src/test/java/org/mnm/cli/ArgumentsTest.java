@@ -106,4 +106,22 @@ class ArgumentsTest {
 
         assertThat(parsed.getInt("age", 99)).isEqualTo(99);
     }
+
+    @Test
+    void returnsContainsTrueIfPresent() {
+        String[] args = {"--age", "notANumber"};
+
+        Arguments parsed = Arguments.parse(args);
+
+        assertThat(parsed.contains("age")).isTrue();
+    }
+
+    @Test
+    void returnsContainsFalseIfNotPresent() {
+        String[] args = {"--age", "notANumber"};
+
+        Arguments parsed = Arguments.parse(args);
+
+        assertThat(parsed.contains("name")).isFalse();
+    }
 }

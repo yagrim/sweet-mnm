@@ -70,4 +70,7 @@ public class Arguments {
         return getBoolean("help");
     }
 
+    public boolean contains(String key) {
+        return argsMap.containsKey(key);
+    }
 }

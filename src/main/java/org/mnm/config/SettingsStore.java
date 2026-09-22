@@ -16,6 +16,7 @@ public interface SettingsStore {
     String DEFAULT_UMU_PROTONPATH = "GE-Proton";
 
     String UMU_USE_CLIENT_AS_PREFIX = "linux.umu.use-client-as-prefix";
+    boolean DEFAULT_UMU_USE_CLIENT_AS_PREFIX = true;
     String UMU_WINEPREFIX = "linux.umu.wineprefix";
 
     // To avoid popups in testing
