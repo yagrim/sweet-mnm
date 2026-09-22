@@ -8,6 +8,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.Component;
 import java.awt.Container;
@@ -67,14 +68,14 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         debugOption = new CheckboxOption("Enable debug", settingsStore, DEBUG_KEY, false);
         if (debugOption.isSelected()) {
-            LoggerHandler.setDebug(true);
+            SwingUtilities.invokeLater(() -> {
+                LoggerHandler.setDebug(true);
+                initConsoleWindow(true);
+            });
         }
         debugOption.addActionListener(_ -> {
             boolean selected = debugOption.isSelected();
-            if (selected && NATIVE_IMAGE && OS.isWindows()) {
-                ConsoleAllocator.allocConsole();
-            }
-            LoggerHandler.setDebug(selected);
+            initConsoleWindow(selected);
             settingsStore.putBoolean(DEBUG_KEY, selected);
         });
 
@@ -122,6 +123,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         // post-init
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private static void initConsoleWindow(boolean selected) {
+        if (selected && NATIVE_IMAGE && OS.isWindows()) {
+            ConsoleAllocator.allocConsole();
+        }
+        LoggerHandler.setDebug(selected);
     }
 
     @Override
