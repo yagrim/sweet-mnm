@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.util.StringUtils;
 
 import static org.mnm.tools.StringUtils.join;
 
@@ -64,6 +63,9 @@ public class ProcessUtils {
                 return stdout;
             }
         } catch (IOException e) {
+            if (isCommandNotFound(e)) {
+                throw new CommandNotFound(command[0], e);
+            }
             throw new RuntimeException("Process failed: " + join(command), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -102,4 +104,27 @@ public class ProcessUtils {
         }
     }
 
+    private static boolean isCommandNotFound(IOException e) {
+        Throwable current = e;
+        while (current != null) {
+            String msg = current.getMessage();
+            if (msg != null) {
+                String m = msg.toLowerCase();
+                if (isLinux(m) || isWindows(m)) return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isWindows(String m) {
+        return m.contains("createprocess error=2")
+            || m.contains("createprocess error=3")
+            || m.contains("cannot find the file specified");
+    }
+
+    private static boolean isLinux(String m) {
+        return m.contains("error=2")
+            || m.contains("no such file or directory");
+    }
 }

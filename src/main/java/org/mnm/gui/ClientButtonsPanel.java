@@ -17,6 +17,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
+import org.mnm.tools.CommandNotFound;
 
 import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
@@ -193,11 +194,36 @@ class ClientButtonsPanel extends JPanel
                 ClientStatus repair1 = repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean());
                 return new Tuple(repair1, progressWindow);
             })
-            .whenComplete((tuple, _) -> SwingUtilities.invokeLater(() -> {
-                ClientEventHandler.getInstance().repairDone(tuple.clientStatus());
+            .whenComplete((tuple, error) -> SwingUtilities.invokeLater(() -> {
+                Throwable candidate = findKnownException(error);
+                if (candidate == null) {
+                    ClientEventHandler.getInstance().repairDone(tuple.clientStatus());
+                } else {
+                    if (candidate instanceof CommandNotFound) {
+                        MessageDialog.showErrorMessageDialogSync("""
+                            Required tool not found: %s.
+                            Try setting "In-memory hashing" in options. 
+                            """.formatted(candidate.getMessage()));
+                    } else {
+                        MessageDialog.showErrorMessageDialogSync("Error: " + error.getMessage());
+                    }
+                    ClientEventHandler.getInstance().repairDone(clientStatus);
+                    progressWindow.close();
+                }
             }));
 
         progressWindow.setVisible(true);
+    }
+
+    private Throwable findKnownException(Throwable error) {
+        Throwable cause = error;
+        while (cause != null) {
+            if (cause instanceof CommandNotFound) {
+                return cause;
+            }
+            cause = error.getCause();
+        }
+        return error;
     }
 
     record Tuple(ClientStatus clientStatus, ProgressBarWindow dialog) {
