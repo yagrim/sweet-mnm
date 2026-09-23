@@ -12,6 +12,9 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.util.StringUtils;
+
+import static org.mnm.tools.StringUtils.join;
 
 public class ProcessUtils {
 
@@ -61,10 +64,10 @@ public class ProcessUtils {
                 return stdout;
             }
         } catch (IOException e) {
-            throw new RuntimeException("Process failed for: " + workingDirectory, e);
+            throw new RuntimeException("Process failed: " + join(command), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Process failed for: " + workingDirectory, e);
+            throw new RuntimeException("Process failed: " + join(command), e);
         }
     }
 
