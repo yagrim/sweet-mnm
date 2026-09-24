@@ -14,8 +14,6 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.FilesValidationListener;
 import org.mnm.events.RepairFilesListener;
 
-import static org.mnm.gui.Style.BASE_FONT_SIZE;
-
 public class DualProgressPanel extends JPanel
     implements FilesValidationListener, RepairFilesListener {
 
@@ -86,7 +84,7 @@ public class DualProgressPanel extends JPanel
             this.label = createLabel(labelText);
         }
 
-        private static JProgressBar createProgressBar(Color fill,  float uiScaling) {
+        private static JProgressBar createProgressBar(Color fill, float uiScaling) {
             JProgressBar bar = new JProgressBar(0, 100);
             bar.setValue(0);
             bar.setStringPainted(true);
