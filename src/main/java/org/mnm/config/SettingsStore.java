@@ -8,6 +8,8 @@ public interface SettingsStore {
     String IN_MEMORY_HASHING_KEY = "in-memory-hashing";
     String OPTIONS_FONT_SCALING_KEY = "ui.scaling";
 
+    String HIDE_CREDENTIALS = "ui.hide-credentials";
+
     String MANGOHUD_KEY = "linux.mangohud";
 
     String UMU_GAMEID = "linux.umu.gameid";

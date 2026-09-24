@@ -32,6 +32,7 @@ import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
 import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
+import static org.mnm.config.SettingsStore.HIDE_CREDENTIALS;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
@@ -45,6 +46,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
+    private final JCheckBox hideCredentials;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
@@ -84,6 +86,9 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         clearCache.addActionListener(_ -> handleClearCache(parent, clearCache));
 
+        hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
+        hideCredentials.setToolTipText("aka. Streamer mode");
+
         deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
@@ -109,11 +114,10 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         uiScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         this.add(debugOption);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(inMemoryHashingOption);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(clearCache);
         this.add(Box.createVerticalStrut(SCALE));
+        this.add(hideCredentials);
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(uiScalingPanel);

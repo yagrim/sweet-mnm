@@ -11,22 +11,29 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+import org.mnm.config.SettingsStore;
+
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class CredentialsPanel {
 
     private final CredentialsHandler credentialsHandler;
+    private final SettingsStore settingsStore;
 
     private final JPanel panel;
-    private final JTextField username;
+    private final JPasswordField username;
     private final JPasswordField password;
     private final JCheckBox storeCredentials;
 
     // TODO Simplify this Grid
-    CredentialsPanel(CredentialsHandler credentialsHandler) {
+    CredentialsPanel(CredentialsHandler credentialsHandler, SettingsStore settingsStore) {
         this.credentialsHandler = credentialsHandler;
+        this.settingsStore = settingsStore;
 
-        final JTextField emailField = new JTextField(20);
+        final JPasswordField emailField = new JPasswordField(20);
+        if (!settingsStore.getBoolean(SettingsStore.HIDE_CREDENTIALS, false)) {
+            emailField.setEchoChar((char) 0);
+        }
         final JPasswordField passwordField = new JPasswordField(20);
         final JCheckBox storeCredentialsOption = new JCheckBox("Remember login information");
         storeCredentialsOption.setToolTipText("WARNING: Password will be saved locally, use this at your own risk");

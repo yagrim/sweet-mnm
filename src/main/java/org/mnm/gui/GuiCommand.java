@@ -185,7 +185,7 @@ public class GuiCommand implements Command {
                 this.frame = new JFrame("Sweet GUI");
 
                 final var optionsPanel = new OptionsPanel(settingsStore, credentialsHandler);
-                final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), credentialsHandler, uiScaling);
+                final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), credentialsHandler, settingsStore, uiScaling);
                 final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(), uiScaling);
 
                 final MainTabs tabs = new MainTabs(settingsStore, clientPanel, optionsPanel);
