@@ -5,7 +5,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -48,7 +47,6 @@ public class PlayPanel extends JPanel
         Supplier<RunnerOptions> optionsSupplier,
         float uiScaling) {
 
-//        super(new FlowLayout(FlowLayout.CENTER, 0, 0));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(2 * SCALE, 0, 0, 0));
 
@@ -63,19 +61,7 @@ public class PlayPanel extends JPanel
             }
         });
         this.add(play);
-
-        JPanel versionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        versionPanel.setBorder(BorderFactory.createEmptyBorder(0, SCALE, SCALE, SCALE));
-
-        VersionDetails version = Environment.versionDetails();
-        String text = "Sweet v%s (%s)".formatted(version.version(), version.gitSha());
-
-        JLabel versionLabel = new JLabel(text);
-        versionLabel.setForeground(Color.GRAY);
-        GuiComponents.setFontSize(versionLabel, (float) (BASE_FONT_SIZE * 0.9 * uiScaling));
-        versionPanel.add(versionLabel);
-
-        this.add(versionPanel);
+        this.add(new VersionPanel(uiScaling));
 
         ClientEventHandler.getInstance().register(this);
     }
@@ -85,6 +71,29 @@ public class PlayPanel extends JPanel
         button.setEnabled(false);
         setFontSize(button, ACTION_BUTTON_FONT_SIZE * uiScaling);
         return button;
+    }
+
+    static class VersionPanel extends JPanel {
+
+        private final JLabel label;
+
+        VersionPanel(float uiScaling) {
+            super(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            this.setBorder(BorderFactory.createEmptyBorder(0, SCALE, SCALE, SCALE));
+
+            VersionDetails version = Environment.versionDetails();
+            String text = "Sweet v%s (%s)".formatted(version.version(), version.gitSha());
+
+            this.label = new JLabel(text);
+            label.setForeground(Color.GRAY);
+            GuiComponents.setFontSize(label, (float) (BASE_FONT_SIZE * 0.9 * uiScaling));
+            this.add(label);
+        }
+
+        String getText() {
+            return label.getText();
+        }
+
     }
 
     @Override
