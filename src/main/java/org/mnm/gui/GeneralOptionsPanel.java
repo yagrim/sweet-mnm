@@ -35,6 +35,7 @@ import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
+import static org.mnm.gui.CredentialsHandler.HIDE_CREDENTIALS;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.SCALE;
 
@@ -45,6 +46,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
+    private final JCheckBox hideCredentials;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
@@ -84,7 +86,10 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         clearCache.addActionListener(_ -> handleClearCache(parent, clearCache));
 
-        deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
+        hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
+        hideCredentials.setToolTipText("aka. Streamer mode");
+
+        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
         for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
@@ -109,11 +114,10 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         uiScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         this.add(debugOption);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(inMemoryHashingOption);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(clearCache);
         this.add(Box.createVerticalStrut(SCALE));
+        this.add(hideCredentials);
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(uiScalingPanel);
@@ -152,7 +156,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-        deleteCredentials.setEnabled(credentialsHandler.getStoreCredentials());
+        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
     }
 
     boolean isInMemoryHashing() {

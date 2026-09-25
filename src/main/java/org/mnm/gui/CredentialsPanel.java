@@ -18,7 +18,7 @@ class CredentialsPanel {
     private final CredentialsHandler credentialsHandler;
 
     private final JPanel panel;
-    private final JTextField username;
+    private final JPasswordField username;
     private final JPasswordField password;
     private final JCheckBox storeCredentials;
 
@@ -26,7 +26,10 @@ class CredentialsPanel {
     CredentialsPanel(CredentialsHandler credentialsHandler) {
         this.credentialsHandler = credentialsHandler;
 
-        final JTextField emailField = new JTextField(20);
+        final JPasswordField emailField = new JPasswordField(20);
+        if (!credentialsHandler.isHideCredentials()) {
+            emailField.setEchoChar((char) 0);
+        }
         final JPasswordField passwordField = new JPasswordField(20);
         final JCheckBox storeCredentialsOption = new JCheckBox("Remember login information");
         storeCredentialsOption.setToolTipText("WARNING: Password will be saved locally, use this at your own risk");
@@ -81,7 +84,7 @@ class CredentialsPanel {
         if (storedPassword != null) {
             passwordField.setText(storedPassword);
         }
-        storeCredentialsOption.setSelected(credentialsHandler.getStoreCredentials());
+        storeCredentialsOption.setSelected(credentialsHandler.isStoreCredentials());
     }
 
     public String getUsername() {

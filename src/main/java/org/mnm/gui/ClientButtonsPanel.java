@@ -61,6 +61,7 @@ class ClientButtonsPanel extends JPanel
         login = createButton("Refresh", uiScaling);
         logout = createButton("Logout", uiScaling);
         this.credentialsHandler = credentialsHandler;
+
         this.uiScaling = uiScaling;
 
         this.add(login);
@@ -120,7 +121,7 @@ class ClientButtonsPanel extends JPanel
         install.setEnabled(validToken && toInstall);
         repair.setEnabled(validToken && !toInstall);
 
-        refreshToken = validToken && credentialsHandler.getStoreCredentials();
+        refreshToken = validToken && credentialsHandler.isStoreCredentials();
         login.setEnabled(refreshToken || !validToken);
         setLoginText(refreshToken ? "Refresh" : "Login");
         setToolTip(refreshToken ? "Regenerate token with stored credentials" : "Obtain a new token");
