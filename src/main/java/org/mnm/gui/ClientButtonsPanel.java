@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Client;
-import org.mnm.config.SettingsStore;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
@@ -41,7 +40,6 @@ class ClientButtonsPanel extends JPanel
     private final JButton login;
     private final JButton logout;
     private final CredentialsHandler credentialsHandler;
-    private final SettingsStore settingsStore;
     // Store the original one to avoid size changes when uses modifies values before restart
     private final float uiScaling;
 
@@ -54,7 +52,6 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
         CredentialsHandler credentialsHandler,
-        SettingsStore settingsStore,
         float uiScaling) {
 
         super(new GridLayout(1, 2, SCALE, 0));
@@ -64,7 +61,7 @@ class ClientButtonsPanel extends JPanel
         login = createButton("Refresh", uiScaling);
         logout = createButton("Logout", uiScaling);
         this.credentialsHandler = credentialsHandler;
-        this.settingsStore = settingsStore;
+
         this.uiScaling = uiScaling;
 
         this.add(login);
@@ -153,7 +150,7 @@ class ClientButtonsPanel extends JPanel
                 final ClientStatus client = loginAction.login(credentialsHandler.getEmail(), credentialsHandler.getPassword());
                 eventHandler.loginDone(client);
             } else {
-                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler, settingsStore);
+                final CredentialsPanel credentialsPanel = new CredentialsPanel(credentialsHandler);
                 final int result = credentialsPanel.show(parent);
                 if (result == JOptionPane.OK_OPTION && !isEmpty(credentialsPanel.getUsername()) && !isEmpty(credentialsPanel.getPassword())) {
                     final ClientStatus client = loginAction.login(credentialsPanel.getUsername(), credentialsPanel.getPassword());

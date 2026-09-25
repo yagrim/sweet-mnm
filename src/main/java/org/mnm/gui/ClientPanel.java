@@ -1,7 +1,5 @@
 package org.mnm.gui;
 
-import org.mnm.config.SettingsStore;
-
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -21,11 +19,10 @@ class ClientPanel extends JPanel {
                 GuiCommand.LogoutAction logoutAction,
                 GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
                 CredentialsHandler credentialsHandler,
-                SettingsStore settingsStore,
                 float uiScaling) {
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 15, 20));
 
-        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, settingsStore, uiScaling);
+        this.clientButtons = new ClientButtonsPanel(mainWindow, loginAction, logoutAction, repairAction, inMemoryHashing, credentialsHandler, uiScaling);
         this.infoPanel = new InfoPanel(clientButtons.getPreferredSize().width, Math.round(SCALE * 6 * uiScaling), this.getBackground(), uiScaling);
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

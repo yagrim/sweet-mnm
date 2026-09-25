@@ -11,14 +11,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import org.mnm.config.SettingsStore;
-
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class CredentialsPanel {
 
     private final CredentialsHandler credentialsHandler;
-    private final SettingsStore settingsStore;
 
     private final JPanel panel;
     private final JPasswordField username;
@@ -26,12 +23,11 @@ class CredentialsPanel {
     private final JCheckBox storeCredentials;
 
     // TODO Simplify this Grid
-    CredentialsPanel(CredentialsHandler credentialsHandler, SettingsStore settingsStore) {
+    CredentialsPanel(CredentialsHandler credentialsHandler) {
         this.credentialsHandler = credentialsHandler;
-        this.settingsStore = settingsStore;
 
         final JPasswordField emailField = new JPasswordField(20);
-        if (!settingsStore.getBoolean(SettingsStore.HIDE_CREDENTIALS, false)) {
+        if (!credentialsHandler.isHideCredentials()) {
             emailField.setEchoChar((char) 0);
         }
         final JPasswordField passwordField = new JPasswordField(20);

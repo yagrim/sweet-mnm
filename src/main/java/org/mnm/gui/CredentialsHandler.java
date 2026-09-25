@@ -40,6 +40,10 @@ public class CredentialsHandler {
         settingsStore.putBoolean(STORE_CREDENTIALS_KEY, value);
     }
 
+    public boolean isHideCredentials() {
+        return settingsStore.getBoolean(SettingsStore.HIDE_CREDENTIALS, false);
+    }
+
     public String getEmail() {
         return settingsStore.get(EMAIL_KEY);
     }
