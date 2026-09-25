@@ -185,7 +185,7 @@ class ClientButtonsHandlerTest {
     }
 
     private ClientButtonsPanel initComponents(boolean storeCredentials) {
-        SettingsStore settingsStore = new SettingsStore() {
+        var handler = new ClientButtonsPanel(null, null, null, null, null, new CredentialsHandler(new SettingsStore() {
             @Override
             public String get(String key) {
                 return storeCredentials && key.equals("user.store-credentials") ? "true" : null;
@@ -198,9 +198,7 @@ class ClientButtonsHandlerTest {
             @Override
             public void delete(String key) {
             }
-        };
-        CredentialsHandler credentialsHandler = new CredentialsHandler(settingsStore);
-        var handler = new ClientButtonsPanel(null, null, null, null, null, credentialsHandler, 1f);
+        }), 1f);
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         login = getButton(handler, "login");

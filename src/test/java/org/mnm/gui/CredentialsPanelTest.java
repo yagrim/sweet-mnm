@@ -17,10 +17,9 @@ class CredentialsPanelTest {
 
     @Test
     void shouldRestoreStoredCredentials() {
-        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
-            EMAIL_KEY, "user@example.com",
-            PASSWORD_KEY, "secret"));
-        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(new InMemorySettingsStore(Map.of(
+            InMemorySettingsStore.EMAIL_KEY, "user@example.com",
+            InMemorySettingsStore.PASSWORD_KEY, "secret"))));
 
         assertThat(credentialsPanel.getUsername()).isEqualTo("user@example.com");
         assertThat(credentialsPanel.getPassword()).isEqualTo("secret");
@@ -28,7 +27,8 @@ class CredentialsPanelTest {
 
     @Test
     void shouldRestoreStoreCredentialsOption() {
-        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(STORE_CREDENTIALS_KEY, "true"));
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
+            STORE_CREDENTIALS_KEY, "true"));
         CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
 
         JCheckBox checkbox = (JCheckBox) get(credentialsPanel, "storeCredentials");
@@ -70,8 +70,7 @@ class CredentialsPanelTest {
 
     @Test
     void shouldLeaveCredentialsEmptyWhenNotStored() {
-        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
-        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(settings));
+        CredentialsPanel credentialsPanel = new CredentialsPanel(new CredentialsHandler(new InMemorySettingsStore(Map.of())));
 
         assertThat(credentialsPanel.getUsername()).isEmpty();
         assertThat(credentialsPanel.getPassword()).isEmpty();
