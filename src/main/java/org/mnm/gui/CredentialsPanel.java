@@ -84,7 +84,7 @@ class CredentialsPanel {
         if (storedPassword != null) {
             passwordField.setText(storedPassword);
         }
-        storeCredentialsOption.setSelected(credentialsHandler.getStoreCredentials());
+        storeCredentialsOption.setSelected(credentialsHandler.isStoreCredentials());
     }
 
     public String getUsername() {

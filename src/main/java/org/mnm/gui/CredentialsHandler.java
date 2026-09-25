@@ -9,9 +9,11 @@ public class CredentialsHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CredentialsHandler.class);
 
-    private static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
-    private static final String EMAIL_KEY = "user.email";
-    private static final String PASSWORD_KEY = "user.password";
+    static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
+    static final String EMAIL_KEY = "user.email";
+    static final String PASSWORD_KEY = "user.password";
+
+    static final String HIDE_CREDENTIALS = "ui.hide-credentials";
 
     private final SettingsStore settingsStore;
 
@@ -41,7 +43,7 @@ public class CredentialsHandler {
     }
 
     public boolean isHideCredentials() {
-        return settingsStore.getBoolean(SettingsStore.HIDE_CREDENTIALS, false);
+        return settingsStore.getBoolean(HIDE_CREDENTIALS, false);
     }
 
     public String getEmail() {
@@ -52,7 +54,7 @@ public class CredentialsHandler {
         return settingsStore.get(PASSWORD_KEY);
     }
 
-    public boolean getStoreCredentials() {
+    public boolean isStoreCredentials() {
         return settingsStore.getBoolean(STORE_CREDENTIALS_KEY, false);
     }
 }

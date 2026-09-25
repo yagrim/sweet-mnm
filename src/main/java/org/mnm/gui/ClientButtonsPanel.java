@@ -121,7 +121,7 @@ class ClientButtonsPanel extends JPanel
         install.setEnabled(validToken && toInstall);
         repair.setEnabled(validToken && !toInstall);
 
-        refreshToken = validToken && credentialsHandler.getStoreCredentials();
+        refreshToken = validToken && credentialsHandler.isStoreCredentials();
         login.setEnabled(refreshToken || !validToken);
         setLoginText(refreshToken ? "Refresh" : "Login");
         setToolTip(refreshToken ? "Regenerate token with stored credentials" : "Obtain a new token");
