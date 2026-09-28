@@ -222,7 +222,7 @@ class ClientButtonsPanel extends JPanel
             if (cause instanceof CommandNotFound) {
                 return cause;
             }
-            cause = error.getCause();
+            cause = cause.getCause();
         }
         return error;
     }
