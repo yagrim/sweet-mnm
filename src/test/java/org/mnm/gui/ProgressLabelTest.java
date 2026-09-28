@@ -7,7 +7,7 @@ import java.awt.Color;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.mnm.gui.DualProgressPanel.ProgressLabel;
+import org.mnm.gui.DualProgressPanel.ProgressPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,12 +16,12 @@ class ProgressLabelTest {
     private JLabel label;
     private JProgressBar bar;
 
-    private ProgressLabel progressLabel;
+    private ProgressPanel progressLabel;
 
     @BeforeEach
     void setUp() {
         final Color color = new Color(229, 145, 75);
-        progressLabel = new ProgressLabel("Test label", color, 1f);
+        progressLabel = new ProgressPanel("Test label", color, color, 1f);
         label = ReflectionTestTools.getLabel(progressLabel, "label");
         bar = ReflectionTestTools.getProgressBar(progressLabel, "bar");
     }
