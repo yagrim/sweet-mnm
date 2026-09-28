@@ -6,8 +6,9 @@ import java.util.Set;
 
 import org.mnm.gui.ClientStatus;
 
-public class ClientEventHandler
-    implements LoginListener, RepairListener, Refreshable, FilesValidationListener, RepairFilesListener {
+public class ClientEventHandler implements
+    LoginListener, RepairListener, Refreshable, FilesValidationListener, RepairFilesListener,
+    InstallationListener {
 
     private static final ClientEventHandler instance = new ClientEventHandler();
 
@@ -25,6 +26,10 @@ public class ClientEventHandler
 
     public void register(EventListener listener) {
         listeners.add(listener);
+    }
+
+    public void clear() {
+        listeners.clear();
     }
 
     @Override
@@ -97,8 +102,10 @@ public class ClientEventHandler
             .forEach(listener -> ((RepairFilesListener) listener).fileInstalled());
     }
 
-    public void clear() {
-        listeners.clear();
+    @Override
+    public void pause() {
+        listeners.stream()
+            .filter(l -> l instanceof InstallationListener)
+            .forEach(listener -> ((InstallationListener) listener).pause());
     }
-
 }

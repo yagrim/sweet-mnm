@@ -21,7 +21,9 @@ import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 
+import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
+import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.gui.MessageDialog.showInfoMessageDialogSync;
 import static org.mnm.gui.Style.INFO_PANEL_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
@@ -91,11 +93,17 @@ public class InfoPanel extends JPanel
 
     @Override
     public void repairDone(ClientStatus client) {
-        this.updateText("""
-            Client is up-to-date
-            Token expires at: %s""".formatted(client.expiresAt()));
+        if (client.statusIs(INSTALLING) || client.statusIs(REPAIRING)) {
+            this.updateText("""
+                Client update aborted
+                Token expires at: %s""".formatted(client.expiresAt()));
+        } else {
+            this.updateText("""
+                Client is up-to-date
+                Token expires at: %s""".formatted(client.expiresAt()));
 
-        updateVersion(client);
+            updateVersion(client);
+        }
     }
 
     @Override
