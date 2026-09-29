@@ -1,7 +1,5 @@
 package org.mnm.gui;
 
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
 import java.awt.Color;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,14 +9,13 @@ import org.mockito.Mockito;
 import org.mnm.events.ClientEventHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 class DualProgressPanelTest {
 
-    private DualProgressPanel.ProgressLabel progressLabel1;
-    private DualProgressPanel.ProgressLabel progressLabel2;
+    private DualProgressPanel.ProgressPanel progressLabel1;
+    private DualProgressPanel.ProgressPanel progressLabel2;
 
     private DualProgressPanel panel;
 
@@ -60,10 +57,9 @@ class DualProgressPanelTest {
         verifyNoInteractions(progressLabel1);
     }
 
-    private static DualProgressPanel.ProgressLabel mockProgressLabel() {
-        DualProgressPanel.ProgressLabel mock = mock(DualProgressPanel.ProgressLabel.class);
-        Mockito.when(mock.getLabel()).thenReturn(new JLabel("Test label"));
-        Mockito.when(mock.getBar()).thenReturn(new JProgressBar());
+    private static DualProgressPanel.ProgressPanel mockProgressLabel() {
+        DualProgressPanel.ProgressPanel progressLabel = new DualProgressPanel.ProgressPanel("Test label", Color.GREEN, Color.GRAY, 1f);
+        DualProgressPanel.ProgressPanel mock = Mockito.spy(progressLabel);
         return mock;
     }
 

@@ -1,7 +1,6 @@
 package org.mnm.gui;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -14,19 +13,21 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.FilesValidationListener;
 import org.mnm.events.RepairFilesListener;
 
+import static org.mnm.gui.Style.SCALE;
+
 public class DualProgressPanel extends JPanel
     implements FilesValidationListener, RepairFilesListener {
 
-    private final ProgressLabel progressLabel1;
-    private final ProgressLabel progressLabel2;
+    private final ProgressPanel progressLabel1;
+    private final ProgressPanel progressLabel2;
 
     public DualProgressPanel(String labelText1, String labelText2, Color backgroundColor, float uiScaling) {
-        this(new ProgressLabel(labelText1, new Color(70, 130, 220), uiScaling),
-            new ProgressLabel(labelText2, new Color(70, 190, 140), uiScaling),
+        this(new ProgressPanel(labelText1, new Color(70, 130, 220), backgroundColor, uiScaling),
+            new ProgressPanel(labelText2, new Color(70, 190, 140), backgroundColor, uiScaling),
             backgroundColor);
     }
 
-    DualProgressPanel(ProgressLabel progressLabel1, ProgressLabel progressLabel2, Color backgroundColor) {
+    DualProgressPanel(ProgressPanel progressLabel1, ProgressPanel progressLabel2, Color backgroundColor) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         setBackground(backgroundColor);
@@ -34,15 +35,8 @@ public class DualProgressPanel extends JPanel
         this.progressLabel1 = progressLabel1;
         this.progressLabel2 = progressLabel2;
 
-        add(progressLabel1.getLabel());
-        add(Box.createVerticalStrut(6));
-        add(progressLabel1.getBar());
-
-        add(Box.createVerticalStrut(20));
-
-        add(progressLabel2.getLabel());
-        add(Box.createVerticalStrut(6));
-        add(progressLabel2.getBar());
+        add(progressLabel1);
+        add(progressLabel2);
 
         ClientEventHandler.getInstance().register(this);
     }
@@ -72,16 +66,23 @@ public class DualProgressPanel extends JPanel
         progressLabel2.increment();
     }
 
-    static final class ProgressLabel {
+    static final class ProgressPanel extends JPanel {
 
         private final JLabel label;
         private final JProgressBar bar;
         private final String labelText;
 
-        ProgressLabel(String labelText, Color barColor, float uiScaling) {
+        ProgressPanel(String labelText, Color barColor, Color backgroundColor, float uiScaling) {
+            this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            this.setBackground(backgroundColor);
+            this.setBorder(BorderFactory.createEmptyBorder(SCALE, SCALE, SCALE, SCALE));
+
             this.labelText = labelText;
             this.bar = createProgressBar(barColor, uiScaling);
             this.label = createLabel(labelText);
+
+            this.add(label);
+            this.add(bar);
         }
 
         private static JProgressBar createProgressBar(Color fill, float uiScaling) {
