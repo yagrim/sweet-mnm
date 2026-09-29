@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
 import org.mnm.events.ClientEventHandler;
+import org.mnm.events.InstallationListener;
 import org.mnm.manifest.Manifest;
 import org.mnm.tools.Downloader;
 import org.mnm.tools.FileUtils;
@@ -46,10 +48,32 @@ public class ClientInstaller {
 
     private final ConfigDb configDb;
     private final ApiConnector apiConnector;
+    private final ClientEventHandler eventHandler;
+    private final InstallationMonitor installationMonitor = new InstallationMonitor();
+
+    private final FileHelper fileHelper = new FileHelper();
+
+    class InstallationMonitor implements InstallationListener {
+
+        private final AtomicBoolean active = new AtomicBoolean(true);
+
+        @Override
+        public void pause() {
+            synchronized (active) {
+                active.set(!active.get());
+            }
+        }
+
+        public boolean isActive() {
+            return active.get();
+        }
+    }
 
     public ClientInstaller(ConfigDb configDb, ApiConnector apiConnector) {
         this.configDb = configDb;
         this.apiConnector = apiConnector;
+        this.eventHandler = ClientEventHandler.getInstance();
+        eventHandler.register(installationMonitor);
     }
 
     public InstallationResult install(InstallerOptions options,
@@ -96,7 +120,6 @@ public class ClientInstaller {
 
         final List<Manifest.File> files = session.getManifestHandler(installation.getDownloadsPath()).getFiles();
 
-        final ClientEventHandler eventHandler = ClientEventHandler.getInstance();
         eventHandler.validationStart(files.size());
 
         for (int i = 0; i < files.size(); i++) {
@@ -132,22 +155,28 @@ public class ClientInstaller {
 
         // Actual installation
         eventHandler.filesToInstall(invalid.size() + missing.size());
+
         if (!invalid.isEmpty()) {
-            installFiles(invalid, session, installation, options, eventHandler);
+            installFiles(invalid, session, installation, options);
         }
         if (!missing.isEmpty()) {
-            installFiles(missing, session, installation, options, eventHandler);
+            installFiles(missing, session, installation, options);
         }
-        if (!currentFiles.isEmpty()) {
-            currentFiles.forEach(path -> path.toFile().delete());
+        if (installationMonitor.isActive()) {
+            if (!currentFiles.isEmpty()) {
+                currentFiles.forEach(path -> path.toFile().delete());
+            }
+
+            configDb.updateClient(slug, session.getVersion(), UPDATED);
+            logger.info("Installation completed");
+        } else {
+            configDb.updateClient(slug, session.getVersion(), status);
+            logger.info("Installation stopped. Current status: {}", status);
         }
-
-        configDb.updateClient(slug, session.getVersion(), UPDATED);
-        logger.info("Installation completed");
-
         // Force to clean memory
         System.gc();
 
+        // TODO we don't use the result: remove or update with only rework when we separate downloading from extracting
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
     }
 
@@ -185,24 +214,33 @@ public class ClientInstaller {
     }
 
     // We could have async workers to download and extract in parallel
-    private static void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options, ClientEventHandler eventHandler) {
+    private void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options) {
         for (Manifest.File file : files) {
-            FileHelper.downloadChunks(file, session.getChunksUrl(), installation);
-            FileHelper.extract(file, installation, options.fileCheck());
+            fileHelper.downloadChunks(file, session.getChunksUrl(), installation);
+            if (!installationMonitor.isActive()) break;
+
+            fileHelper.extract(file, installation, options.fileCheck());
             eventHandler.fileInstalled();
         }
     }
 
-    static class FileHelper {
+    private class FileHelper {
 
-        private static void downloadChunks(Manifest.File file, String chunksUrl, Installation installation) {
+        private void downloadChunks(Manifest.File file, String chunksUrl, Installation installation) {
             for (Manifest.Bundle bundle : file.getBundlesList()) {
+                if (!installationMonitor.isActive()) {
+                    logger.debug("Installation stopped");
+                    break;
+                }
+
                 final String bundleName = bundle.bundleCrc() + ".bin";
                 final Path downloadPath = installation.getBundlePath(bundleName);
-                logger.info("Downloading bundle: {}", downloadPath.toAbsolutePath());
 
                 if (!fileExists(downloadPath)) {
+                    logger.info("Downloading bundle: {}", downloadPath.toAbsolutePath());
                     Downloader.downloadFile(buildUrl(chunksUrl, bundleName).toString(), downloadPath);
+                } else {
+                    logger.info("Retrieved bundle from cache: {}", downloadPath.toAbsolutePath());
                 }
 
                 String crc = compact(HashFunctions.InMemory.crc64(downloadPath));
@@ -213,7 +251,7 @@ public class ClientInstaller {
         }
 
         // manifest JSON returns crc's with missing 0's on the left side
-        public static String compact(String input) {
+        public String compact(String input) {
             int i = 0;
             while (i < input.length() - 1 && input.charAt(i) == '0') {
                 i++;
@@ -221,7 +259,7 @@ public class ClientInstaller {
             return input.substring(i);
         }
 
-        private static void extract(Manifest.File file, Installation installation, InstallerOptions.FileCheck fileCheck) {
+        private void extract(Manifest.File file, Installation installation, InstallerOptions.FileCheck fileCheck) {
             final Path destination = installation.getInstallPath(file.path());
             FileUtils.createDirectories(destination);
 

@@ -23,19 +23,25 @@ public class ProgressBarWindow extends JDialog
     private static final Color backgroundColor = new Color(220, 220, 220);
 
     private final DualProgressPanel panel;
+    private final JButton stopBtn;
     private final JButton closeBtn;
+
+    private final ClientEventHandler eventHandler;
 
     public ProgressBarWindow(Frame owner, String label1, String label2, float uiScaling) {
         super(owner, "Progress", true); // true = modal
         panel = new DualProgressPanel(label1, label2, backgroundColor, uiScaling);
 
+        stopBtn = new JButton("Stop");
         closeBtn = new JButton("Close");
-        closeBtn.setEnabled(false);
+        initButtons();
+        stopBtn.addActionListener(e -> pause());
         closeBtn.addActionListener(e -> close());
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
         footer.setBackground(backgroundColor);
         footer.add(new JSeparator(), BorderLayout.NORTH);
+        footer.add(stopBtn);
         footer.add(closeBtn);
 
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -46,11 +52,17 @@ public class ProgressBarWindow extends JDialog
         setSize((int) (owner.getWidth() * 0.9), getHeight());
         setLocationRelativeTo(owner);
 
-        ClientEventHandler.getInstance().register(this);
+        eventHandler = ClientEventHandler.getInstance();
+        eventHandler.register(this);
     }
 
     public void resetProgress() {
         panel.resetProgress();
+    }
+
+    public void pause() {
+        eventHandler.pause();
+        initButtons();
     }
 
     public void close() {
@@ -59,10 +71,17 @@ public class ProgressBarWindow extends JDialog
 
     @Override
     public void repairStart() {
+        initButtons();
+    }
+
+    private void initButtons() {
+        stopBtn.setEnabled(true);
+        closeBtn.setEnabled(false);
     }
 
     @Override
     public void repairDone(ClientStatus client) {
+        stopBtn.setEnabled(false);
         closeBtn.setEnabled(true);
     }
 }
