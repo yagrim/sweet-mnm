@@ -185,7 +185,7 @@ class ClientButtonsPanel extends JPanel
         if (status == REPAIRING) {
             progressWindow = new ProgressBarWindow(mainWindow, "Checking installation", "Downloading", "Patching", uiScaling);
         } else {
-            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading", "Installing", uiScaling);
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading", "Extracting", uiScaling);
         }
 
         progressWindow.resetProgress();

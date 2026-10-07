@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -19,7 +20,12 @@ public class Zstd {
         private InMemory() {
         }
 
-        public static void decompress(Path destination, Section... sections) {
+        /**
+         * @param destination     final location of the assembled file.
+         * @param sections        sources to assemble into a single file.
+         * @param sectionCallback callback to run when a section has been processed (yes, hacky solution).
+         */
+        public static void decompress(Path destination, Section[] sections, Consumer<Section> sectionCallback) {
             if (sections.length == 0) {
                 throw new IllegalArgumentException("sections must not be empty");
             }
@@ -30,6 +36,7 @@ public class Zstd {
                     byte[] src = readAllBytes(section.source);
                     com.github.luben.zstd.Zstd.decompress(bytesUncompressed, src);
                     out.write(bytesUncompressed);
+                    sectionCallback.accept(section);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

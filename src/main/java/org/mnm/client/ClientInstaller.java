@@ -237,7 +237,6 @@ public class ClientInstaller {
 
             fileHelper.extract(file, installation, options.fileCheck());
             eventHandler.fileInstalled();
-            eventHandler.dataAssembled(file.totalSize());
         }
     }
 
@@ -292,7 +291,7 @@ public class ClientInstaller {
                 .stream()
                 .map(bundle -> new Zstd.Section(installation.getBundlePath(bundle.resolveName()), bundle.fileSectionLength()))
                 .toArray(Zstd.Section[]::new);
-            Zstd.InMemory.decompress(destination, sections);
+            Zstd.InMemory.decompress(destination, sections, s -> eventHandler.dataAssembled(s.size()));
 
             if (!hasValidCrc(destination, file, fileCheck)) {
                 panic("Could not validate file: " + destination);

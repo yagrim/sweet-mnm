@@ -1,10 +1,13 @@
 package org.mnm.tools;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.tools.FileUtils.humanReadableSize;
@@ -70,6 +73,30 @@ class FileUtilsTest {
             long folderSize = FileUtils.getFolderSize(missingPath);
 
             assertThat(folderSize).isGreaterThan(110000L);
+        }
+    }
+
+    @Nested
+    class DeleteFolder {
+
+        @Test
+        void shouldDeleteAllFolderContents(@TempDir Path tempDir) throws IOException {
+            final Path folder = Files.createDirectory(tempDir.resolve("folder"));
+            final Path nestedFolder1 = Files.createDirectory(folder.resolve("nested-1"));
+            final Path nestedFolder2 = Files.createDirectory(folder.resolve("nested-2"));
+
+            Files.writeString(folder.resolve("file.txt"), "contents");
+            Path nestedFile1 = nestedFolder1.resolve("nested-file.txt");
+            Files.writeString(nestedFile1, "contents");
+            Path nestedFile2 = nestedFolder2.resolve("nested-file.txt");
+            Files.writeString(nestedFile2, "contents");
+
+            assertThat(nestedFile1).exists().isNotEmptyFile();
+            assertThat(nestedFile2).exists().isNotEmptyFile();
+
+            FileUtils.deleteFolder(folder);
+
+            assertThat(folder).exists().isEmptyDirectory();
         }
     }
 
