@@ -28,9 +28,9 @@ public class ProgressBarWindow extends JDialog
 
     private final ClientEventHandler eventHandler;
 
-    public ProgressBarWindow(Frame owner, String label1, String label2, float uiScaling) {
+    public ProgressBarWindow(Frame owner, String label1, String label2, String label3, float uiScaling) {
         super(owner, "Progress", true); // true = modal
-        panel = new DualProgressPanel(label1, label2, backgroundColor, uiScaling);
+        panel = new DualProgressPanel(label1, label2, label3, backgroundColor, uiScaling);
 
         stopBtn = new JButton("Stop");
         closeBtn = new JButton("Close");

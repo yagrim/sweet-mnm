@@ -183,9 +183,9 @@ class ClientButtonsPanel extends JPanel
         ClientEventHandler.getInstance().repairStart();
         ProgressBarWindow progressWindow;
         if (status == REPAIRING) {
-            progressWindow = new ProgressBarWindow(mainWindow, "Validating", "Patching", uiScaling);
+            progressWindow = new ProgressBarWindow(mainWindow, "Checking installation", "Downloading", "Patching", uiScaling);
         } else {
-            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading & Patching", uiScaling);
+            progressWindow = new ProgressBarWindow(mainWindow, "Preparing files", "Downloading", "Installing", uiScaling);
         }
 
         progressWindow.resetProgress();
@@ -196,6 +196,7 @@ class ClientButtonsPanel extends JPanel
                 return new Tuple(repair1, progressWindow);
             })
             .whenComplete((tuple, error) -> SwingUtilities.invokeLater(() -> {
+                logger.debug("", error);
                 Throwable candidate = findKnownException(error);
                 if (candidate == null) {
                     ClientEventHandler.getInstance().repairDone(tuple.clientStatus());

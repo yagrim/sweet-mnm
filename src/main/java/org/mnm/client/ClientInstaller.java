@@ -155,6 +155,8 @@ public class ClientInstaller {
 
         // Actual installation
         eventHandler.filesToInstall(invalid.size() + missing.size());
+        eventHandler.dataToDownload(getTotalDownloadSize(invalid, missing));
+        eventHandler.dataToAssemble(getTotalPatchDataSize(invalid, missing));
 
         if (!invalid.isEmpty()) {
             installFiles(invalid, session, installation, options);
@@ -178,6 +180,20 @@ public class ClientInstaller {
 
         // TODO we don't use the result: remove or update with only rework when we separate downloading from extracting
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
+    }
+
+    private long getTotalDownloadSize(List<Manifest.File> invalid, List<Manifest.File> missing) {
+        return downloadFileSize(invalid) + downloadFileSize(missing);
+    }
+
+    private static long downloadFileSize(List<Manifest.File> files) {
+        return files.stream().mapToLong(Manifest.File::getBundlesSize).sum();
+    }
+
+    private long getTotalPatchDataSize(List<Manifest.File> invalid, List<Manifest.File> missing) {
+        long invalidFilesSize = invalid.stream().mapToLong(Manifest.File::totalSize).sum();
+        long missingFilesSize = missing.stream().mapToLong(Manifest.File::totalSize).sum();
+        return invalidFilesSize + missingFilesSize;
     }
 
     private static boolean hasValidCrc(Path location, Manifest.File file, InstallerOptions.FileCheck fileCheck) {
@@ -221,10 +237,17 @@ public class ClientInstaller {
 
             fileHelper.extract(file, installation, options.fileCheck());
             eventHandler.fileInstalled();
+            eventHandler.dataAssembled(file.totalSize());
         }
     }
 
     private class FileHelper {
+
+        private final ClientEventHandler eventHandler;
+
+        private FileHelper() {
+            this.eventHandler = ClientEventHandler.getInstance();
+        }
 
         private void downloadChunks(Manifest.File file, String chunksUrl, Installation installation) {
             for (Manifest.Bundle bundle : file.getBundlesList()) {
@@ -242,6 +265,7 @@ public class ClientInstaller {
                 } else {
                     logger.info("Retrieved bundle from cache: {}", downloadPath.toAbsolutePath());
                 }
+                eventHandler.dataDownloaded(bundle.bundleLength());
 
                 String crc = compact(HashFunctions.InMemory.crc64(downloadPath));
                 if (!crc.equals(bundle.bundleCrc())) {

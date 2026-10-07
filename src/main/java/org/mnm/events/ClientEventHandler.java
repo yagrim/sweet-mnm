@@ -7,7 +7,9 @@ import java.util.Set;
 import org.mnm.gui.ClientStatus;
 
 public class ClientEventHandler implements
-    LoginListener, RepairListener, Refreshable, FilesValidationListener, RepairFilesListener,
+    LoginListener, RepairListener, Refreshable, FilesValidationListener,
+    RepairFilesListener, AssemblyListener,
+    DownloadListener,
     InstallationListener {
 
     private static final ClientEventHandler instance = new ClientEventHandler();
@@ -100,6 +102,34 @@ public class ClientEventHandler implements
         listeners.stream()
             .filter(l -> l instanceof RepairFilesListener)
             .forEach(listener -> ((RepairFilesListener) listener).fileInstalled());
+    }
+
+    @Override
+    public void dataToDownload(long bytes) {
+        listeners.stream()
+            .filter(l -> l instanceof DownloadListener)
+            .forEach(listener -> ((DownloadListener) listener).dataToDownload(bytes));
+    }
+
+    @Override
+    public void dataDownloaded(long bytes) {
+        listeners.stream()
+            .filter(l -> l instanceof DownloadListener)
+            .forEach(listener -> ((DownloadListener) listener).dataDownloaded(bytes));
+    }
+
+    @Override
+    public void dataToAssemble(long bytes) {
+        listeners.stream()
+            .filter(l -> l instanceof AssemblyListener)
+            .forEach(listener -> ((AssemblyListener) listener).dataToAssemble(bytes));
+    }
+
+    @Override
+    public void dataAssembled(long bytes) {
+        listeners.stream()
+            .filter(l -> l instanceof AssemblyListener)
+            .forEach(listener -> ((AssemblyListener) listener).dataAssembled(bytes));
     }
 
     @Override

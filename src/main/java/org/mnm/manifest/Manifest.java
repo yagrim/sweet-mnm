@@ -18,10 +18,21 @@ public record Manifest(List<File> manifest) {
         /**
          * Size of final file.
          */
-        public int totalSize() {
-            int size = 0;
+        public long totalSize() {
+            long size = 0;
             for (Manifest.Chunk chunk : chunks) {
                 size += chunk.length();
+            }
+            return size;
+        }
+
+        /**
+         * Size of data downloaded.
+         */
+        public long getBundlesSize() {
+            long size = 0;
+            for (Manifest.Bundle bundle : getBundlesList()) {
+                size += bundle.bundleLength();
             }
             return size;
         }
