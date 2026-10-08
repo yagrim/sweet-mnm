@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.gui.DualProgressPanel.FileCounterBar;
-import org.mnm.gui.DualProgressPanel.FileSizeBar;
+import org.mnm.gui.DualProgressPanel.FileDownloadBar;
 import org.mnm.gui.DualProgressPanel.ProgressBarPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,7 +101,7 @@ class ProgressBarPanelTest {
 
         @Override
         ProgressBarPanel createPanel(Color color) {
-            return new FileSizeBar("Test label", color, color, 1f);
+            return new FileDownloadBar("Test label", color, color, 1f);
         }
 
         @Test

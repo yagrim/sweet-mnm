@@ -8,7 +8,7 @@ import org.mockito.Mockito;
 
 import org.mnm.events.ClientEventHandler;
 import org.mnm.gui.DualProgressPanel.FileCounterBar;
-import org.mnm.gui.DualProgressPanel.FileSizeBar;
+import org.mnm.gui.DualProgressPanel.FileDownloadBar;
 import org.mnm.gui.DualProgressPanel.ProgressBarPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,7 +84,7 @@ class DualProgressPanelTest {
     }
 
     private static ProgressBarPanel mockFileDownloadBar(int id) {
-        var bar = new FileSizeBar("Bar " + id, Color.GREEN, Color.GREEN, 1f);
+        var bar = new FileDownloadBar("Bar " + id, Color.GREEN, Color.GREEN, 1f);
         return Mockito.spy(bar);
     }
 
