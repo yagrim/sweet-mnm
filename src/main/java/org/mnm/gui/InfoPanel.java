@@ -108,28 +108,35 @@ public class InfoPanel extends JPanel
 
     @Override
     public void refresh(ClientStatus client) {
+
+        String steamCompatAppId = System.getenv("STEAM_COMPAT_APP_ID");
+        String steamCompatDataPath = System.getenv("STEAM_COMPAT_DATA_PATH");
+
+        String proton = ""+steamCompatAppId+"/"+steamCompatDataPath;
+
         if (client != null && client.client() != null) {
             Client.Status status = client.client().status();
             if (status.isInProgress()) {
                 String message = """
                     Last operation was interrupted: Re-run Install
                     Token expires at: %s""".formatted(client.expiresAt());
-                this.updateText(message);
+                this.updateText(message+proton);
             } else if (client.validToken()) {
                 String message;
                 if (!client.validToken()) {
                     message = "Token expired: run Logout, and then Login";
-                    showInfoMessageDialogSync(message);
+                    showInfoMessageDialogSync(message+proton);
                 } else if (client.statusIs(NEEDS_UPDATE)) {
                     message = "Client update detected: run Repair";
-                    showInfoMessageDialogSync(message);
+                    showInfoMessageDialogSync(message+proton);
                 } else {
                     message = """
                         Client is up-to-date
                         Token expires at: %s""".formatted(client.expiresAt());
                 }
-                this.updateText(message);
+                this.updateText(message+proton);
             }
+
             updateVersion(client);
         } else {
             this.updateText(null);
