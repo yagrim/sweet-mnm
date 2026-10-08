@@ -31,8 +31,8 @@ public class DualProgressPanel extends JPanel
     public DualProgressPanel(String labelText1, String labelText2, String labelText3, Color backgroundColor, float uiScaling) {
         this(
             new FileCounterBar(labelText1, new Color(70, 130, 220), backgroundColor, uiScaling),
-            new FileDownloadBar(labelText2, new Color(130, 105, 200), backgroundColor, uiScaling),
-            new FileAssemblyBar(labelText3, new Color(70, 190, 140), backgroundColor, uiScaling),
+            new FileSizeBar(labelText2, new Color(130, 105, 200), backgroundColor, uiScaling, 1),
+            new FileSizeBar(labelText3, new Color(70, 190, 140), backgroundColor, uiScaling, 2),
             backgroundColor);
     }
 
@@ -183,12 +183,14 @@ public class DualProgressPanel extends JPanel
 
     }
 
-    static class FileDownloadBar extends ProgressBarPanel<Long> {
+    static class FileSizeBar extends ProgressBarPanel<Long> {
 
         long value;
+        private final int progressMultiplier;
 
-        FileDownloadBar(String labelText, Color barColor, Color backgroundColor, float uiScaling) {
+        FileSizeBar(String labelText, Color barColor, Color backgroundColor, float uiScaling, int progressMultiplier) {
             super(labelText, barColor, backgroundColor, uiScaling);
+            this.progressMultiplier = progressMultiplier;
         }
 
         @Override
@@ -197,7 +199,7 @@ public class DualProgressPanel extends JPanel
                 bar.setMaximum(100);
                 bar.setValue(100);
             } else {
-                bar.setMaximum(toMegaBytes(value));
+                bar.setMaximum(toMegaBytes(value * progressMultiplier));
                 bar.setValue(0);
             }
         }
@@ -211,48 +213,8 @@ public class DualProgressPanel extends JPanel
 //                float gigaBytes = megaBytes / 1024;
                 bar.setValue(megaBytes);
             }
-            label.setText("%s... %s of %s %s".formatted(labelTitle, megaBytes, bar.getMaximum(), "MB"));
-        }
-
-        private int toMegaBytes(long bytes) {
-            return Math.toIntExact(bytes / (1024 * 1024));
-        }
-
-        public void reset() {
-            super.reset();
-            this.value = 0;
-        }
-
-    }
-
-    static class FileAssemblyBar extends ProgressBarPanel<Long> {
-
-        long value;
-
-        FileAssemblyBar(String labelText, Color barColor, Color backgroundColor, float uiScaling) {
-            super(labelText, barColor, backgroundColor, uiScaling);
-        }
-
-        @Override
-        void setMaximum(Long value) {
-            if (value == 0) {
-                bar.setMaximum(100);
-                bar.setValue(100);
-            } else {
-                bar.setMaximum(toMegaBytes(value * 2));
-                bar.setValue(0);
-            }
-        }
-
-        @Override
-        void increment(Long amount) {
-            int megaBytes;
-            synchronized (bar) {
-                value += amount;
-                megaBytes = toMegaBytes(value);
-                bar.setValue(megaBytes);
-            }
-            label.setText("%s... %s of %s %s".formatted(labelTitle, megaBytes / 2, bar.getMaximum() / 2, "MB"));
+            label.setText("%s... %s of %s %s".formatted(
+                labelTitle, megaBytes / progressMultiplier, bar.getMaximum() / progressMultiplier, "MB"));
         }
 
         private int toMegaBytes(long bytes) {

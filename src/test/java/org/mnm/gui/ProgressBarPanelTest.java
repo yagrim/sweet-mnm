@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.gui.DualProgressPanel.FileCounterBar;
-import org.mnm.gui.DualProgressPanel.FileDownloadBar;
+import org.mnm.gui.DualProgressPanel.FileSizeBar;
 import org.mnm.gui.DualProgressPanel.ProgressBarPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,7 +101,7 @@ class ProgressBarPanelTest {
 
         @Override
         ProgressBarPanel createPanel(Color color) {
-            return new FileDownloadBar("Test label", color, color, 1f);
+            return new FileSizeBar("Test label", color, color, 1f, 1);
         }
 
         @Test
@@ -131,6 +131,19 @@ class ProgressBarPanelTest {
             progressBar.increment(Long.valueOf(FACTOR * 8));
             assertProgressValues(0, (int) (bytes / FACTOR), 16);
             assertThat(label.getText()).isEqualTo("Test label... 16 of 16 MB");
+        }
+
+        @Test
+        void shouldSupportMultiStepProgress() {
+            progressBar = new FileSizeBar("Test label", Color.GREEN, Color.GREEN, 1f, 2);
+            label = ReflectionTestTools.getField(progressBar, "label", JLabel.class);
+            bar = ReflectionTestTools.getField(progressBar, "bar", JProgressBar.class);
+
+            progressBar.setMaximum(Long.valueOf(FACTOR * 16));
+            progressBar.increment(Long.valueOf(FACTOR * 8));
+
+            assertProgressValues(0, 32, 8);
+            assertThat(label.getText()).isEqualTo("Test label... 4 of 16 MB");
         }
 
         // better to be inaccurate than to crash
