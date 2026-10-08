@@ -18,14 +18,6 @@ class ReflectionTestTools {
         }
     }
 
-    static JLabel getLabel(Object instance, String name) {
-        return (JLabel) get(instance, name);
-    }
-
-    static JProgressBar getProgressBar(Object instance, String name) {
-        return (JProgressBar) get(instance, name);
-    }
-
     static Object get(Object instance, String name) {
         try {
             Field field = instance.getClass().getDeclaredField(name);
@@ -34,5 +26,24 @@ class ReflectionTestTools {
         } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    static <T> T getField(Object instance, String fieldName, Class<T> type) {
+        try {
+            Class<?> clazz = instance.getClass();
+
+            while (clazz != null) {
+                try {
+                    Field field = clazz.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    return (T) field.get(instance);
+                } catch (NoSuchFieldException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 }

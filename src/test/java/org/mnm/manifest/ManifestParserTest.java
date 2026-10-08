@@ -70,7 +70,7 @@ class ManifestParserTest {
             .containsExactly(
                 "data/file1.bin",
                 "abc123",
-                768
+                768L
             );
 
         assertThat(file.bundleCrcs())
