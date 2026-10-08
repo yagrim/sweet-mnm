@@ -26,8 +26,8 @@ class DualProgressPanelTest {
     void setUp() {
         final Color color = new Color(229, 145, 75);
         validationBar = mockFileCounterBar(1);
-        downloadBar = mockFileDownloadBar(2);
-        assemblyBar = mockFileDownloadBar(3);
+        downloadBar = mockFileSizeBar(2, 1);
+        assemblyBar = mockFileSizeBar(3, 2);
         panel = new DualProgressPanel(validationBar, downloadBar, assemblyBar, color);
         assertThat(panel).isNotNull();
 
@@ -83,8 +83,8 @@ class DualProgressPanelTest {
         return Mockito.spy(bar);
     }
 
-    private static ProgressBarPanel mockFileDownloadBar(int id) {
-        var bar = new FileSizeBar("Bar " + id, Color.GREEN, Color.GREEN, 1f);
+    private static ProgressBarPanel mockFileSizeBar(int id, int progressMultiplier) {
+        var bar = new FileSizeBar("Bar " + id, Color.GREEN, Color.GREEN, 1f, progressMultiplier);
         return Mockito.spy(bar);
     }
 

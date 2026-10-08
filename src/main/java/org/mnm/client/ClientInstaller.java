@@ -296,6 +296,7 @@ public class ClientInstaller {
             if (!hasValidCrc(destination, file, fileCheck)) {
                 panic("Could not validate file: " + destination);
             }
+            eventHandler.dataAssembled(file.totalSize());
         }
     }
 
