@@ -30,7 +30,7 @@ import static org.mnm.config.SettingsStore.DEFAULT_UMU_USE_CLIENT_AS_PREFIX;
 import static org.mnm.gui.Style.BASE_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
 
-public class ClientPathPanel extends JPanel
+class ClientPathPanel extends JPanel
     implements Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientPathPanel.class);
@@ -38,7 +38,7 @@ public class ClientPathPanel extends JPanel
     private final SettingsStore settingsStore;
     private final JTextField textArea;
 
-    public ClientPathPanel(SettingsStore settingsStore, Color color, float uiScaling) {
+    ClientPathPanel(SettingsStore settingsStore, Color color, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(2 * SCALE, SCALE, 0, 0));
         this.settingsStore = settingsStore;
