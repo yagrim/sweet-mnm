@@ -3333,6 +3333,34 @@
       "allDeclaredFields": true
     },
     {
+      "type": "java.awt.Desktop$Action",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "sun.awt.X11.XDesktopPeer",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "sun.awt.X11.XRootWindow",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.util.ArrayList",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "sun.java2d.d3d.D3DSurfaceData$1",
       "jniAccessible": true,
       "methods": [

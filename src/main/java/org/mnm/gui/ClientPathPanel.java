@@ -102,6 +102,7 @@ class ClientPathPanel extends JPanel
         ClientPaths clientPaths = new ClientPaths(client, clientAsWinePrefix);
         String gameSettingsPath = clientPaths.getGameSettingsPath();
         textArea.setText(gameSettingsPath);
+        textArea.setToolTipText(gameSettingsPath);
         textArea.setCaretPosition(0);
     }
 
