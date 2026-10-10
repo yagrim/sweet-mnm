@@ -32,15 +32,24 @@ class ClientPaths {
         return winePrefix
             .map(prefix -> {
                 String path = prefix + "/" + gameSettings;
-                return isExists(path) ? path : INSTALLATION_NOT_FOUND_ERROR;
+                return exists(path) ? path : INSTALLATION_NOT_FOUND_ERROR;
             })
             .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
     }
 
-    private boolean isExists(String path) {
+    private boolean exists(String path) {
         Path absolutePath = Path.of(path).normalize().toAbsolutePath();
         logger.debug("Checking if exists {}", absolutePath);
-        return absolutePath.toFile().exists();
+        if (absolutePath.toFile().exists()) {
+            return true;
+        }
+        if (OS.isWindows()) {
+            // Proton hotfix
+            Path zDrivePath = PathUtils.replaceDrive(absolutePath, 'z');
+            logger.debug("Checking if exists {}", zDrivePath);
+            return zDrivePath.toFile().exists();
+        }
+        return false;
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
@@ -55,4 +64,6 @@ class ClientPaths {
             return Optional.of(Environment.getWorkDir().toString());
         }
     }
+
+
 }
