@@ -45,11 +45,22 @@ class ClientPaths {
         }
         if (OS.isWindows()) {
             // Proton hotfix
-            Path zDrivePath = PathUtils.replaceDrive(absolutePath, 'z');
+            Path zDrivePath = protonPath(path);
             logger.debug("Checking if exists {}", zDrivePath);
             return zDrivePath.toFile().exists();
         }
         return false;
+    }
+
+    /**
+     * Returns sanitized Proton Path.
+     */
+    static Path protonPath(String path) {
+        Path absolutePath = Path.of(path).normalize().toAbsolutePath();
+        if (absolutePath.toFile().exists()) {
+            return absolutePath;
+        }
+        return PathUtils.replaceDrive(absolutePath, 'z');
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
@@ -64,6 +75,5 @@ class ClientPaths {
             return Optional.of(Environment.getWorkDir().toString());
         }
     }
-
 
 }
