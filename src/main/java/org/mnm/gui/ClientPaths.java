@@ -1,6 +1,7 @@
 package org.mnm.gui;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.mnm.config.Environment;
@@ -11,8 +12,6 @@ import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
 
 class ClientPaths {
 
-    // TODO before installing the files does not exists
-    // We should check if the file exists and if doesn't: show special message and disable "copy" button
     // Note: Windows 11 stores logs in "AppData/Local", in Proton all in the same path
     private static final String gameSettings = "pfx/drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
 
@@ -29,9 +28,13 @@ class ClientPaths {
         return winePrefix
             .map(prefix -> {
                 String path = prefix + "/" + gameSettings;
-                return new File(path).exists() ? path : INSTALLATION_NOT_FOUND_ERROR;
+                return isExists(path) ? path : INSTALLATION_NOT_FOUND_ERROR;
             })
             .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
+    }
+
+    private static boolean isExists(String path) {
+        return Path.of(path).normalize().toAbsolutePath().toFile().exists();
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
