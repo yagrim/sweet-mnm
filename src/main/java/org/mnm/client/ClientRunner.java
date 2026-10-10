@@ -20,6 +20,8 @@ import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ClientRunner {
 
+    public static final String DEFAULT_MNM_PREFIX = "mnm_prefix";
+
     private final Logger logger = LoggerFactory.getLogger(ClientRunner.class);
 
     private final ConfigDb configDb;
@@ -141,7 +143,7 @@ public class ClientRunner {
 
         String candidateWinePrefixPath;
         if (linuxOptions.useClientAsPrefix() || isEmpty(linuxOptions.umuOptions().winePrefix())) {
-            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve("mnm_prefix").toString();
+            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(DEFAULT_MNM_PREFIX).toString();
         } else {
             String prefix = linuxOptions.umuOptions().winePrefix();
             Path prefixPath = Path.of(prefix);

@@ -86,6 +86,8 @@ jobs:
           xxhsum --version
       - name: Run tests
         shell: bash
+        env:
+          STEAM_COMPAT_DATA_PATH: ${{ runner.os == 'Windows' && 'C:/steam-compat-data' || '' }}
         run: make test
       - name: Native build
         shell: bash
