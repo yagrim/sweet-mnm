@@ -40,7 +40,7 @@ class ClientPathPanel extends JPanel
 
     ClientPathPanel(SettingsStore settingsStore, Color color, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        this.setBorder(BorderFactory.createEmptyBorder(2 * SCALE, SCALE, 0, 0));
+        this.setBorder(BorderFactory.createEmptyBorder(3 * SCALE, SCALE, 0, 0));
         this.settingsStore = settingsStore;
 
         JLabel jlabel = new JLabel("Settings & logs");
@@ -56,6 +56,10 @@ class ClientPathPanel extends JPanel
         copyToClipboard.setToolTipText("Copy to clipboard");
         copyToClipboard.addActionListener(_ -> copyToClipboard(textArea));
 
+        JButton open = new JButton("Open");
+        open.setToolTipText("Open in file explorer");
+        open.addActionListener(_ -> openFileExplorer(textArea));
+
         GuiComponents.setFontSize(jlabel, BASE_FONT_SIZE * uiScaling);
         GuiComponents.setFontSize(textArea, BASE_FONT_SIZE * uiScaling);
 
@@ -64,25 +68,27 @@ class ClientPathPanel extends JPanel
         add(textArea);
         add(Box.createHorizontalStrut(SCALE));
         add(copyToClipboard);
+        add(Box.createHorizontalStrut(SCALE));
+        add(open);
 
         ClientEventHandler.getInstance().register(this);
     }
 
     private void copyToClipboard(JTextComponent textPane) {
-        String text = textPane.getText();
+        final String location = textPane.getText();
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(new StringSelection(text), null);
-        logger.debug("Copied {} characters to clipboard.", text);
-//        openFileExplorer(textArea.getText());
+        clipboard.setContents(new StringSelection(location), null);
+        logger.debug("Copied {} characters to clipboard.", location);
     }
 
     // experimental
-    private void openFileExplorer(String path) {
+    private void openFileExplorer(JTextComponent textPane) {
+        final String location = textPane.getText();
         try {
-            Desktop.getDesktop().open(new File(path));
+            Desktop.getDesktop().open(new File(location));
         } catch (IOException e) {
             try {
-                new ProcessBuilder(OS.isWindows() ? "explorer.exe" : "xdg-open", path).start();
+                new ProcessBuilder(OS.isWindows() ? "explorer.exe" : "xdg-open", location).start();
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
                 throw new RuntimeException(ex);

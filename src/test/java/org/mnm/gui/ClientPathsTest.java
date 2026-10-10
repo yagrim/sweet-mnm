@@ -5,10 +5,11 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.config.Client;
-import org.mnm.config.Environment;
 
+import static java.nio.file.Files.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
 import static org.mnm.config.Client.Status.UPDATED;
@@ -28,23 +29,24 @@ class ClientPathsTest {
 
     @Test
     @EnabledOnOs(OS.LINUX)
-    void shouldUseClientDirectoryAsWinePrefixOnLinux() {
-        Client client = new Client("mnm", "1.2.3", UPDATED, Path.of("my-client"));
+    void shouldUseClientDirectoryAsWinePrefixOnLinux(@TempDir Path tempDir) throws Exception {
+        Client client = new Client("mnm", "1.2.3", UPDATED, tempDir);
+        Path gameSettingsPath = tempDir.resolve(DEFAULT_MNM_PREFIX).resolve("pfx").resolve(GAME_SETTINGS);
+        createDirectories(gameSettingsPath);
         ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
 
-        String expected = client.path().toAbsolutePath() + "/" + DEFAULT_MNM_PREFIX + "/" + GAME_SETTINGS;
+        String expected = client.path().toAbsolutePath() + "/" + DEFAULT_MNM_PREFIX + "/pfx/" + GAME_SETTINGS;
 
         assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
     }
 
     @Test
     @EnabledOnOs(OS.LINUX)
-    void shouldUseWorkingDirectoryAsWinePrefixOnLinux() {
-        ClientPaths paths = new ClientPaths(null, false);
+    void shouldReportMissingInstallation(@TempDir Path tempDir) {
+        Client client = new Client("mnm", "1.2.3", UPDATED, tempDir);
+        ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
 
-        String expected = Environment.getWorkDir() + "/" + GAME_SETTINGS;
-
-        assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
     }
 
 }

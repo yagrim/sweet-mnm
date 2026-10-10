@@ -1,5 +1,6 @@
 package org.mnm.gui;
 
+import java.io.File;
 import java.util.Optional;
 
 import org.mnm.config.Environment;
@@ -14,12 +15,23 @@ class ClientPaths {
     // We should check if the file exists and if doesn't: show special message and disable "copy" button
     // Note: Windows 11 stores logs in "AppData/Local", in Proton all in the same path
     private static final String gameSettings = "pfx/drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
+
     private static final String STEAM_COMPAT_DATA_PATH_ERROR = "Error: STEAM_COMPAT_DATA_PATH empty or not set";
+    private static final String INSTALLATION_NOT_FOUND_ERROR = "Error: installation not found, run Install or Repair";
 
     private final Optional<String> winePrefix;
 
     ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix) {
         winePrefix = getWinePrefixLocation(clientStatus, clientAsWinePrefix);
+    }
+
+    String getGameSettingsPath() {
+        return winePrefix
+            .map(prefix -> {
+                String path = prefix + "/" + gameSettings;
+                return new File(path).exists() ? path : INSTALLATION_NOT_FOUND_ERROR;
+            })
+            .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
@@ -34,11 +46,4 @@ class ClientPaths {
             return Optional.of(Environment.getWorkDir().toString());
         }
     }
-
-    String getGameSettingsPath() {
-        return winePrefix
-            .map(prefix -> prefix + "/" + gameSettings)
-            .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
-    }
-
 }
