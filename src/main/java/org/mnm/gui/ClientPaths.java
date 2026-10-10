@@ -39,14 +39,14 @@ class ClientPaths {
 
     private boolean exists(String path) {
         Path absolutePath = Path.of(path).normalize().toAbsolutePath();
-        logger.debug("Checking if exists {}", absolutePath);
+        logger.debug("Exists? {}", absolutePath);
         if (absolutePath.toFile().exists()) {
             return true;
         }
         if (OS.isWindows()) {
             // Proton hotfix
             Path zDrivePath = protonPath(path);
-            logger.debug("Checking if exists {}", zDrivePath);
+            logger.debug("Exists? {}", zDrivePath);
             return zDrivePath.toFile().exists();
         }
         return false;

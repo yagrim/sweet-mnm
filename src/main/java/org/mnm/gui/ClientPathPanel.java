@@ -76,9 +76,6 @@ class ClientPathPanel extends JPanel
 
     private void copyToClipboard(JTextComponent textPane) {
         String location = textPane.getText();
-        if (OS.isWindows()) {
-            location = ClientPaths.protonPath(location).toString();
-        }
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(new StringSelection(location), null);
         logger.debug("Copied {} characters to clipboard.", location);
@@ -86,7 +83,10 @@ class ClientPathPanel extends JPanel
 
     // experimental
     private void openFileExplorer(JTextComponent textPane) {
-        final String location = textPane.getText();
+        String location = textPane.getText();
+        if (OS.isWindows()) {
+            location = ClientPaths.protonPath(location).toString();
+        }
         try {
             Desktop.getDesktop().open(new File(location));
         } catch (IOException e) {
