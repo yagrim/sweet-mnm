@@ -1,7 +1,9 @@
 package org.mnm.gui;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -32,14 +34,14 @@ class ClientPathsTest {
             Files.createDirectories(expectedPath);
             assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
         } finally {
-            Files.deleteIfExists(expectedPath);
+            deleteRecursively(Path.of(WINDOWS_PREFIX));
         }
     }
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    void shouldReportMissingInstallationOnWindows() throws IOException {
-        Files.deleteIfExists(Path.of(WINDOWS_PREFIX));
+    void shouldReportMissingInstallationOnWindows() {
+        deleteRecursively(Path.of(WINDOWS_PREFIX));
         ClientPaths paths = new ClientPaths(null, true);
 
         assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
@@ -67,4 +69,18 @@ class ClientPathsTest {
         assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
     }
 
+    static boolean deleteRecursively(Path path) {
+        try {
+            if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+                try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
+                    for (Path child : children) {
+                        deleteRecursively(child);
+                    }
+                }
+            }
+            return Files.deleteIfExists(path);
+        } catch (IOException e) {
+            return false;
+        }
+    }
 }
