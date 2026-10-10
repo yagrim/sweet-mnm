@@ -1,22 +1,16 @@
 package org.mnm.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.awt.Color;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+
+import org.mnm.config.Environment;
+import org.mnm.tools.ProcessUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,11 +78,31 @@ class ClientPathPanel extends JPanel
     // experimental
     private void openFileExplorer(JTextComponent textPane) {
         String location = textPane.getText();
+        logger.debug("Opening 1: {}", location);
         if (OS.isWindows()) {
             location = ClientPaths.protonPath(location).toString();
+            logger.debug("Opening 2: {}", location);
         }
         try {
-            Desktop.getDesktop().open(new File(location));
+//            location ="C:\\Users\\User\\home";
+            File file = new File(location);
+            logger.debug("exists: {}", file.exists());
+            try {
+                Files.list(file.toPath()).forEach(p -> logger.debug("Contains: {}", p.toAbsolutePath()));
+            } catch (IOException e) {
+                logger.error("", e);
+//            throw new RuntimeException(e);
+            }
+            logger.debug("Opening 3: {}", location);
+            if (OS.isWindows()) {
+                logger.debug("Calling explorer: {}", location);
+                ProcessUtils.run(Environment.getWorkDir(),new String[]{
+                    "explorer.exe", location
+                });
+//                new ProcessBuilder("explorer.exe", location).start();
+            } else {
+                Desktop.getDesktop().open(new File(location));
+            }
         } catch (IOException e) {
             try {
                 new ProcessBuilder(OS.isWindows() ? "explorer.exe" : "xdg-open", location).start();

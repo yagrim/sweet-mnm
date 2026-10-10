@@ -936,6 +936,13 @@
       ]
     },
     {
+      "type": "sun.awt.shell.Win32ShellFolderManager2",
+      "jniAccessible": true,
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "java.awt.event.KeyEvent",
       "jniAccessible": true,
       "allDeclaredConstructors": true,
