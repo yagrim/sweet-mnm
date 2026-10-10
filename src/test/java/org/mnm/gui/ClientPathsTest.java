@@ -15,24 +15,15 @@ import static org.mnm.config.Client.Status.UPDATED;
 
 class ClientPathsTest {
 
-    private static final Path GAME_SETTINGS = Path.of("drive_c")
-        .resolve("users")
-        .resolve("steamuser")
-        .resolve("AppData")
-        .resolve("LocalLow")
-        .resolve("Niche Worlds Cult")
-        .resolve("Monsters and Memories");
+    private static final String GAME_SETTINGS = "drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
     void shouldUseSteamCompatibilityDataPathOnWindows() {
         ClientPaths paths = new ClientPaths(null, true);
-        Path expected = Path.of("C:/steam-compat-data")
-            .resolve(GAME_SETTINGS)
-            .toAbsolutePath()
-            .normalize();
+        String expected = "C:/steam-compat-data/" + GAME_SETTINGS;
 
-        assertThat(paths.getGameSettingsPath()).isEqualTo(expected.toString());
+        assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
     }
 
     @Test
@@ -41,13 +32,9 @@ class ClientPathsTest {
         Client client = new Client("mnm", "1.2.3", UPDATED, Path.of("my-client"));
         ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
 
-        Path expected = client.path()
-            .resolve(DEFAULT_MNM_PREFIX)
-            .resolve(GAME_SETTINGS)
-            .toAbsolutePath()
-            .normalize();
+        String expected = client.path().toAbsolutePath() + "/" + DEFAULT_MNM_PREFIX + "/" + GAME_SETTINGS;
 
-        assertThat(paths.getGameSettingsPath()).isEqualTo(expected.toString());
+        assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
     }
 
     @Test
@@ -55,12 +42,9 @@ class ClientPathsTest {
     void shouldUseWorkingDirectoryAsWinePrefixOnLinux() {
         ClientPaths paths = new ClientPaths(null, false);
 
-        Path expected = Environment.getWorkDir()
-            .resolve(GAME_SETTINGS)
-            .toAbsolutePath()
-            .normalize();
+        String expected = Environment.getWorkDir() + "/" + GAME_SETTINGS;
 
-        assertThat(paths.getGameSettingsPath()).isEqualTo(expected.toString());
+        assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
     }
 
 }
