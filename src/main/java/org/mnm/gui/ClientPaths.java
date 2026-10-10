@@ -1,8 +1,10 @@
 package org.mnm.gui;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
@@ -11,6 +13,8 @@ import org.mnm.tools.StringUtils;
 import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
 
 class ClientPaths {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientPaths.class);
 
     // Note: Windows 11 stores logs in "AppData/Local", in Proton all in the same path
     private static final String gameSettings = "pfx/drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
@@ -33,8 +37,10 @@ class ClientPaths {
             .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
     }
 
-    private static boolean isExists(String path) {
-        return Path.of(path).normalize().toAbsolutePath().toFile().exists();
+    private boolean isExists(String path) {
+        Path absolutePath = Path.of(path).normalize().toAbsolutePath();
+        logger.debug("Checking if exists {}", absolutePath);
+        return absolutePath.toFile().exists();
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
