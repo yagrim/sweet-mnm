@@ -22,9 +22,17 @@ class ClientPathsTest {
     @EnabledOnOs(OS.WINDOWS)
     void shouldUseSteamCompatibilityDataPathOnWindows() {
         ClientPaths paths = new ClientPaths(null, true);
-        String expected = "C:/steam-compat-data/" + GAME_SETTINGS;
+        String expected = "C:/steam-compat-data/pfx/" + GAME_SETTINGS;
 
         assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldReportMissingInstallationOnWindows() {
+        ClientPaths paths = new ClientPaths(null, true);
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
     }
 
     @Test

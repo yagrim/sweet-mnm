@@ -35,7 +35,7 @@ class ClientPaths {
     }
 
     private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
-        // TODO Support real windows?
+        // TODO Support real windows and not only Proton?
         if (OS.isWindows()) {
             String compatDataPath = System.getenv("STEAM_COMPAT_DATA_PATH");
             return StringUtils.isEmpty(compatDataPath) ? Optional.empty() : Optional.of(compatDataPath);
