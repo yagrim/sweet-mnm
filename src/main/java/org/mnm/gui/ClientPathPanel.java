@@ -34,9 +34,13 @@ class ClientPathPanel extends JPanel
     implements Refreshable {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientPathPanel.class);
+    private static final String ERROR_PREFIX = "Error:";
 
     private final SettingsStore settingsStore;
+
     private final JTextField textArea;
+    private final JButton copyToClipboard;
+    private final JButton open;
 
     ClientPathPanel(SettingsStore settingsStore, Color color, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -52,11 +56,13 @@ class ClientPathPanel extends JPanel
 
         this.setMaximumSize(new Dimension(Integer.MAX_VALUE, textArea.getPreferredSize().height));
 
-        JButton copyToClipboard = new JButton("Copy");
+        copyToClipboard = new JButton("Copy");
+        copyToClipboard.setEnabled(false);
         copyToClipboard.setToolTipText("Copy to clipboard");
         copyToClipboard.addActionListener(_ -> copyToClipboard(textArea));
 
-        JButton open = new JButton("Open");
+        open = new JButton("Open");
+        open.setEnabled(false);
         open.setToolTipText("Open in file explorer");
         open.addActionListener(_ -> openFileExplorer(textArea));
 
@@ -86,7 +92,7 @@ class ClientPathPanel extends JPanel
         logger.debug("Copied {} characters to clipboard.", location);
     }
 
-    // Running from proton is not working
+    // Running from proton is not working. Left in case of further investigation.
     private void openFileExplorer(JTextComponent textPane) {
         String location = textPane.getText();
         try {
@@ -109,6 +115,10 @@ class ClientPathPanel extends JPanel
         textArea.setText(gameSettingsPath);
         textArea.setToolTipText(gameSettingsPath);
         textArea.setCaretPosition(0);
+
+        boolean validPath = !gameSettingsPath.startsWith(ERROR_PREFIX);
+        copyToClipboard.setEnabled(validPath);
+        open.setEnabled(validPath);
     }
 
 }
