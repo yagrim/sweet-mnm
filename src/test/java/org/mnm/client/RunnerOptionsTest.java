@@ -17,6 +17,8 @@ import static org.mnm.client.LinuxOptionsTestFactory.umuOptions;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
+import static org.mnm.config.SettingsStore.PROTON_ENABLE_WAYLAND;
+import static org.mnm.config.SettingsStore.PROTON_USE_WINED3D;
 import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
@@ -162,6 +164,19 @@ class RunnerOptionsTest {
             RunnerOptions options = RunnerOptions.parse(arguments, settingsStore);
 
             assertThat(options.linuxOptions().enableMangoHud()).isTrue();
+        }
+
+        @Test
+        void shouldReadProtonOptionsFromSettings() {
+            Arguments arguments = Arguments.parse();
+            InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(
+                PROTON_USE_WINED3D, "true",
+                PROTON_ENABLE_WAYLAND, "true"));
+
+            RunnerOptions options = RunnerOptions.parse(arguments, settingsStore);
+
+            assertThat(options.linuxOptions().protonOptions().useWined3d()).isTrue();
+            assertThat(options.linuxOptions().protonOptions().enableWayland()).isTrue();
         }
 
         @Test

@@ -25,6 +25,8 @@ import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.client.LinuxOptionsTestFactory.defaultLinuxOptions;
 import static org.mnm.client.LinuxOptionsTestFactory.linuxOptions;
+import static org.mnm.client.LinuxOptionsTestFactory.protonOptions;
+import static org.mnm.client.LinuxOptionsTestFactory.umuOptions;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -204,7 +206,7 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var linuxOptions = new LinuxOptions(true, true, null);
+        var linuxOptions = new LinuxOptions(true, true, null, protonOptions(false, false));
         var options = new RunnerOptions(null, null, true, linuxOptions);
 
         assertThatThrownBy(() -> runClient(installPath, token, false, options))
@@ -250,11 +252,25 @@ class ClientRunnerTest {
     }
 
     @Test
+    void shouldRunLinuxClientWithEnabledProtonVariables(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+        var options = new RunnerOptions(null, null, true,
+            new LinuxOptions(false, true, umuOptions(), protonOptions(true, true)));
+
+        var result = runClient(installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsEntry("PROTON_USE_WINED3D", "1")
+            .containsEntry("PROTON_ENABLE_WAYLAND", "1");
+    }
+
+    @Test
     void shouldBuildEnvironmentWithGameId(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        final String gameId = "custom-mnm";
+        final String gameId = "customm-mnm";
         var umuOptions = new UmuOptions(gameId, "GE-Proton", null);
         var options = new RunnerOptions(null, null, true, linuxOptions(umuOptions));
 

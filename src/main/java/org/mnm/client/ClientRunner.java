@@ -137,6 +137,7 @@ public class ClientRunner {
 
         Objects.requireNonNull(linuxOptions, "linuxOptions cannot be null");
         Objects.requireNonNull(linuxOptions.umuOptions(), "linuxOptions.umuOptions cannot be null");
+        Objects.requireNonNull(linuxOptions.protonOptions(), "linuxOptions.protonOptions cannot be null");
 
         environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", linuxOptions.umuOptions().gameId()));
         environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", linuxOptions.umuOptions().protonPath()));
@@ -158,6 +159,12 @@ public class ClientRunner {
 
         if (linuxOptions.enableMangoHud()) {
             environment.put("MANGOHUD", "1");
+        }
+        if (linuxOptions.protonOptions().useWined3d()) {
+            environment.put("PROTON_USE_WINED3D", "1");
+        }
+        if (linuxOptions.protonOptions().enableWayland()) {
+            environment.put("PROTON_ENABLE_WAYLAND", "1");
         }
 
         return Map.copyOf(environment);
