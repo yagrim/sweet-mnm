@@ -53,7 +53,7 @@ class MainTabsTest {
                 }
             }, () -> false, settingsStore, credentialsHandler, 1f);
 
-        var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(settingsStore, credentialsHandler));
+        var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(null, settingsStore, credentialsHandler));
 
         assertThat(tabs).isNotNull();
     }

@@ -38,7 +38,7 @@ class PlayPanelTest {
         PlayPanel playPanel = new PlayPanel(options -> {
             optionSupplied.set(options.slug());
             actionPerformed.set(true);
-        }, () -> new RunnerOptions(randomSlug, null, false, new LinuxOptions(false, false, null)));
+        }, () -> new RunnerOptions(randomSlug, null, false, new LinuxOptions(false, false, null, new RunnerOptions.ProtonOptions(false, false))));
         play = getButton(playPanel, "play");
 
         play.setEnabled(true);
