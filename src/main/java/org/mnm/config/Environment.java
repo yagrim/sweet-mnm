@@ -28,4 +28,15 @@ public class Environment {
         return new VersionDetails(split[0], split[1]);
     }
 
+    public static Path getSweetConfigLocation() {
+        final Path base = OS.isWindows()
+            ? Path.of(System.getenv("LOCALAPPDATA"))
+            : Environment.getHomeDir().resolve(".local/share");
+
+        return base
+            .resolve("com.monstersandmemories.sweet")
+            .normalize()
+            .toAbsolutePath();
+    }
+
 }
