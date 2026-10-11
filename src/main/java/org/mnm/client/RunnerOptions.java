@@ -7,6 +7,8 @@ import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_USE_CLIENT_AS_PREFIX;
 import static org.mnm.config.SettingsStore.MANGOHUD_KEY;
+import static org.mnm.config.SettingsStore.PROTON_ENABLE_WAYLAND;
+import static org.mnm.config.SettingsStore.PROTON_USE_WINED3D;
 import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
@@ -19,10 +21,13 @@ import static org.mnm.tools.StringUtils.isEmpty;
  */
 public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionCheck, LinuxOptions linuxOptions) {
 
-    public record LinuxOptions(boolean enableMangoHud, boolean useClientAsPrefix, UmuOptions umuOptions) {
+    public record LinuxOptions(boolean enableMangoHud, boolean useClientAsPrefix, UmuOptions umuOptions, ProtonOptions protonOptions) {
     }
 
     public record UmuOptions(String gameId, String protonPath, String winePrefix) {
+    }
+
+    public record ProtonOptions(boolean useWined3d, boolean enableWayland) {
     }
 
     public static RunnerOptions parse(Arguments args, SettingsStore settingsStore) {
@@ -39,7 +44,10 @@ public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionChe
                 new UmuOptions(
                     settingsStore.get(UMU_GAMEID, DEFAULT_UMU_GAMEID),
                     settingsStore.get(UMU_PROTONPATH, DEFAULT_UMU_PROTONPATH),
-                    getWinePrefix(useClientAsPrefix, settingsStore))));
+                    getWinePrefix(useClientAsPrefix, settingsStore)),
+                new ProtonOptions(
+                    settingsStore.getBoolean(PROTON_USE_WINED3D, false),
+                    settingsStore.getBoolean(PROTON_ENABLE_WAYLAND, false))));
     }
 
     private static boolean getMangoHud(Arguments args, SettingsStore settingsStore) {

@@ -137,7 +137,7 @@ class GeneralOptionsPanelTest {
     @Test
     void shouldApplySavedFontSizeOnlyWhenOptionsPanelIsCreated() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SCALING_KEY, "16"));
-        OptionsPanel optionsPanel = new OptionsPanel(settings, new CredentialsHandler(settings));
+        OptionsPanel optionsPanel = new OptionsPanel(null, settings, new CredentialsHandler(settings));
         GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
 
         assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);

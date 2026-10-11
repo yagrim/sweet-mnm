@@ -1,8 +1,10 @@
 package org.mnm.gui;
 
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import java.util.function.Supplier;
 
 import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
@@ -21,6 +23,8 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     private final JCheckBox mangoHudOption;
     private final JCheckBox useClientAsPrefix;
+    private final JButton protonVariables;
+    private ProtonOptionsWindow protonOptions;
 
     private final TextOption umuGameId;
     private final TextOption umuProtonPath;
@@ -28,7 +32,7 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     private final SettingsStore settingsStore;
 
-    public LinuxOptionsPanel(SettingsStore settingsStore) {
+    public LinuxOptionsPanel(SettingsStore settingsStore, Supplier<ProtonOptionsWindow> protonOptionsSupplier) {
         super("Linux");
         this.settingsStore = settingsStore;
 
@@ -51,6 +55,14 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         addLinuxComponent(umuProtonPath);
         addLinuxComponent(useClientAsPrefix);
         addLinuxComponent(umuWinePrefix);
+
+        protonVariables = new JButton("Proton settings");
+        protonVariables.addActionListener(_ -> {
+            // We need to create the window on-the-fly so it appears as a popup
+            protonOptions = protonOptionsSupplier.get();
+            protonOptions.setVisible(true);
+        });
+        addLinuxComponent(protonVariables);
     }
 
     private static void refresh(TextOption umuWinePrefix, JCheckBox useGameLocationForPrefix) {
@@ -83,5 +95,13 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     public String getUmuWinePrefix() {
         return umuWinePrefix.getText();
+    }
+
+    public boolean isProtonUseWined3dEnabled() {
+        return protonOptions == null ? false : protonOptions.isUseWined3dEnabled();
+    }
+
+    public boolean isProtonWaylandEnabled() {
+        return protonOptions == null ? false : protonOptions.isEnableWayland();
     }
 }

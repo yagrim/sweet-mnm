@@ -29,7 +29,7 @@ public class GuiComponents {
                     defaults.put(key, new FontUIResource(font.deriveFont(font.getSize2D() * scale)));
                 }
             } catch (Exception e) {
-                logger.debug("Could not initialize UI component: " + key, e);
+                logger.debug("Could not initialize UI component: {}", key, e);
             }
         }
         scaleIcons(scale);

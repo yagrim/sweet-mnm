@@ -10,6 +10,9 @@ public interface SettingsStore {
 
     String MANGOHUD_KEY = "linux.mangohud";
 
+    String PROTON_USE_WINED3D = "linux.proton.proton-use-wined3d";
+    String PROTON_ENABLE_WAYLAND = "linux.proton.proton-enable-wayland";
+
     String UMU_GAMEID = "linux.umu.gameid";
     String DEFAULT_UMU_GAMEID = "mnm";
     String UMU_PROTONPATH = "linux.umu.protonpath";
