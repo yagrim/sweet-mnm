@@ -72,10 +72,10 @@ public class Session {
             panic("No game versions found");
         }
         if (gamesVersions.size() > 1) {
-            panic("Too many game versions found");
+            logger.debug("Multiple game slugs found: {}", gamesVersions.stream().map(p -> p.slug()).toList());
         }
 
-        return new Session(gamesVersions.get(0), connection.getToken());
+        return new Session(gamesVersions.stream().filter(p -> p.slug().equals("mnm")).findFirst().get(), connection.getToken());
     }
 
     public ManifestHandler getManifestHandler(Path downloadsCache) {
