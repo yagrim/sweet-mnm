@@ -17,10 +17,12 @@ public class Session {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
+    private final List<ApiConnection.GameVersion> gameVersions;
     private final ApiConnection.GameVersion gameVersion;
     private String token;
 
-    private Session(ApiConnection.GameVersion gameVersion, String token) {
+    private Session(List<ApiConnection.GameVersion> gameVersions, ApiConnection.GameVersion gameVersion, String token) {
+        this.gameVersions = gameVersions;
         this.gameVersion = gameVersion;
         this.token = token;
     }
@@ -66,11 +68,31 @@ public class Session {
         if (gamesVersions.isEmpty()) {
             panic("No game versions found");
         }
+        final ApiConnection.GameVersion defaultVersion = gamesVersions.get(0);
         if (gamesVersions.size() > 1) {
-            logger.debug("Multiple game slugs found: {}", gamesVersions.stream().map(p -> p.slug()).toList());
+            logger.info("Multiple game slugs found: {}. Using '{}' by default, use --slug to select a different one",
+                gamesVersions.stream().map(p -> p.slug()).toList(), defaultVersion.slug());
         }
 
-        return new Session(gamesVersions.stream().filter(p -> p.slug().equals("mnm")).findFirst().get(), connection.getToken());
+        return new Session(gamesVersions, defaultVersion, connection.getToken());
+    }
+
+    /**
+     * Returns a new Session with the same token, for the given slug.
+     */
+    public Session select(String slug) {
+        final ApiConnection.GameVersion selected = gameVersions.stream()
+            .filter(p -> p.slug().equals(slug))
+            .findFirst()
+            .orElse(null);
+        if (selected == null) {
+            panic("Slug '%s' not found, available slugs: %s".formatted(slug, getSlugs()));
+        }
+        return new Session(gameVersions, selected, token);
+    }
+
+    public List<String> getSlugs() {
+        return gameVersions.stream().map(ApiConnection.GameVersion::slug).toList();
     }
 
     public ManifestHandler getManifestHandler(Path downloadsCache) {

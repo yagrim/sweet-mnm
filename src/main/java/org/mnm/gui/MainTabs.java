@@ -11,8 +11,6 @@ import static org.mnm.gui.Style.SCALE;
 
 class MainTabs extends JTabbedPane {
 
-    static final String DEFAULT_SLUG = "mnm";
-
     private final ClientPanel clientPanel;
     private final OptionsPanel optionsPanel;
 

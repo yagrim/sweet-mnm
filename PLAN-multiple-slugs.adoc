@@ -1,0 +1,443 @@
+= Plan: Support for Multiple Slugs (Issue 113)
+:toc:
+:toclevels: 2
+
+NOTE: This plan uses ASD-STE100 Simplified Technical English.
+
+== Purpose
+
+The application uses a fixed slug value, `mnm`.
+The API can send more than one slug.
+The application must show all the slugs to the user.
+The user must select one slug.
+The application must use the selected slug for the operations `install`, `repair`, `run` and `logout`.
+
+== Current Problems
+
+=== Problem 1: Session does not use the API data
+
+In `Session.buildSession` (`src/main/java/org/mnm/api/Session.java:64`), the API sends a list of game versions.
+The method keeps only the version with the slug `mnm`.
+The method does not keep the other versions.
+If the API does not send `mnm`, the method stops with a `NoSuchElementException`.
+
+=== Problem 2: Fixed slug values
+
+The table that follows shows the locations with a fixed slug value.
+
+[cols="2,3"]
+|===
+| Location | Function
+
+| `gui/MainTabs.java:14`
+| Constant `DEFAULT_SLUG = "mnm"`.
+
+| `gui/GuiCommand.java:124`
+| The GUI reads the client status for `DEFAULT_SLUG` at start.
+
+| `gui/ClientButtonsPanel.java` (`runRepair`)
+| Install and repair use `DEFAULT_SLUG`.
+
+| `gui/ClientButtonsPanel.java` (`handleLogout`)
+| Logout uses `DEFAULT_SLUG`.
+
+| `gui/OptionsPanel.java:35`
+| `getRunnerOptions` sends `DEFAULT_SLUG` to the runner.
+
+| `api/Session.java:73`
+| The session filter uses `"mnm"`.
+
+| `client/ClientRunner.java:23`
+| Constant `DEFAULT_MNM_PREFIX = "mnm_prefix"`. All the slugs use the same Wine prefix.
+|===
+
+=== Problem 3: Version check uses the incorrect version
+
+These methods compare the client version with `session.getVersion()`:
+
+* `Validators.checkVersion` (`client/Validators.java:12`)
+* `ClientStatus.getClientStatus` (`gui/ClientStatus.java:21`)
+
+The session version is always the version of `mnm`.
+The comparison must use the version of the slug of the client.
+
+== Installation Folder Review
+
+The installation folder has the same name as the slug.
+The table that follows shows the result of the review.
+
+[cols="2,1,3"]
+|===
+| Item | Result | Comment
+
+| `Installation.getInstallPath()`
+| Correct
+| The path is `<base dir>/<slug>`.
+
+| `ClientRunner.buildCommand`
+| Correct
+| The path is `<slug>/mnm.exe`. The working directory is `<base dir>`.
+
+| Name of the executable
+| No change
+| The name of the executable is always `mnm.exe` for all the slugs.
+
+| `Installation.getDownloadsPath()`
+| No change
+| All the slugs use the same folder `<base dir>/downloads`.
+  The names of the manifest files are hash values.
+  Thus two different manifests do not have the same name.
+
+| Wine prefix `mnm_prefix`
+| Change
+| Each slug must use its own Wine prefix. Refer to <<_decision_5_each_slug_has_its_own_wine_prefix>>.
+
+| Game settings path
+| Change
+| The path `LocalLow/Niche Worlds Cult/Monsters and Memories` stays fixed.
+  The Wine prefix part of the path must use the selected slug.
+
+| `DEFAULT_UMU_GAMEID = "mnm"`
+| No change
+| This value is the UMU game ID. It is not a slug.
+|===
+
+== Design Decisions
+
+=== Decision 1: Login keeps a client for each slug
+
+One token gives access to all the slugs of the account.
+When the user logs in, `LoginService` must add one client and one token for each slug.
+Thus the database contains all the slugs after one login.
+The dropdown menu reads the slugs from the database.
+The dropdown menu does not need an API call.
+
+=== Decision 2: Session keeps all the game versions
+
+`Session` must keep the full list of game versions.
+The caller can select one slug.
+If the caller does not give a slug, apply these rules:
+
+. If the API sends one slug, use that slug.
+. If the API sends more than one slug, use the first slug in the API order.
+  Do not stop the application.
+  Write an `INFO` message to the log.
+  The message must show the list of slugs, the selected slug and the option `--slug`.
+
+=== Decision 3: The GUI keeps the last selected slug
+
+The GUI must keep the selected slug in the settings store.
+Use a new key: `ui.selected-slug`.
+At start, the GUI selects the slug from the settings store.
+If that slug is not in the database, the GUI selects the slug `mnm`.
+If the slug `mnm` is not in the database, the GUI selects the first slug.
+
+The dropdown menu shows the slugs in the API order.
+
+=== Decision 4: The slug selection reads only the database
+
+Do not add a new event.
+A change of the selection must not make an API call.
+All the necessary data is already in the database:
+
+* The `clients` table has the slug, the version, the status and the path of each client.
+* The `tokens` table has the token of each slug.
+  The GUI reads the expiration time from the token (`JwtParser`).
+  This operation does not make an API call.
+
+Today, `ClientStatus.getClientStatus` makes an API call to compare the versions.
+Divide this method into two methods:
+
+. `ClientStatus.updateVersions(ConfigDb, String apiEndpoint)`.
+  This method makes one API call with a valid token from the database.
+  The API sends the versions of all the slugs.
+  The method compares the version of each client in the database with the version from the API.
+  If the versions are different, the method sets the status `NEEDS_UPDATE` for that client.
+. `ClientStatus.read(ConfigDb, String slug)`.
+  This method reads the client and the token from the database.
+  This method does not make an API call.
+
+The GUI uses these methods as follows:
+
+[cols="1,1,1"]
+|===
+| Operation | API call | Database read
+
+| Start
+| `updateVersions`, one time, in a background thread.
+| `read` for the selected slug.
+
+| Login
+| The login call. `LoginService` updates the versions of all the slugs (refer to Step 2).
+| `read` for the selected slug.
+
+| Change of the selection
+| No API call.
+| `read` for the new slug.
+|===
+
+The GUI keeps the current initialization logic for the start:
+
+. The buttons start disabled.
+. The GUI updates the versions and reads the status in a background thread.
+. `postInitializeSwing` initializes the dropdown menu and sends the event `refresh(ClientStatus)`.
+. Each panel enables its buttons from the `ClientStatus`.
+
+A change of the selection does not need a background thread.
+The database read is fast.
+The GUI calls `read` and sends `refresh(ClientStatus)` in the Swing thread.
+Thus the buttons do not need to be disabled during the change.
+
+=== Decision 5: Each slug has its own Wine prefix
+
+The name of the Wine prefix is `<slug>_prefix`.
+For the slug `mnm`, the name is `mnm_prefix`.
+This is the current name.
+Thus the current installations continue to work.
+
+These parts use the Wine prefix:
+
+* `ClientRunner.buildLinuxEnvironment` sets `WINEPREFIX`.
+* `ClientPaths.getWinePrefixLocation` finds the game settings path.
+  The panel "Settings & logs" (`ClientPathPanel`) shows this path.
+
+`ClientPathPanel` already implements `Refreshable`.
+When the user changes the selection, the GUI sends `refresh(ClientStatus)`.
+Thus `ClientPathPanel` shows the path of the new slug.
+The fixed part `LocalLow/Niche Worlds Cult/Monsters and Memories` does not change.
+
+=== Decision 6: Logout uses the selected slug
+
+Logout removes only the token of the selected slug.
+Each slug has its own token in the database.
+Thus the other slugs stay logged in.
+
+== Procedure
+
+Each step changes the code and its tests together.
+At the end of each step, do this check:
+
+. Run `./gradlew test`.
+. Make sure that all the tests pass.
+
+Do not start the next step before all the tests pass.
+
+=== Step 1: Change the Session class
+
+. Change the field `gameVersion` to `List<ApiConnection.GameVersion> gameVersions`.
+. Add the field `selectedSlug`.
+. In `buildSession`, remove the filter with `"mnm"`.
+. In `buildSession`, keep all the game versions.
+. Add the method `List<String> getSlugs()`.
+. Add the method `Session select(String slug)`.
+  This method returns a new `Session` with the same token.
+  If the slug is not in the list, call `panic` with the list of slugs.
+. Apply the rules of <<_decision_2_session_keeps_all_the_game_versions>> when the caller does not call `select`.
+. Make sure that `getSlug`, `getVersion`, `getChunksUrl` and `getManifestHandler` use the selected version.
+
+Tests:
+
+. In `ApiServerStubs`, add a stub that sends two slugs.
+. In `SessionTest`, add these tests:
+.. The API sends one slug, and the caller does not select a slug.
+.. The API sends two slugs, and the caller does not select a slug.
+   The session must use the first slug.
+   The result must not be an error.
+.. The caller selects a slug that is in the list.
+.. The caller selects a slug that is not in the list.
+   The result must be an error.
+.. The API does not send `mnm`.
+   The session must work.
+. Update the current tests that expect the slug `mnm` from a list with more than one slug.
+
+=== Step 2: Change the LoginService class
+
+. In `updateClientAndToken`, add or update one client for each slug of the session.
+  For each slug, compare the version and set `NEEDS_UPDATE` if necessary.
+. Add one token for each slug.
+. Change the return type of `login` from `String` to `List<String>`.
+. Update the callers of `login`:
+.. `LoginCommand`: show all the slugs in the log.
+.. `GuiCommand.login`: return the `ClientStatus` of the first slug in the list.
+   Step 8 changes this to the selected slug.
+
+Tests:
+
+. In `LoginServiceTest`, make sure that the login adds one client and one token for each slug.
+. In `LoginServiceTest`, make sure that the login sets `NEEDS_UPDATE` only for the clients with a different version.
+. Update the tests of `LoginCommand` and `GuiCommand` for the new return type.
+
+=== Step 3: Change the installer
+
+. In `InstallerOptions`, accept `--slug` together with `--username`.
+.. With `--username`: `--slug` selects the game version from the API.
+.. Without `--username`: `--slug` selects a client from the database.
+   This is the current function.
+. In `ClientInstaller.install`, call `session.select(options.slug())` when the slug is not empty.
+. Update the help text in `InstallCommand` and `RepairCommand`.
+
+Tests:
+
+. In `InstallerOptionsTest`, add tests for `--slug` together with `--username`.
+. In `ClientInstallerTest`, make sure that the installer uses the folder `<base dir>/<selected slug>`.
+. In `InstallCommandTest`, add a test with two slugs and the option `--slug`.
+
+=== Step 4: Change the version checks
+
+. In `Validators.checkVersion`, use `session.select(client.slug()).getVersion()`.
+. In `ClientStatus`, replace `getClientStatus` with `updateVersions` and `read` (refer to <<_decision_4_the_slug_selection_reads_only_the_database>>).
+.. `updateVersions` uses `session.getSlugs()` and `session.select(slug).getVersion()` for each client.
+.. `read` does not use `Session` or `ApiConnector`.
+. In `GuiCommand.run`, call `ClientStatus.updateVersions` and then `ClientStatus.read(DEFAULT_SLUG)` in the background thread.
+  Step 8 removes `DEFAULT_SLUG`.
+
+Tests:
+
+. In `ValidatorsTest`, add a test with two slugs.
+  Make sure that the check uses the version of the slug of the client.
+. In `ClientStatusTest`, replace the tests of `getClientStatus`.
+.. Make sure that `read` does not make an API call.
+.. Make sure that `updateVersions` makes one API call and updates the status of all the clients.
+
+=== Step 5: Use one Wine prefix for each slug
+
+. In `ClientRunner`, replace the constant `DEFAULT_MNM_PREFIX` with a method, for example `winePrefixName(String slug)`.
+  This method returns `<slug>_prefix`.
+. In `ClientRunner.buildLinuxEnvironment`, add the parameter `slug`.
+  Use `winePrefixName(slug)` for `WINEPREFIX`.
+. In `ClientPaths.getWinePrefixLocation`, use `winePrefixName(client.client().slug())`.
+. In `ClientPaths`, make sure that there is no `NullPointerException` when `ClientStatus` has no client.
+  In this case, show the error "installation not found".
+. Do not change the fixed path `LocalLow/Niche Worlds Cult/Monsters and Memories`.
+
+Tests:
+
+. In `ClientRunnerTest`, make sure that `WINEPREFIX` is `<client path>/mnm_prefix` for the slug `mnm`.
+. In `ClientRunnerTest`, make sure that `WINEPREFIX` is `<client path>/<slug>_prefix` for a different slug.
+. In `ClientPathsTest`, make sure that the game settings path uses the Wine prefix of the slug.
+. In `ClientPathsTest`, add a test for a `ClientStatus` with no client.
+
+=== Step 6: Add the dropdown menu component
+
+In this step, the dropdown menu is not connected to the GUI.
+
+. Add the class `gui/SlugSelectorPanel`.
+.. Use a `JLabel` with the text "Game".
+.. Use a `JComboBox<String>` for the slugs.
+. Add the method `setItems(List<String> slugs, String selectedSlug)`.
+. Add a callback for a change of the selection, for example `Consumer<String>`.
+. Put the dropdown menu on the right side.
+. Make the width of the dropdown menu fit the longest slug.
+  The maximum width is 8 characters.
+  The tooltip shows the full slug.
+. The dropdown menu is always enabled.
+  A disabled dropdown menu can look like an error to the user.
+  During a repair, the modal progress window prevents a change of the selection.
+
+CAUTION: When the code changes the items of the `JComboBox`, the `JComboBox` sends an `ActionEvent`.
+Do not call the callback for these changes.
+If you do not obey this caution, the GUI can go into an infinite loop of refresh events.
+
+Tests:
+
+. Add `SlugSelectorPanelTest`.
+.. Make sure that a change of the selection calls the callback one time.
+.. Make sure that `setItems` does not call the callback.
+.. Make sure that the dropdown menu is enabled with no slug, one slug and more than one slug.
+
+=== Step 7: Connect the dropdown menu to the GUI
+
+. Add the record `gui/GuiState(List<String> slugs, String selectedSlug, ClientStatus clientStatus)`.
+. Add the method `GuiCommand.readGuiState(ConfigDb configDb, String slug)`.
+  This method does not make an API call.
+.. Read the slugs from `ConfigDb.getClients()`.
+.. Find the selected slug.
+   Use the parameter `slug`.
+   If the parameter is empty, use the rules of <<_decision_3_the_gui_keeps_the_last_selected_slug>>.
+.. Call `ClientStatus.read` for the selected slug.
+.. Return a `GuiState`.
+. Add the panel at the top of `ClientPanel`, above `ClientButtonsPanel`.
+  The dropdown menu starts empty.
+. In the start logic (`GuiCommand.run` and `startSwingInterface`), do these steps in the background thread:
+.. Call `ClientStatus.updateVersions` one time.
+.. Call `readGuiState` with an empty slug.
+. Change `postInitializeSwing` to accept a `GuiState`.
+  In the Swing thread, do these steps:
+.. Call `SlugSelectorPanel.setItems`.
+.. Send the event `refresh(ClientStatus)`.
+. Change `GuiStarter` to work with `GuiState`.
+. Add the action `SelectSlugAction` in `GuiCommand`.
+  When the user changes the selection, the action does these steps in the Swing thread:
+.. Write the slug to the settings store with the key `ui.selected-slug`.
+.. Call `readGuiState(slug)`.
+   This step does not make an API call.
+.. Send the event `refresh(ClientStatus)`.
+. After a login, call `readGuiState` with the selected slug and call `setItems` again.
+  The login can add new slugs.
+  This step does not make an API call.
+
+Tests:
+
+. In `GuiCommandTest`, make sure that the start fills the dropdown menu.
+. In `GuiCommandTest`, make sure that the start selects the slug with the rules of Decision 3:
+.. The slug from the settings store.
+.. The slug `mnm`, if the slug from the settings store is not in the database.
+.. The first slug, if `mnm` is not in the database.
+. In `GuiCommandTest`, make sure that `SelectSlugAction` writes the settings store and does not make an API call.
+. In `GuiCommandTest`, make sure that a change of the selection updates the path in `ClientPathPanel`.
+. Update `MainTabsTest` and the tests of `ClientPanel` for the new panel.
+
+=== Step 8: Remove the fixed slug values from the GUI
+
+. Remove the constant `MainTabs.DEFAULT_SLUG`.
+. Add a `Supplier<String>` for the selected slug.
+  The value comes from `SlugSelectorPanel`.
+  Give this supplier to `ClientButtonsPanel`, `OptionsPanel` and `GuiCommand`.
+. In `ClientButtonsPanel.runRepair`, use the selected slug.
+. In `ClientButtonsPanel.handleLogout`, use the selected slug.
+. In `OptionsPanel.getRunnerOptions`, use the selected slug.
+. In `GuiCommand.login`, return the `ClientStatus` of the selected slug.
+  If the selected slug is not in the new list, use the rules of <<_decision_3_the_gui_keeps_the_last_selected_slug>>.
+
+Tests:
+
+. In `GuiCommandTest`, make sure that the play, install, repair and logout actions use the selected slug.
+. In `ClientButtonsHandlerTest`, make sure that install, repair and logout use the slug from the supplier.
+. In `OptionsPanelTest`, make sure that `getRunnerOptions` uses the slug from the supplier.
+. Make sure that no code uses `DEFAULT_SLUG`.
+
+=== Step 9: Update the native image configuration
+
+The project builds a native image.
+New Swing classes can need new reflection data.
+
+. Run the native image tests.
+. If necessary, update `src/main/resources/META-INF/native-image/reachability-metadata.json`.
+. Run `./gradlew test`.
+  Make sure that all the tests pass.
+
+== Closed Questions
+
+[cols="1,2"]
+|===
+| Question | Answer
+
+| Name of the executable
+| Always `mnm.exe`. No change.
+
+| Logout
+| Logout uses the selected slug. Refer to <<_decision_6_logout_uses_the_selected_slug>>.
+
+| Downloads folder
+| All the slugs use the same folder. No change.
+
+| Wine prefix
+| Each slug uses `<slug>_prefix`. Refer to <<_decision_5_each_slug_has_its_own_wine_prefix>>.
+
+| Order of the slugs
+| The API order.
+
+| Game settings path
+| The path `LocalLow/Niche Worlds Cult/Monsters and Memories` stays fixed.
+  The Wine prefix part uses the selected slug.
+|===

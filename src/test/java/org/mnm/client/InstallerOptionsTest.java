@@ -63,6 +63,14 @@ class InstallerOptionsTest {
         }
 
         @Test
+        void shouldAllowSlugWithCredentials() {
+            InstallerOptions options = new InstallerOptions("me", "secret", "mnm", xxhsum);
+
+            assertThatCode(options::validateInstall)
+                .doesNotThrowAnyException();
+        }
+
+        @Test
         void shouldPanicWhenUsernameIsMissing() {
             InstallerOptions options = new InstallerOptions(null, "secret", null, xxhsum);
 

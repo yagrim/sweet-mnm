@@ -32,6 +32,7 @@ class ValidatorsTest {
         Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
         when(session.getVersion()).thenReturn("1.2.3");
+        when(session.select("mnm")).thenReturn(session);
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
@@ -48,6 +49,7 @@ class ValidatorsTest {
         Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
         when(session.getVersion()).thenReturn("2.0.0");
+        when(session.select("mnm")).thenReturn(session);
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
@@ -55,6 +57,24 @@ class ValidatorsTest {
             assertThatThrownBy(() -> Validators.checkVersion("token", client))
                 .isInstanceOf(PanicException.class)
                 .hasMessage("Version mismatch: run 'repair' to update the client");
+        }
+    }
+
+    @Test
+    void shouldCompareVersionOfClientSlugWhenMultipleAreFound() {
+        Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
+        Session session = Mockito.mock(Session.class);
+        Session mnmSession = Mockito.mock(Session.class);
+        // Default (first) slug has a different version
+        when(session.getVersion()).thenReturn("9.9.9");
+        when(session.select("mnm")).thenReturn(mnmSession);
+        when(mnmSession.getVersion()).thenReturn("1.2.3");
+
+        try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
+
+            assertThatCode(() -> Validators.checkVersion("token", client))
+                .doesNotThrowAnyException();
         }
     }
 }

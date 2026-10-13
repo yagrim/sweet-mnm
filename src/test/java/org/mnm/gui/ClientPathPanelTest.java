@@ -17,7 +17,6 @@ import org.mnm.events.ClientEventHandler;
 
 import static java.nio.file.Files.createDirectories;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.ReflectionTestTools.getButton;
 import static org.mnm.gui.ReflectionTestTools.getField;
@@ -47,7 +46,7 @@ class ClientPathPanelTest {
         assertThat(copy.isEnabled()).isFalse();
         assertThat(open.isEnabled()).isFalse();
 
-        Path gameSettingsPath = tempDir.resolve(DEFAULT_MNM_PREFIX).resolve(GAME_SETTINGS);
+        Path gameSettingsPath = tempDir.resolve("mnm_prefix").resolve(GAME_SETTINGS);
         createDirectories(gameSettingsPath);
         panel.refresh(clientStatus);
 

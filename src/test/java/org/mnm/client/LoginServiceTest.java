@@ -46,13 +46,15 @@ class LoginServiceTest {
         when(session.getSlug()).thenReturn(TEST_SLUG);
         when(session.getVersion()).thenReturn(TEST_VERSION);
         when(session.getToken()).thenReturn(VALID_TOKEN);
+        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG));
+        when(session.select(TEST_SLUG)).thenReturn(session);
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
 
             final LoginService loginService = new LoginService(configDb, null);
-            String slug = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
-            assertThat(slug).isEqualTo(TEST_SLUG);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG);
 
             verify(configDb, Mockito.times(1))
                 .addClient(eq(new Client(TEST_SLUG, TEST_VERSION, NOT_INSTALLED, tempDir)));
@@ -73,8 +75,8 @@ class LoginServiceTest {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
 
             final LoginService loginService = new LoginService(configDb, null);
-            String slug = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
-            assertThat(slug).isEqualTo(TEST_SLUG);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG);
 
             verify(configDb, Mockito.times(0)).addClient(any());
             verify(configDb, Mockito.times(0)).updateClientStatus(eq(TEST_SLUG), eq(UPDATED));
@@ -95,8 +97,8 @@ class LoginServiceTest {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
 
             final LoginService loginService = new LoginService(configDb, null);
-            String slug = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
-            assertThat(slug).isEqualTo(TEST_SLUG);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG);
 
             verify(configDb, Mockito.times(0)).addClient(any());
             verify(configDb, Mockito.times(0)).updateClientStatus(eq(TEST_SLUG), any());
@@ -118,8 +120,8 @@ class LoginServiceTest {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
 
             final LoginService loginService = new LoginService(configDb, null);
-            String slug = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
-            assertThat(slug).isEqualTo(TEST_SLUG);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG);
 
             verify(configDb, Mockito.times(0)).addClient(any());
             // Don't update client data if it's up-to-date
@@ -143,14 +145,84 @@ class LoginServiceTest {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
 
             final LoginService loginService = new LoginService(configDb, null);
-            String slug = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
-            assertThat(slug).isEqualTo(TEST_SLUG);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir,  new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG);
 
             verify(configDb, Mockito.times(0)).addClient(any());
             verify(configDb, Mockito.times(0)).updateClientStatus(eq(TEST_SLUG), eq(UPDATED));
             verify(configDb, Mockito.times(0)).addToken(any());
             verify(configDb, Mockito.times(1)).updateToken(eq(1), eq(newValidToken));
         }
+    }
+
+    @Test
+    void shouldLoginAndSaveClientAndTokenForEachSlug(@TempDir Path tempDir) {
+        final String otherSlug = "other-slug";
+        final String otherVersion = "publish-0.0.1.0-other";
+
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        when(configDb.getClient(TEST_SLUG)).thenReturn(null);
+        when(configDb.getClient(otherSlug)).thenReturn(null);
+
+        Session session = Mockito.mock(Session.class);
+        Session testSlugSession = mockSlugSession(TEST_SLUG, TEST_VERSION);
+        Session otherSlugSession = mockSlugSession(otherSlug, otherVersion);
+        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, otherSlug));
+        when(session.select(TEST_SLUG)).thenReturn(testSlugSession);
+        when(session.select(otherSlug)).thenReturn(otherSlugSession);
+
+        try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
+
+            final LoginService loginService = new LoginService(configDb, null);
+            List<String> slugs = loginService.login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
+            assertThat(slugs).containsExactly(TEST_SLUG, otherSlug);
+
+            verify(configDb, Mockito.times(1))
+                .addClient(eq(new Client(TEST_SLUG, TEST_VERSION, NOT_INSTALLED, tempDir)));
+            verify(configDb, Mockito.times(1))
+                .addClient(eq(new Client(otherSlug, otherVersion, NOT_INSTALLED, tempDir)));
+            verify(configDb, Mockito.times(1))
+                .addToken(eq(new Token(TEST_SLUG, VALID_TOKEN)));
+            verify(configDb, Mockito.times(1))
+                .addToken(eq(new Token(otherSlug, VALID_TOKEN)));
+        }
+    }
+
+    @Test
+    void shouldMarkOnlyOutdatedClientsWhenLoginWithMultipleSlugs(@TempDir Path tempDir) {
+        final String otherSlug = "other-slug";
+        final String otherVersion = "publish-0.0.1.0-other";
+
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        when(configDb.getClient(TEST_SLUG)).thenReturn(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir));
+        when(configDb.getClient(otherSlug)).thenReturn(new Client(otherSlug, "old-version", UPDATED, tempDir));
+        when(configDb.getTokens(TEST_SLUG)).thenReturn(List.of(new Token(1, TEST_SLUG, VALID_TOKEN)));
+        when(configDb.getTokens(otherSlug)).thenReturn(List.of(new Token(2, otherSlug, VALID_TOKEN)));
+
+        Session session = Mockito.mock(Session.class);
+        Session testSlugSession = mockSlugSession(TEST_SLUG, TEST_VERSION);
+        Session otherSlugSession = mockSlugSession(otherSlug, otherVersion);
+        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, otherSlug));
+        when(session.select(TEST_SLUG)).thenReturn(testSlugSession);
+        when(session.select(otherSlug)).thenReturn(otherSlugSession);
+
+        try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
+
+            new LoginService(configDb, null).login(TEST_USERNAME, TEST_PASSWORD, tempDir, new TestTokenSupplier());
+
+            verify(configDb, Mockito.times(0)).updateClient(eq(TEST_SLUG), any(), any(), any());
+            verify(configDb, Mockito.times(1)).updateClient(eq(otherSlug), eq(otherVersion), eq(NEEDS_UPDATE), eq(tempDir));
+        }
+    }
+
+    private static Session mockSlugSession(String slug, String version) {
+        Session session = Mockito.mock(Session.class);
+        when(session.getSlug()).thenReturn(slug);
+        when(session.getVersion()).thenReturn(version);
+        when(session.getToken()).thenReturn(VALID_TOKEN);
+        return session;
     }
 
     private static Session mockSession(String token) {
@@ -162,6 +234,8 @@ class LoginServiceTest {
         when(session.getSlug()).thenReturn(TEST_SLUG);
         when(session.getToken()).thenReturn(token);
         when(session.getVersion()).thenReturn(version);
+        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG));
+        when(session.select(TEST_SLUG)).thenReturn(session);
         return session;
     }
 

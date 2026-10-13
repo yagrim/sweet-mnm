@@ -30,12 +30,25 @@ public class LoginService {
         this.apiConnector = apiConnector;
     }
 
-    public String login(String username, String password,
-                        Path workDir, TokenSupplier tokenSupplier) {
+    /**
+     * Returns all slugs available for the account.
+     */
+    public List<String> login(String username, String password,
+                              Path workDir, TokenSupplier tokenSupplier) {
 
         final Session session = Session.login(username, password, apiConnector, tokenSupplier);
-        final Client client = configDb.getClient(session.getSlug());
-        return updateClientAndToken(session, client, workDir, null).slug();
+        return updateClientsAndTokens(session, workDir);
+    }
+
+    /**
+     * Creates or updates a client and token for each slug available in the session.
+     */
+    public List<String> updateClientsAndTokens(Session session, Path workDir) {
+        final List<String> slugs = session.getSlugs();
+        for (String slug : slugs) {
+            updateClientAndToken(session.select(slug), configDb.getClient(slug), workDir, null);
+        }
+        return slugs;
     }
 
     // status only used when REPAIRING or INSTALLING

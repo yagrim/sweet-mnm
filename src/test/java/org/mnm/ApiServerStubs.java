@@ -62,6 +62,35 @@ public class ApiServerStubs {
                     .replaceAll("BASE_URL", baseUrl))));
     }
 
+    /**
+     * Stubs a versions response with one entry per slug, in the given order.
+     * The slug {@link #TEST_SLUG} uses {@link #TEST_VERSION}, others use a version derived from the slug.
+     */
+    public static void stubGameVersionsForSlugs(String baseUrl, String... slugs) {
+        final StringBuilder versions = new StringBuilder();
+        for (String slug : slugs) {
+            if (!versions.isEmpty()) {
+                versions.append(",");
+            }
+            versions.append("""
+                {
+                    "version": "%s",
+                    "slug": "%s",
+                    "chunks_url": "%s/chunks",
+                    "manifest_url": "%s/manifests/65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest"
+                }""".formatted(versionFor(slug), slug, baseUrl, baseUrl));
+        }
+        stubFor(get(urlPathEqualTo("/game/versions"))
+            .withQueryParam("token", matching(".*"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withBody("{ \"versions\": [" + versions + "]}")));
+    }
+
+    public static String versionFor(String slug) {
+        return TEST_SLUG.equals(slug) ? TEST_VERSION : "publish-0.0.1.0-" + slug;
+    }
+
     public static void stubManifestDownload() {
         final byte[] manifest = readFromClasspathAsArray("installation/test-manifest.json");
         stubFor(get(urlPathEqualTo("/manifests/65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest"))

@@ -12,6 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
+import static org.mnm.ApiServerStubs.stubGameVersionsForSlugs;
+import static org.mnm.ApiServerStubs.versionFor;
 
 @WireMockTest(httpsEnabled = true)
 class SessionTest {
@@ -30,6 +32,75 @@ class SessionTest {
         assertThat(session).isNotNull();
         assertThat(session.getSlug()).isEqualTo("mnm");
         assertThat(session.getChunksUrl()).isEqualTo("https://clients.domain.com/chunks");
+    }
+
+    @Test
+    void shouldUseTheOnlySlugWhenNoneIsSelected(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "mnm");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+
+        assertThat(session.getSlugs()).containsExactly("mnm");
+        assertThat(session.getSlug()).isEqualTo("mnm");
+    }
+
+    @Test
+    void shouldUseFirstSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+
+        assertThat(session.getSlugs()).containsExactly("mnm-test", "mnm");
+        assertThat(session.getSlug()).isEqualTo("mnm-test");
+        assertThat(session.getVersion()).isEqualTo(versionFor("mnm-test"));
+    }
+
+    @Test
+    void shouldSelectSlug(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+        Session selected = session.select("mnm");
+
+        assertThat(selected.getSlug()).isEqualTo("mnm");
+        assertThat(selected.getVersion()).isEqualTo(versionFor("mnm"));
+        assertThat(selected.getToken()).isEqualTo(session.getToken());
+        assertThat(selected.getSlugs()).containsExactly("mnm-test", "mnm");
+        // Original session is not modified
+        assertThat(session.getSlug()).isEqualTo("mnm-test");
+    }
+
+    @Test
+    void shouldFailWhenSelectedSlugIsNotFound(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+
+        Throwable t = catchThrowable(() -> session.select("unknown"));
+
+        assertThat(t)
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Slug 'unknown' not found, available slugs: [mnm-test, mnm]");
+    }
+
+    @Test
+    void shouldWorkWhenMnmSlugIsNotPresent(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "alpha", "beta");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+
+        assertThat(session.getSlugs()).containsExactly("alpha", "beta");
+        assertThat(session.getSlug()).isEqualTo("alpha");
+        assertThat(session.select("beta").getVersion()).isEqualTo(versionFor("beta"));
+    }
+
+    private static ApiConnector apiConnector(WireMockRuntimeInfo wiremock) {
+        return new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
     }
 
     @Test

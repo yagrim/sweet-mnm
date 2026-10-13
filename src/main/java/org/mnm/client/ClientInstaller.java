@@ -85,7 +85,7 @@ public class ClientInstaller {
         Session session;
         Path installDir;
 
-        if (!StringUtils.isEmpty(options.slug())) {
+        if (StringUtils.isEmpty(options.username()) && !StringUtils.isEmpty(options.slug())) {
             final String slug = options.slug();
             currentClient = configDb.getClient(slug);
             if (currentClient == null) {
@@ -98,10 +98,13 @@ public class ClientInstaller {
             logger.debug("Found {} tokens for '{}'", tokens.size(), slug);
             validateTokens(tokens);
             final String token = tokens.get(0).token();
-            session = Session.login(token, apiConnector);
+            session = Session.login(token, apiConnector).select(slug);
             installDir = currentClient.path();
         } else {
             session = Session.login(options.username(), options.password(), apiConnector, tokenSupplier);
+            if (!StringUtils.isEmpty(options.slug())) {
+                session = session.select(options.slug());
+            }
             currentClient = configDb.getClient(session.getSlug());
             installDir = workDir;
         }

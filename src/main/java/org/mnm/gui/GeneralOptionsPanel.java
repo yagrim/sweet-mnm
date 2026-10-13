@@ -164,7 +164,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     private static Path getDownloadsPath(Client client) {
-        return new Installation(client.path(), MainTabs.DEFAULT_SLUG).getDownloadsPath();
+        return new Installation(client.path(), client.slug()).getDownloadsPath();
     }
 
     // This is quick enough, we don't bother running async and disabling button in the meantime

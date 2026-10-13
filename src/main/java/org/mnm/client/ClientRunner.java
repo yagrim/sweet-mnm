@@ -20,7 +20,14 @@ import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ClientRunner {
 
-    public static final String DEFAULT_MNM_PREFIX = "mnm_prefix";
+    private static final String WINE_PREFIX_SUFFIX = "_prefix";
+
+    /**
+     * Name of the Wine prefix directory for a client, relative to the client path.
+     */
+    public static String winePrefixName(String slug) {
+        return slug + WINE_PREFIX_SUFFIX;
+    }
 
     private final Logger logger = LoggerFactory.getLogger(ClientRunner.class);
 
@@ -47,7 +54,7 @@ public class ClientRunner {
         final boolean isWindows = OS.isWindows();
 
         String[] command = buildCommand(client.slug(), token.token(), isWindows);
-        Map<String, String> environment = buildEnvironment(isWindows, clientPath, System.getenv(), options.linuxOptions());
+        Map<String, String> environment = buildEnvironment(isWindows, client.slug(), clientPath, System.getenv(), options.linuxOptions());
 
         logger.info("Running: {}", String.join(" ", redactToken(command)));
         logger.info("Working directory: {}", clientPath);
@@ -126,13 +133,13 @@ public class ClientRunner {
         return redacted;
     }
 
-    private Map<String, String> buildEnvironment(boolean isWindows, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
+    private Map<String, String> buildEnvironment(boolean isWindows, String slug, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
         return isWindows
             ? buildWine(linuxOptions.enableMangoHud())
-            : buildLinuxEnvironment(clientPath, currentEnvironment, linuxOptions);
+            : buildLinuxEnvironment(slug, clientPath, currentEnvironment, linuxOptions);
     }
 
-    private Map<String, String> buildLinuxEnvironment(Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
+    private Map<String, String> buildLinuxEnvironment(String slug, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
         Map<String, String> environment = new HashMap<>();
 
         Objects.requireNonNull(linuxOptions, "linuxOptions cannot be null");
@@ -144,7 +151,7 @@ public class ClientRunner {
 
         String candidateWinePrefixPath;
         if (linuxOptions.useClientAsPrefix() || isEmpty(linuxOptions.umuOptions().winePrefix())) {
-            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(DEFAULT_MNM_PREFIX).toString();
+            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(winePrefixName(slug)).toString();
         } else {
             String prefix = linuxOptions.umuOptions().winePrefix();
             Path prefixPath = Path.of(prefix);

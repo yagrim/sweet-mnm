@@ -15,7 +15,7 @@ import org.mnm.config.Client;
 
 import static java.nio.file.Files.createDirectories;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
+import static org.mnm.client.ClientRunner.winePrefixName;
 import static org.mnm.config.Client.Status.UPDATED;
 
 class ClientPathsTest {
@@ -51,13 +51,37 @@ class ClientPathsTest {
     @EnabledOnOs(OS.LINUX)
     void shouldUseClientDirectoryAsWinePrefixOnLinux(@TempDir Path tempDir) throws IOException {
         Client client = new Client("mnm", "1.2.3", UPDATED, tempDir);
-        Path gameSettingsPath = tempDir.resolve(DEFAULT_MNM_PREFIX).resolve("pfx").resolve(GAME_SETTINGS);
+        Path gameSettingsPath = tempDir.resolve("mnm_prefix").resolve("pfx").resolve(GAME_SETTINGS);
         createDirectories(gameSettingsPath);
         ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
 
-        String expected = client.path().toAbsolutePath() + "/" + DEFAULT_MNM_PREFIX + "/pfx/" + GAME_SETTINGS;
+        String expected = client.path().toAbsolutePath() + "/mnm_prefix/pfx/" + GAME_SETTINGS;
 
         assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void shouldUseSlugWinePrefixOnLinux(@TempDir Path tempDir) throws IOException {
+        Client client = new Client("other-game", "1.2.3", UPDATED, tempDir);
+        // Prefix of a different slug must not be used
+        createDirectories(tempDir.resolve(winePrefixName("mnm")).resolve("pfx").resolve(GAME_SETTINGS));
+        ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
+
+        createDirectories(tempDir.resolve("other-game_prefix").resolve("pfx").resolve(GAME_SETTINGS));
+        String expected = client.path().toAbsolutePath() + "/other-game_prefix/pfx/" + GAME_SETTINGS;
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo(expected);
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void shouldReportMissingInstallationWhenThereIsNoClient() {
+        ClientPaths paths = new ClientPaths(new ClientStatus(null, false, null), true);
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
     }
 
     @Test

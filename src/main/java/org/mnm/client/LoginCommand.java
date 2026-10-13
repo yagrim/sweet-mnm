@@ -1,6 +1,7 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -37,10 +38,10 @@ public class LoginCommand implements Command {
             ApiConnector apiConnector = Factories.apiConnector(API_BASE_URL);
             TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, new LineReader());
 
-            String slug = new LoginService(configDb, apiConnector)
+            List<String> slugs = new LoginService(configDb, apiConnector)
                 .login(credentials.username(), credentials.password(), getWorkDir(), tokenSupplier);
 
-            logger.info("Stored token for slug '{}'", slug);
+            logger.info("Stored token for slugs {}", slugs);
         }
     }
 

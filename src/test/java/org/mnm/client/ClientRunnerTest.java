@@ -234,6 +234,21 @@ class ClientRunnerTest {
     }
 
     @Test
+    void shouldUseSlugWinePrefixForLinuxClient(@TempDir Path tempDir) {
+        final String slug = "other-game";
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
+        var result = runClient(slug, installPath, token, false, options);
+
+        assertThat(result.command)
+            .containsExactly("umu-run", "%s/%s".formatted(slug, "mnm.exe"), "--token", token);
+        assertThat(result.environment)
+            .containsEntry("WINEPREFIX", installPath.toAbsolutePath().resolve("other-game_prefix").toString());
+    }
+
+    @Test
     void shouldRunLinuxClientWithMangoHud(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
@@ -382,11 +397,15 @@ class ClientRunnerTest {
 
 
     private RunResult runClient(Path installPath, String token, boolean isWindows, RunnerOptions options) {
-        Client client = new Client(SLUG, "v1.0.0", UPDATED, installPath);
+        return runClient(SLUG, installPath, token, isWindows, options);
+    }
+
+    private RunResult runClient(String slug, Path installPath, String token, boolean isWindows, RunnerOptions options) {
+        Client client = new Client(slug, "v1.0.0", UPDATED, installPath);
 
         ConfigDb configDb = Mockito.mock(ConfigDb.class);
         Mockito.when(configDb.getClients()).thenReturn(List.of(client));
-        Mockito.when(configDb.getTokens(SLUG)).thenReturn(List.of(new Token(1, SLUG, token)));
+        Mockito.when(configDb.getTokens(slug)).thenReturn(List.of(new Token(1, slug, token)));
 
         AtomicReference<Path> workingDirectory = new AtomicReference<>();
         AtomicReference<String[]> command = new AtomicReference<>();

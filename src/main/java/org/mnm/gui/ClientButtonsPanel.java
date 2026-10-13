@@ -8,6 +8,7 @@ import javax.swing.SwingUtilities;
 import java.awt.GridLayout;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import static org.mnm.config.Client.Status.INSTALLING;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.Client.Status.REPAIRING;
 import static org.mnm.gui.GuiComponents.setFontSize;
-import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.ACTION_BUTTON_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
@@ -40,6 +40,7 @@ class ClientButtonsPanel extends JPanel
     private final JButton login;
     private final JButton logout;
     private final CredentialsHandler credentialsHandler;
+    private final Supplier<String> selectedSlug;
     // Store the original one to avoid size changes when uses modifies values before restart
     private final float uiScaling;
 
@@ -52,6 +53,7 @@ class ClientButtonsPanel extends JPanel
         GuiCommand.LogoutAction logoutAction,
         GuiCommand.RepairAction repairAction, BooleanSupplier inMemoryHashing,
         CredentialsHandler credentialsHandler,
+        Supplier<String> selectedSlug,
         float uiScaling) {
 
         super(new GridLayout(1, 2, SCALE, 0));
@@ -61,6 +63,7 @@ class ClientButtonsPanel extends JPanel
         login = createButton("Refresh", uiScaling);
         logout = createButton("Logout", uiScaling);
         this.credentialsHandler = credentialsHandler;
+        this.selectedSlug = selectedSlug;
 
         this.uiScaling = uiScaling;
 
@@ -190,9 +193,11 @@ class ClientButtonsPanel extends JPanel
 
         progressWindow.resetProgress();
 
+        // Read in the Swing thread, the modal progress window blocks selection changes during repair
+        final String slug = selectedSlug.get();
         CompletableFuture
             .supplyAsync(() -> {
-                ClientStatus repair1 = repairAction.repair(DEFAULT_SLUG, status, inMemoryHashing.getAsBoolean());
+                ClientStatus repair1 = repairAction.repair(slug, status, inMemoryHashing.getAsBoolean());
                 return new Tuple(repair1, progressWindow);
             })
             .whenComplete((tuple, error) -> SwingUtilities.invokeLater(() -> {
@@ -232,7 +237,7 @@ class ClientButtonsPanel extends JPanel
     }
 
     private void handleLogout(GuiCommand.LogoutAction logoutAction) {
-        logoutAction.logout(DEFAULT_SLUG);
+        logoutAction.logout(selectedSlug.get());
         ClientEventHandler.getInstance().logoutDone();
     }
 

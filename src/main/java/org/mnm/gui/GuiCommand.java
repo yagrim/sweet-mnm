@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -40,9 +41,8 @@ import org.mnm.tools.ProcessUtils;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
+import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.config.Settings.readUiScaling;
-import static org.mnm.gui.ClientStatus.getClientStatus;
-import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 import static org.mnm.tools.FileUtils.installClasspathResource;
 
 public class GuiCommand implements Command {
@@ -54,7 +54,12 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface GuiStarter {
-        void start(Supplier<ClientStatus> clientStatus);
+        void start(Supplier<GuiState> guiState);
+    }
+
+    @FunctionalInterface
+    interface SelectSlugAction {
+        ClientStatus select(String slug);
     }
 
     @FunctionalInterface
@@ -80,7 +85,7 @@ public class GuiCommand implements Command {
     // Validations run after initializing the UI
     @FunctionalInterface
     interface PostInitializationAction {
-        void run(ClientStatus clientStatus);
+        void run(GuiState guiState);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -91,11 +96,13 @@ public class GuiCommand implements Command {
     private final RepairAction repairAction;
     private final LoginAction loginAction;
     private final LogoutAction logoutAction;
+    private final SelectSlugAction selectSlugAction;
 
     private final ApiConnector apiConnector;
     private final TokenSupplier tokenSupplier;
 
     private JFrame frame;
+    private SlugSelectorPanel slugSelector;
 
     public GuiCommand() {
         this(new ConfigDbLocator());
@@ -108,6 +115,7 @@ public class GuiCommand implements Command {
         this.runAction = (options) -> runClient(configDbLocator, options);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
+        this.selectSlugAction = slug -> selectSlug(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
         this.postInitAction = this::postInitializeSwing;
 
@@ -121,7 +129,12 @@ public class GuiCommand implements Command {
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
 
         initialize();
-        guiStarter.start(() -> getClientStatus(DEFAULT_SLUG, configDbLocator.get(), apiEndpoint));
+        guiStarter.start(() -> {
+            try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+                ClientStatus.updateVersions(configDb, apiEndpoint);
+                return readGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY));
+            }
+        });
     }
 
     @Override
@@ -170,7 +183,7 @@ public class GuiCommand implements Command {
         }
     }
 
-    private void startSwingInterface(Supplier<ClientStatus> clientStatusSupplier) {
+    private void startSwingInterface(Supplier<GuiState> guiStateSupplier) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 final ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
@@ -185,8 +198,9 @@ public class GuiCommand implements Command {
                 this.frame = new JFrame("Sweet GUI");
 
                 final var optionsPanel = new OptionsPanel(frame, settingsStore, credentialsHandler);
-                final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), settingsStore, credentialsHandler, uiScaling);
-                final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(), uiScaling);
+                this.slugSelector = new SlugSelectorPanel(slug -> ClientEventHandler.getInstance().refresh(selectSlugAction.select(slug)), uiScaling);
+                final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), settingsStore, credentialsHandler, slugSelector, uiScaling);
+                final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(slugSelector.getSelectedSlug()), uiScaling);
 
                 final MainTabs tabs = new MainTabs(settingsStore, clientPanel, optionsPanel);
 
@@ -203,9 +217,9 @@ public class GuiCommand implements Command {
 
                 // Prevent UI locking for some seconds
                 CompletableFuture
-                    .supplyAsync(() -> clientStatusSupplier.get())
-                    .whenComplete((clientStatus, _) -> SwingUtilities.invokeLater(() -> {
-                        postInitAction.run(clientStatus);
+                    .supplyAsync(() -> guiStateSupplier.get())
+                    .whenComplete((guiState, _) -> SwingUtilities.invokeLater(() -> {
+                        postInitAction.run(guiState);
                     }));
             });
         } catch (InterruptedException e) {
@@ -216,11 +230,12 @@ public class GuiCommand implements Command {
         }
     }
 
-    private void postInitializeSwing(ClientStatus clientStatus) {
-        if (clientStatus.client() == null) {
+    private void postInitializeSwing(GuiState guiState) {
+        if (guiState.clientStatus().client() == null) {
             logger.debug("No client found in config db");
         }
-        ClientEventHandler.getInstance().refresh(clientStatus);
+        slugSelector.setItems(guiState.slugs(), guiState.selectedSlug());
+        ClientEventHandler.getInstance().refresh(guiState.clientStatus());
     }
 
     void close() {
@@ -242,10 +257,38 @@ public class GuiCommand implements Command {
     private ClientStatus login(Supplier<Path> configDbLocator, String username, String password) {
         try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
 
-            String slug = new LoginService(configDb, apiConnector)
+            new LoginService(configDb, apiConnector)
                 .login(username, password, getWorkDir(), tokenSupplier);
 
-            return buildClientStatus(configDb, slug);
+            // Login can add new slugs
+            final String preferredSlug = slugSelector == null ? configDb.getSettings(SELECTED_SLUG_KEY) : slugSelector.getSelectedSlug();
+            final GuiState guiState = readGuiState(configDb, preferredSlug);
+            if (slugSelector != null) {
+                slugSelector.setItems(guiState.slugs(), guiState.selectedSlug());
+            }
+            return guiState.clientStatus();
+        }
+    }
+
+    /**
+     * Reads the GUI state from the database, without API calls.
+     */
+    static GuiState readGuiState(ConfigDb configDb, String preferredSlug) {
+        final List<String> slugs = configDb.getClients().stream().map(Client::slug).toList();
+        final String selectedSlug = GuiState.selectSlug(slugs, preferredSlug);
+        final ClientStatus clientStatus = selectedSlug == null
+            ? new ClientStatus(null, false, null)
+            : ClientStatus.read(configDb, selectedSlug);
+        return new GuiState(slugs, selectedSlug, clientStatus);
+    }
+
+    /**
+     * Stores the selection and returns the status of the selected client, without API calls.
+     */
+    static ClientStatus selectSlug(Supplier<Path> configDbLocator, String slug) {
+        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+            configDb.putSettings(SELECTED_SLUG_KEY, slug);
+            return readGuiState(configDb, slug).clientStatus();
         }
     }
 

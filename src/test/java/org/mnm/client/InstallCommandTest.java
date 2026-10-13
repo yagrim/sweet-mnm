@@ -38,11 +38,12 @@ class InstallCommandTest {
             Installs MnM client in the current location
             
             Usage:
-              sweet install --username <username> --password <password>
+              sweet install --username <username> --password <password> [--slug <slug>]
             
             Options:
-              --username      MnM account username (required when --slug is not set)
+              --username      MnM account username (required)
               --password      MnM account password (required when --username is set)
+              --slug          Game slug to install when the account has more than one (default: first one)
               --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
               --debug         Enables debug messages
               --help          Shows this help
