@@ -14,14 +14,18 @@ import static org.mnm.config.Environment.getWorkDir;
 public class Factories {
 
     static void installer(InstallerOptions options, ConfigDb configDb, Client.Status status) {
-        ApiConnector apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
+        ApiConnector apiConnector = apiConnector(API_BASE_URL);
         TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, new LineReader());
         new ClientInstaller(configDb, apiConnector)
-            .install(options, getWorkDir(), API_BASE_URL, status, tokenSupplier);
+            .install(options, getWorkDir(), status, tokenSupplier);
     }
 
     static void runner(RunnerOptions options, ConfigDb configDb) {
         new ClientRunner(configDb)
             .run(options);
+    }
+
+    public static ApiConnector apiConnector(String apiBaseUrl) {
+        return new ApiConnector(new RestClient(apiBaseUrl));
     }
 }

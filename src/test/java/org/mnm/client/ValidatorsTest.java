@@ -1,19 +1,31 @@
 package org.mnm.client;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import org.mnm.api.ApiConnector;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.tools.PanicException;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mnm.client.Factories.apiConnector;
 import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class ValidatorsTest {
+
+    ApiConnector apiConnector;
+
+    @BeforeEach
+    void before() {
+        apiConnector = apiConnector(API_BASE_URL);
+    }
 
     @Test
     void shouldAllowMatchingVersion() {
@@ -22,12 +34,12 @@ class ValidatorsTest {
         when(session.getVersion()).thenReturn("1.2.3");
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
-            sessionMock.when(() -> Session.login("token", API_BASE_URL)).thenReturn(session);
+            sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
 
             assertThatCode(() -> Validators.checkVersion("token", client))
                 .doesNotThrowAnyException();
 
-            sessionMock.verify(() -> Session.login("token", API_BASE_URL));
+            sessionMock.verify(() -> Session.login(eq("token"), any()));
         }
     }
 
@@ -38,7 +50,7 @@ class ValidatorsTest {
         when(session.getVersion()).thenReturn("2.0.0");
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
-            sessionMock.when(() -> Session.login("token", API_BASE_URL)).thenReturn(session);
+            sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
 
             assertThatThrownBy(() -> Validators.checkVersion("token", client))
                 .isInstanceOf(PanicException.class)

@@ -77,7 +77,7 @@ public class ClientInstaller {
     }
 
     public InstallationResult install(InstallerOptions options,
-                                      Path workDir, String apiBaseUrl,
+                                      Path workDir,
                                       Client.Status status,
                                       TokenSupplier tokenSupplier) {
 
@@ -98,7 +98,7 @@ public class ClientInstaller {
             logger.debug("Found {} tokens for '{}'", tokens.size(), slug);
             validateTokens(tokens);
             final String token = tokens.get(0).token();
-            session = Session.login(token, apiBaseUrl);
+            session = Session.login(token, apiConnector);
             installDir = currentClient.path();
         } else {
             session = Session.login(options.username(), options.password(), apiConnector, tokenSupplier);

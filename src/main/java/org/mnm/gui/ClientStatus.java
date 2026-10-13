@@ -4,7 +4,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+import org.mnm.api.ApiConnector;
+import org.mnm.api.RestClient;
 import org.mnm.api.Session;
+import org.mnm.client.Factories;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
@@ -24,7 +27,7 @@ public record ClientStatus(Client client, boolean validToken, Instant expiresAt)
                     Token token = tokens.get(0);
                     JwtParser.JwtClaims tokenClaims = JwtParser.parse(token.token());
                     if (!tokenClaims.isExpired()) {
-                        Session session = Session.login(token.token(), apiEndpoint);
+                        Session session = Session.login(token.token(), Factories.apiConnector(apiEndpoint));
                         boolean upToDateClient = session.getVersion().equals(client.version());
                         if (!upToDateClient) {
                             configDb.updateClientStatus(slug, NEEDS_UPDATE);

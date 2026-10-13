@@ -31,9 +31,16 @@ public class Session {
             panic("Username or password is empty");
         }
 
-        ApiConnection connection = apiConnector.login(username, password, tokenSupplier);
+        return buildSession(apiConnector.login(username, password, tokenSupplier));
+    }
 
-        return buildSession(connection);
+    public static Session login(String token, ApiConnector apiConnector) {
+        logger.info("Authenticating with token ...");
+        if (isEmpty(token)) {
+            panic("Token is empty");
+        }
+
+        return buildSession(apiConnector.login(token));
     }
 
     private static String mask(String email) {
@@ -52,18 +59,6 @@ public class Session {
             : domain + "***";
 
         return maskedName + "@" + maskedDomain;
-    }
-
-    public static Session login(String token, String baseUrl) {
-        logger.info("Authenticating with token ...");
-        if (isEmpty(token)) {
-            panic("Token is empty");
-        }
-
-        ApiConnector apiConnector = new ApiConnector(new RestClient(baseUrl));
-        ApiConnection connection = apiConnector.login(token);
-
-        return buildSession(connection);
     }
 
     private static Session buildSession(ApiConnection connection) {
