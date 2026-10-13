@@ -6,10 +6,10 @@ import java.util.function.Supplier;
 
 import org.mnm.api.ApiConnection;
 import org.mnm.api.ApiConnector;
-import org.mnm.api.RestClient;
 import org.mnm.api.TokenSupplier;
 import org.mnm.cli.CliTwoFactorTokenSupplier;
 import org.mnm.cli.LineReader;
+import org.mnm.client.Factories;
 
 class TokenUpdater {
 
@@ -21,7 +21,7 @@ class TokenUpdater {
 
     void update(String apiEndpoint, Options options) {
 
-        ApiConnector apiConnector = new ApiConnector(new RestClient(apiEndpoint));
+        ApiConnector apiConnector = Factories.apiConnector(apiEndpoint);
         TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, new LineReader());
         ApiConnection apiConnection = apiConnector.login(options.username(), options.password(), tokenSupplier);
 

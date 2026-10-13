@@ -16,13 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.api.ApiConnector;
-import org.mnm.api.RestClient;
 import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
+import org.mnm.client.Factories;
 import org.mnm.client.InstallerOptions;
 import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
@@ -111,7 +111,7 @@ public class GuiCommand implements Command {
         this.guiStarter = this::startSwingInterface;
         this.postInitAction = this::postInitializeSwing;
 
-        this.apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
+        this.apiConnector = Factories.apiConnector(API_BASE_URL);
         this.tokenSupplier = new PopUpTwoFactorTokenSupplier(apiConnector);
     }
 
@@ -233,7 +233,7 @@ public class GuiCommand implements Command {
             final InstallerOptions options = InstallerOptions.forRepair(slug, inMemoryHashing);
 
             new ClientInstaller(configDb, apiConnector)
-                .install(options, getWorkDir(), API_BASE_URL, status, tokenSupplier);
+                .install(options, getWorkDir(), status, tokenSupplier);
 
             return buildClientStatus(configDb, slug);
         }

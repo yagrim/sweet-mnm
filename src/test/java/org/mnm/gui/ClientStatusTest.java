@@ -23,6 +23,8 @@ import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.gui.ClientStatus.getClientStatus;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class ClientStatusTest {
@@ -88,7 +90,7 @@ class ClientStatusTest {
         when(session.getVersion()).thenReturn(serverVersion);
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
-            sessionMock.when(() -> Session.login(validToken, API_BASE_URL)).thenReturn(session);
+            sessionMock.when(() -> Session.login(eq(validToken), any())).thenReturn(session);
 
             ClientStatus clientStatus = getClientStatus(TEST_SLUG, dbFile, API_BASE_URL);
 

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.mnm.api.ApiConnector;
-import org.mnm.api.RestClient;
 import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.CliTwoFactorTokenSupplier;
@@ -35,7 +34,7 @@ public class LoginCommand implements Command {
         credentials.validate();
 
         try (ConfigDb configDb = ConfigDb.open(databaseFileLocator.get())) {
-            ApiConnector apiConnector = new ApiConnector(new RestClient(API_BASE_URL));
+            ApiConnector apiConnector = Factories.apiConnector(API_BASE_URL);
             TokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, new LineReader());
 
             String slug = new LoginService(configDb, apiConnector)
