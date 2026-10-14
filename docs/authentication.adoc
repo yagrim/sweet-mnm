@@ -1,6 +1,14 @@
 = Authentication workflow
 :api-base-url: https://account.monstersandmemories.com/api
 :toc:
+:icons: font
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
 
 This document describes how sweet-mnm authenticates against the Monsters & Memories account API, which REST operations are involved, and how to reproduce each step with `curl`.
 
@@ -55,8 +63,8 @@ Any error is surfaced as an `ApiException` that keeps the HTTP status and body.
    status=0          status=6 and                 any other
    (token)     code=two_factor_required            → error
         │                │
-        │        TokenSupplier.getToken(method, methods, challenge_token)
-        │                │  (user reads code from email)
+        │        server sends a code via method
+        │        (response has method, methods, challenge_token)
         │                │
         │                ├──(optional) POST account/login/2fa/{method}   resend code
         │                │
@@ -64,11 +72,9 @@ Any error is surfaced as an `ApiException` that keeps the HTTP status and body.
         │                │
         └───────┬────────┘
                 ▼
-       ApiConnection(token)
+              token
                 │
        GET game/versions?token=...   → slug, version, manifest_url, chunks_url
-                │
-             Session
 ----
 
 The token is a JWT.
@@ -255,33 +261,10 @@ Response contains a `games` object keyed by id, each entry with `dir`, `name`, `
 
 == Full example script
 
-[,bash,subs="+attributes"]
+link:../scripts/api_login.sh[`scripts/api_login.sh`] runs the whole workflow (requires `curl` and `jq`).
+Set `API` to target a different endpoint.
+
+[,bash]
 ----
-#!/usr/bin/env bash
-set -euo pipefail
-
-API={api-base-url}
-read -rp 'Email: ' EMAIL
-read -rsp 'Password: ' PASSWORD; echo
-
-RESP=$(curl -s -X POST "$API/account/login" \
-  -H 'Content-Type: application/json; charset=utf-8' \
-  -d "$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" '{email:$e,password:$p,version:21}')")
-
-STATUS=$(jq -r '.status' <<<"$RESP")
-if [[ "$STATUS" == 0 ]]; then
-  TOKEN=$(jq -r '.token' <<<"$RESP")
-elif [[ "$STATUS" == 6 && $(jq -r '.code' <<<"$RESP") == two_factor_required ]]; then
-  METHOD=$(jq -r '.method' <<<"$RESP")
-  CHALLENGE=$(jq -r '.challenge_token' <<<"$RESP")
-  read -rp "Verification code ($METHOD): " CODE
-  TOKEN=$(curl -s -X POST "$API/account/login/2fa" \
-    -H 'Content-Type: application/json; charset=utf-8' \
-    -d "$(jq -n --arg m "$METHOD" --arg c "$CODE" --arg t "$CHALLENGE" '{method:$m,code:$c,challenge_token:$t}')" \
-    | jq -r '.token')
-else
-  echo "Login failed: $RESP" >&2; exit 1
-fi
-
-curl -s "$API/game/versions?token=$TOKEN" | jq .
+include::../scripts/api_login.sh[]
 ----
