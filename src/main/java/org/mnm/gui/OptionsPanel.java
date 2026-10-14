@@ -8,7 +8,6 @@ import java.awt.GridLayout;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
-import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 
 class OptionsPanel extends JPanel {
 
@@ -31,8 +30,8 @@ class OptionsPanel extends JPanel {
         return generalPanel.isInMemoryHashing();
     }
 
-    RunnerOptions getRunnerOptions() {
-        return new RunnerOptions(DEFAULT_SLUG, null, true,
+    RunnerOptions getRunnerOptions(String slug) {
+        return new RunnerOptions(slug, null, true,
             new RunnerOptions.LinuxOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isUseClientAsPrefix(),
                 new RunnerOptions.UmuOptions(linuxPanel.getUmuGameId(), linuxPanel.getUmuProtonPath(), linuxPanel.getUmuWinePrefix()),
                 new RunnerOptions.ProtonOptions(linuxPanel.isProtonUseWined3dEnabled(), linuxPanel.isProtonWaylandEnabled()))

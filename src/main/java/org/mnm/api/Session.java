@@ -17,11 +17,11 @@ public class Session {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
-    private final ApiConnection.GameVersion gameVersion;
+    private final List<ApiConnection.GameVersion> gameVersions;
     private String token;
 
-    private Session(ApiConnection.GameVersion gameVersion, String token) {
-        this.gameVersion = gameVersion;
+    private Session(List<ApiConnection.GameVersion> gameVersions, String token) {
+        this.gameVersions = gameVersions;
         this.token = token;
     }
 
@@ -66,19 +66,39 @@ public class Session {
         if (gamesVersions.isEmpty()) {
             panic("No game versions found");
         }
-        if (gamesVersions.size() > 1) {
-            logger.debug("Multiple game slugs found: {}", gamesVersions.stream().map(p -> p.slug()).toList());
+
+        if (logger.isDebugEnabled()) {
+            List<String> games = gamesVersions.stream()
+                .map(g -> "%s (%s)".formatted(g.slug(), g.version()))
+                .toList();
+            logger.debug("Game slugs found: {}", games);
         }
 
-        return new Session(gamesVersions.stream().filter(p -> p.slug().equals("mnm")).findFirst().get(), connection.getToken());
+        return new Session(gamesVersions, connection.getToken());
     }
 
-    public ManifestHandler getManifestHandler(Path downloadsCache) {
+
+    public List<String> getSlugs() {
+        return gameVersions.stream().map(ApiConnection.GameVersion::slug).toList();
+    }
+
+    public ApiConnection.GameVersion getGameVersion(String slug) {
+        final ApiConnection.GameVersion gameVersion = gameVersions.stream()
+            .filter(p -> p.slug().equals(slug))
+            .findFirst()
+            .orElse(null);
+        if (gameVersion == null) {
+            panic("Slug '%s' not found, available slugs: %s".formatted(slug, getSlugs()));
+        }
+        return gameVersion;
+    }
+
+    public ManifestHandler getManifestHandler(ApiConnection.GameVersion gameVersion, Path downloadsCache) {
         logger.info("Processing Game Version: {}@{}", gameVersion.slug(), gameVersion.version());
-        return new ManifestHandler(downloadManifest(downloadsCache));
+        return new ManifestHandler(downloadManifest(gameVersion, downloadsCache));
     }
 
-    private Path downloadManifest(Path downloadsCache) {
+    private Path downloadManifest(ApiConnection.GameVersion gameVersion, Path downloadsCache) {
         String manifestUrl = gameVersion.manifest_url();
         String manifestName = getLastSegment(manifestUrl);
         final Path downloadPath = downloadsCache.resolve(manifestName);
@@ -98,18 +118,6 @@ public class Session {
 
         int lastSlash = url.lastIndexOf('/');
         return (lastSlash >= 0) ? url.substring(lastSlash + 1) : url;
-    }
-
-    public String getSlug() {
-        return gameVersion.slug();
-    }
-
-    public String getChunksUrl() {
-        return gameVersion.chunksUrl();
-    }
-
-    public String getVersion() {
-        return gameVersion.version();
     }
 
     public String getToken() {

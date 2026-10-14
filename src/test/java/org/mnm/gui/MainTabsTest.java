@@ -51,7 +51,7 @@ class MainTabsTest {
                 public ClientStatus repair(String slug, Client.Status status, boolean inMemoryHashing) {
                     return null;
                 }
-            }, () -> false, settingsStore, credentialsHandler, 1f);
+            }, () -> false, settingsStore, credentialsHandler, new SlugSelectorPanel(_ -> new ClientStatus(null, false, null), 1f), 1f);
 
         var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(null, settingsStore, credentialsHandler));
 

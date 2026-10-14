@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.ApiConnector;
 import org.mnm.api.Session;
 import org.mnm.api.TokenSupplier;
@@ -83,10 +84,11 @@ public class ClientInstaller {
 
         Client currentClient;
         Session session;
+        String slug;
         Path installDir;
 
-        if (!StringUtils.isEmpty(options.slug())) {
-            final String slug = options.slug();
+        if (StringUtils.isEmpty(options.username()) && !StringUtils.isEmpty(options.slug())) {
+            slug = options.slug();
             currentClient = configDb.getClient(slug);
             if (currentClient == null) {
                 panic("No client found: run 'install --username ...' first");
@@ -102,23 +104,24 @@ public class ClientInstaller {
             installDir = currentClient.path();
         } else {
             session = Session.login(options.username(), options.password(), apiConnector, tokenSupplier);
-            currentClient = configDb.getClient(session.getSlug());
+            slug = StringUtils.isEmpty(options.slug()) ? defaultSlug(session) : options.slug();
+            currentClient = configDb.getClient(slug);
             installDir = workDir;
         }
         logger.info("Running in path: {}", installDir);
 
-        final String slug = session.getSlug();
+        final GameVersion gameVersion = session.getGameVersion(slug);
         final Installation installation = new Installation(installDir, slug);
 
         new LoginService(configDb, apiConnector)
-            .updateClientAndToken(session, currentClient, installDir, status);
+            .updateClientAndToken(session, slug, currentClient, installDir, status);
 
         final List<Manifest.File> invalid = new ArrayList<>();
         final List<Manifest.File> missing = new ArrayList<>();
         // We list files, so empty directories will still remain
         final List<Path> currentFiles = getAllFiles(installation.getInstallPath());
 
-        final List<Manifest.File> files = session.getManifestHandler(installation.getDownloadsPath()).getFiles();
+        final List<Manifest.File> files = session.getManifestHandler(gameVersion, installation.getDownloadsPath()).getFiles();
 
         eventHandler.validationStart(files.size());
 
@@ -159,20 +162,20 @@ public class ClientInstaller {
         eventHandler.dataToAssemble(getTotalPatchDataSize(invalid, missing));
 
         if (!invalid.isEmpty()) {
-            installFiles(invalid, session, installation, options);
+            installFiles(invalid, gameVersion, installation, options);
         }
         if (!missing.isEmpty()) {
-            installFiles(missing, session, installation, options);
+            installFiles(missing, gameVersion, installation, options);
         }
         if (installationMonitor.isActive()) {
             if (!currentFiles.isEmpty()) {
                 currentFiles.forEach(path -> path.toFile().delete());
             }
 
-            configDb.updateClient(slug, session.getVersion(), UPDATED);
+            configDb.updateClient(slug, gameVersion.version(), UPDATED);
             logger.info("Installation completed");
         } else {
-            configDb.updateClient(slug, session.getVersion(), status);
+            configDb.updateClient(slug, gameVersion.version(), status);
             logger.info("Installation stopped. Current status: {}", status);
         }
         // Force to clean memory
@@ -180,6 +183,15 @@ public class ClientInstaller {
 
         // TODO we don't use the result: remove or update with only rework when we separate downloading from extracting
         return new InstallationResult(invalid.size(), missing.size(), currentFiles.size());
+    }
+
+    private static String defaultSlug(Session session) {
+        final List<String> slugs = session.getSlugs();
+        final String slug = SlugSelection.select(slugs, null);
+        if (slugs.size() > 1) {
+            logger.info("Multiple game slugs found: {}. Using '{}' by default, use --slug to select a different one", slugs, slug);
+        }
+        return slug;
     }
 
     private long getTotalDownloadSize(List<Manifest.File> invalid, List<Manifest.File> missing) {
@@ -230,9 +242,9 @@ public class ClientInstaller {
     }
 
     // We could have async workers to download and extract in parallel
-    private void installFiles(List<Manifest.File> files, Session session, Installation installation, InstallerOptions options) {
+    private void installFiles(List<Manifest.File> files, GameVersion gameVersion, Installation installation, InstallerOptions options) {
         for (Manifest.File file : files) {
-            fileHelper.downloadChunks(file, session.getChunksUrl(), installation);
+            fileHelper.downloadChunks(file, gameVersion.chunksUrl(), installation);
             if (!installationMonitor.isActive()) break;
 
             fileHelper.extract(file, installation, options.fileCheck());

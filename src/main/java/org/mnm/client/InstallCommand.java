@@ -52,11 +52,12 @@ public class InstallCommand implements Command {
             %s
             
             Usage:
-              sweet %s --username <username> --password <password>
+              sweet %s --username <username> --password <password> [--slug <slug>]
             
             Options:
-              --username      MnM account username (required when --slug is not set)
+              --username      MnM account username (required)
               --password      MnM account password (required when --username is set)
+              --slug          Game slug to install when the account has more than one (default: mnm, or the first one)
               --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
               --debug         Enables debug messages
               --help          Shows this help

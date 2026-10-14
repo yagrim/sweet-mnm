@@ -8,9 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
+import org.mnm.config.WinePrefix;
 import org.mnm.tools.StringUtils;
-
-import static org.mnm.client.ClientRunner.DEFAULT_MNM_PREFIX;
 
 class ClientPaths {
 
@@ -24,11 +23,17 @@ class ClientPaths {
 
     private final Optional<String> winePrefix;
 
+    private final boolean missingClient;
+
     ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix) {
-        winePrefix = getWinePrefixLocation(clientStatus, clientAsWinePrefix);
+        missingClient = !OS.isWindows() && clientAsWinePrefix && (clientStatus == null || clientStatus.client() == null);
+        winePrefix = missingClient ? Optional.empty() : getWinePrefixLocation(clientStatus, clientAsWinePrefix);
     }
 
     String getGameSettingsPath() {
+        if (missingClient) {
+            return INSTALLATION_NOT_FOUND_ERROR;
+        }
         return winePrefix
             .map(prefix -> {
                 String path = prefix + "/" + gameSettings;
@@ -70,7 +75,7 @@ class ClientPaths {
             return StringUtils.isEmpty(compatDataPath) ? Optional.empty() : Optional.of(compatDataPath);
         }
         if (clientAsWinePrefix) {
-            return Optional.of(client.client().path().toAbsolutePath() + "/" + DEFAULT_MNM_PREFIX);
+            return Optional.of(client.client().path().toAbsolutePath() + "/" + WinePrefix.name(client.client().slug()));
         } else {
             return Optional.of(Environment.getWorkDir().toString());
         }

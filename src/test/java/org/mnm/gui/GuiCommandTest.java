@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.client.InstallerOptions;
@@ -20,9 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
+import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
+import static org.mnm.config.Client.Status.NOT_INSTALLED;
+import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.config.Client.Status.UPDATED;
-import static org.mnm.gui.MainTabs.DEFAULT_SLUG;
 
 // TODO update tests to cover
 // Test buttons state change after install, logout
@@ -61,7 +66,7 @@ class GuiCommandTest {
         final Path dbFile = tempDir.resolve("config.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             configDb.addClient(testClient());
-            configDb.addToken(new Token(DEFAULT_SLUG, validToken()));
+            configDb.addToken(new Token("mnm", validToken()));
         }
 
         GuiCommand command = new GuiCommand(() -> dbFile);
@@ -86,8 +91,100 @@ class GuiCommandTest {
         assertThat(options.toString()).contains("xxhsum");
     }
 
+    @Test
+    void shouldReadEmptyGuiStateWhenThereAreNoClients(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
+
+            assertThat(guiState.slugs()).isEmpty();
+            assertThat(guiState.selectedSlug()).isNull();
+            assertThat(guiState.clientStatus().client()).isNull();
+        }
+    }
+
+    @Test
+    void shouldReadGuiStateWithPreferredSlug(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+            addClients(configDb, tempDir, "mnm-test", "mnm", "other");
+
+            GuiState guiState = GuiCommand.loadGuiState(configDb, "other");
+
+            assertThat(guiState.slugs()).containsExactly("mnm-test", "mnm", "other");
+            assertThat(guiState.selectedSlug()).isEqualTo("other");
+            assertThat(guiState.clientStatus().client().slug()).isEqualTo("other");
+            assertThat(guiState.clientStatus().validToken()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldReadGuiStateWithMnmWhenPreferredSlugIsNotFound(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+            addClients(configDb, tempDir, "mnm-test", "mnm");
+
+            GuiState guiState = GuiCommand.loadGuiState(configDb, "removed");
+
+            assertThat(guiState.selectedSlug()).isEqualTo("mnm");
+        }
+    }
+
+    @Test
+    void shouldReadGuiStateWithFirstSlugWhenMnmIsNotFound(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+            addClients(configDb, tempDir, "alpha", "beta");
+
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
+
+            assertThat(guiState.selectedSlug()).isEqualTo("alpha");
+        }
+    }
+
+    @Test
+    void shouldReadGuiStateForSelectedClientWithExpiredToken(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+            configDb.addClient(new Client("mnm", "1.2.3", NOT_INSTALLED, tempDir));
+            configDb.addToken(new Token("mnm", expiredToken()));
+
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
+
+            assertThat(guiState.slugs()).containsExactly("mnm");
+            assertThat(guiState.selectedSlug()).isEqualTo("mnm");
+            assertThat(guiState.clientStatus().client()).isEqualTo(new Client("mnm", "1.2.3", NOT_INSTALLED, tempDir));
+            assertThat(guiState.clientStatus().validToken()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldSelectSlugAndStoreItWithoutApiCalls(@TempDir Path tempDir) {
+        final Path dbFile = tempDir.resolve("config.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            addClients(configDb, tempDir, "mnm-test", "mnm");
+        }
+
+        try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+
+            ClientStatus clientStatus = GuiCommand.storeSlug(() -> dbFile, "mnm-test");
+
+            assertThat(clientStatus.client().slug()).isEqualTo("mnm-test");
+            assertThat(clientStatus.validToken()).isTrue();
+            sessionMock.verifyNoInteractions();
+        }
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            assertThat(configDb.getSettings(SELECTED_SLUG_KEY)).isEqualTo("mnm-test");
+            // Stored selection is used on next start
+            assertThat(GuiCommand.loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY)).selectedSlug()).isEqualTo("mnm-test");
+        }
+    }
+
+    private static void addClients(ConfigDb configDb, Path path, String... slugs) {
+        for (String slug : slugs) {
+            configDb.addClient(new Client(slug, "1.2.3", UPDATED, path));
+            configDb.addToken(new Token(slug, validToken()));
+        }
+    }
+
     static Client testClient() {
-        return new Client(DEFAULT_SLUG, "1.2.3", UPDATED, Path.of("."));
+        return new Client("mnm", "1.2.3", UPDATED, Path.of("."));
     }
 
 }

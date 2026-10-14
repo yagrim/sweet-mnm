@@ -2,6 +2,8 @@ package org.mnm.gui;
 
 import javax.swing.JButton;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
@@ -180,6 +182,20 @@ class ClientButtonsHandlerTest {
         refreshEnabled();
     }
 
+    @Test
+    void shouldLogoutSelectedSlug() {
+        final AtomicReference<String> loggedOutSlug = new AtomicReference<>();
+        Client client = new Client("other-game", "1.2.3", UPDATED, Path.of("."));
+        var handler = new ClientButtonsPanel(null, null, loggedOutSlug::set, null, null,
+            new CredentialsHandler(new InMemorySettingsStore(Map.of())), () -> "other-game", 1f);
+        logout = getButton(handler, "logout");
+        handler.refresh(new ClientStatus(client, true, null));
+
+        logout.doClick();
+
+        assertThat(loggedOutSlug).hasValue("other-game");
+    }
+
     private ClientButtonsPanel initComponents() {
         return initComponents(false);
     }
@@ -198,7 +214,7 @@ class ClientButtonsHandlerTest {
             @Override
             public void delete(String key) {
             }
-        }), 1f);
+        }), () -> "mnm", 1f);
         install = getButton(handler, "install");
         repair = getButton(handler, "repair");
         login = getButton(handler, "login");

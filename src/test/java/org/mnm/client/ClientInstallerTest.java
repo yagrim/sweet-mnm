@@ -38,7 +38,9 @@ import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubChunkDownload;
 import static org.mnm.ApiServerStubs.stubEmptyManifestDownload;
 import static org.mnm.ApiServerStubs.stubGameVersions;
+import static org.mnm.ApiServerStubs.stubGameVersionsForSlugs;
 import static org.mnm.ApiServerStubs.stubManifestDownload;
+import static org.mnm.ApiServerStubs.versionFor;
 import static org.mnm.TestUtils.appendToFile;
 import static org.mnm.TestUtils.deletePath;
 import static org.mnm.TestUtils.expiredToken;
@@ -121,6 +123,94 @@ class ClientInstallerTest {
             assertThatThrownBy(() -> installer.install(options, tempDir, INSTALLING, null))
                 .isInstanceOf(PanicException.class)
                 .hasMessage("All token(s) expired: run 'install --username ...' to create a new one");
+        }
+    }
+
+    @Test
+    void shouldInstallSelectedSlugWhenMultipleAreFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        stubAccountLogin(VALID_TOKEN);
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), "mnm-test", TEST_SLUG);
+        stubManifestDownload();
+        stubChunkDownload("a1fd9407db7effaf");
+        stubChunkDownload("3d8638fbc9718fcb");
+        stubChunkDownload("a5700d088b8922a7");
+        stubChunkDownload("31054dae2bb797ad");
+
+        final Path dbFile = tempDir.resolve("install-selected-slug.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            InstallerOptions options = new InstallerOptions("username", "password", TEST_SLUG, xxhsum);
+
+            InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
+
+            assertThat(result.missing()).isEqualTo(3);
+        }
+
+        assertThat(listDirs(tempDir)).containsExactlyInAnyOrder(TEST_SLUG, "downloads");
+        assertThat(tempDir.resolve(TEST_SLUG)).isNotEmptyDirectory();
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            testDatabase.assertThatTable("clients")
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
+                .hasRows(1);
+        }
+    }
+
+    @Test
+    void shouldInstallMnmSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        // 'mnm' is not the first one
+        shouldInstallDefaultSlug(wiremock, tempDir, TEST_SLUG, "mnm-test", TEST_SLUG);
+    }
+
+    @Test
+    void shouldInstallFirstSlugWhenMnmIsNotFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        shouldInstallDefaultSlug(wiremock, tempDir, "alpha", "alpha", "beta");
+    }
+
+    private static void shouldInstallDefaultSlug(WireMockRuntimeInfo wiremock, Path tempDir, String expectedSlug, String... slugs) {
+        stubAccountLogin(VALID_TOKEN);
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), slugs);
+        stubEmptyManifestDownload();
+
+        final Path dbFile = tempDir.resolve("install-default-slug.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
+
+            installer.install(options, tempDir, INSTALLING, null);
+        }
+
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            testDatabase.assertThatTable("clients")
+                .containsClient(new Client(expectedSlug, versionFor(expectedSlug), UPDATED, tempDir))
+                .hasRows(1);
+        }
+    }
+
+    @Test
+    void shouldRepairStoredSlugWhenMultipleAreFound(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        stubAccountLogin(VALID_TOKEN);
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), "mnm-test", TEST_SLUG);
+        stubEmptyManifestDownload();
+
+        final Path dbFile = tempDir.resolve("repair-stored-slug.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(new Client(TEST_SLUG, "old-version", UPDATED, tempDir));
+            configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
+
+            final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
+
+            installer.install(options, tempDir, INSTALLING, null);
+        }
+
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            // Version must come from the stored slug, not from the first one sent by the API
+            testDatabase.assertThatTable("clients")
+                .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
+                .hasRows(1);
         }
     }
 

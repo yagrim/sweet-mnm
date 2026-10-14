@@ -30,27 +30,41 @@ public class LoginService {
         this.apiConnector = apiConnector;
     }
 
-    public String login(String username, String password,
-                        Path workDir, TokenSupplier tokenSupplier) {
+    /**
+     * Returns all slugs available for the account.
+     */
+    public List<String> login(String username, String password,
+                              Path workDir, TokenSupplier tokenSupplier) {
 
         final Session session = Session.login(username, password, apiConnector, tokenSupplier);
-        final Client client = configDb.getClient(session.getSlug());
-        return updateClientAndToken(session, client, workDir, null).slug();
+        return updateClientsAndTokens(session, workDir);
+    }
+
+    /**
+     * Creates or updates a client and token for each slug available in the session.
+     */
+    public List<String> updateClientsAndTokens(Session session, Path workDir) {
+        final List<String> slugs = session.getSlugs();
+        for (String slug : slugs) {
+            updateClientAndToken(session, slug, configDb.getClient(slug), workDir, null);
+        }
+        return slugs;
     }
 
     // status only used when REPAIRING or INSTALLING
-    public Client updateClientAndToken(Session session, Client client, Path workDir, Client.Status status) {
+    public Client updateClientAndToken(Session session, String slug, Client client, Path workDir, Client.Status status) {
+        final String version = session.getGameVersion(slug).version();
         if (client == null) {
             // Installing works, since no installation has been completed yet
-            Client newClient = new Client(session.getSlug(), session.getVersion(), NOT_INSTALLED, workDir);
+            Client newClient = new Client(slug, version, NOT_INSTALLED, workDir);
             configDb.addClient(newClient);
-            configDb.addToken(new Token(session.getSlug(), session.getToken()));
+            configDb.addToken(new Token(slug, session.getToken()));
             return newClient;
         } else {
             if (status != null && status.isInProgress() && status != client.status()) {
-                configDb.updateClientStatus(session.getSlug(), status);
-            } else if (!session.getVersion().equals(client.version())) {
-                configDb.updateClient(session.getSlug(), session.getVersion(), NEEDS_UPDATE, client.path());
+                configDb.updateClientStatus(slug, status);
+            } else if (!version.equals(client.version())) {
+                configDb.updateClient(slug, version, NEEDS_UPDATE, client.path());
             }
             refreshSessionToken(client, session);
         }
@@ -72,7 +86,7 @@ public class LoginService {
             }
             if (tokens.isEmpty()) {
                 // This is a protection for inconsistency scenarios, in theory it should not happen, but data is not transactional
-                configDb.addToken(new Token(session.getSlug(), session.getToken()));
+                configDb.addToken(new Token(client.slug(), session.getToken()));
             } else {
                 tokenToUpdate = tokens.get(0);
                 if (!session.getToken().equals(tokenToUpdate.token())) {
