@@ -8,9 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
+import org.mnm.config.WinePrefix;
 import org.mnm.tools.StringUtils;
-
-import static org.mnm.client.ClientRunner.winePrefixName;
 
 class ClientPaths {
 
@@ -23,7 +22,7 @@ class ClientPaths {
     private static final String INSTALLATION_NOT_FOUND_ERROR = "Error: installation not found, run Install or Repair";
 
     private final Optional<String> winePrefix;
-    // Prefix depends on the client slug, so it cannot be resolved without client
+
     private final boolean missingClient;
 
     ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix) {
@@ -76,7 +75,7 @@ class ClientPaths {
             return StringUtils.isEmpty(compatDataPath) ? Optional.empty() : Optional.of(compatDataPath);
         }
         if (clientAsWinePrefix) {
-            return Optional.of(client.client().path().toAbsolutePath() + "/" + winePrefixName(client.client().slug()));
+            return Optional.of(client.client().path().toAbsolutePath() + "/" + WinePrefix.name(client.client().slug()));
         } else {
             return Optional.of(Environment.getWorkDir().toString());
         }

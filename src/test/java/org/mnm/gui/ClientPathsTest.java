@@ -12,10 +12,10 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.mnm.config.Client;
+import org.mnm.config.WinePrefix;
 
 import static java.nio.file.Files.createDirectories;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.client.ClientRunner.winePrefixName;
 import static org.mnm.config.Client.Status.UPDATED;
 
 class ClientPathsTest {
@@ -65,7 +65,7 @@ class ClientPathsTest {
     void shouldUseSlugWinePrefixOnLinux(@TempDir Path tempDir) throws IOException {
         Client client = new Client("other-game", "1.2.3", UPDATED, tempDir);
         // Prefix of a different slug must not be used
-        createDirectories(tempDir.resolve(winePrefixName("mnm")).resolve("pfx").resolve(GAME_SETTINGS));
+        createDirectories(tempDir.resolve(WinePrefix.name("mnm")).resolve("pfx").resolve(GAME_SETTINGS));
         ClientPaths paths = new ClientPaths(new ClientStatus(client, true, null), true);
 
         assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");

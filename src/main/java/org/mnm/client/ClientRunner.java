@@ -12,6 +12,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
+import org.mnm.config.WinePrefix;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
@@ -19,15 +20,6 @@ import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 public class ClientRunner {
-
-    private static final String WINE_PREFIX_SUFFIX = "_prefix";
-
-    /**
-     * Name of the Wine prefix directory for a client, relative to the client path.
-     */
-    public static String winePrefixName(String slug) {
-        return slug + WINE_PREFIX_SUFFIX;
-    }
 
     private final Logger logger = LoggerFactory.getLogger(ClientRunner.class);
 
@@ -151,7 +143,7 @@ public class ClientRunner {
 
         String candidateWinePrefixPath;
         if (linuxOptions.useClientAsPrefix() || isEmpty(linuxOptions.umuOptions().winePrefix())) {
-            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(winePrefixName(slug)).toString();
+            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(WinePrefix.name(slug)).toString();
         } else {
             String prefix = linuxOptions.umuOptions().winePrefix();
             Path prefixPath = Path.of(prefix);

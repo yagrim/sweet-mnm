@@ -249,6 +249,19 @@ class ClientRunnerTest {
     }
 
     @Test
+    void shouldUseSanitizedSlugWinePrefixForLinuxClient(@TempDir Path tempDir) {
+        final String slug = "other game";
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
+        var result = runClient(slug, installPath, token, false, options);
+
+        assertThat(result.environment)
+            .containsEntry("WINEPREFIX", installPath.toAbsolutePath().resolve("other_game_prefix").toString());
+    }
+
+    @Test
     void shouldRunLinuxClientWithMangoHud(@TempDir Path tempDir) {
         Path installPath = tempDir.resolve("install");
         String token = validToken();

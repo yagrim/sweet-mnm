@@ -263,7 +263,9 @@ public class GuiCommand implements Command {
             new LoginService(configDb, apiConnector)
                 .login(username, password, getWorkDir(), tokenSupplier);
 
-            // Login can add new slugs
+            // Login can add new slugs. Read them from DB to keep slugs that the server does not return.
+            // We keep the files locally, so we want to make the user aware of that.
+            // TODO feature to delete slugs
             final GuiState guiState = loadGuiState(configDb, slugSelector.getSelectedSlug());
             slugSelector.setItems(guiState.slugs(), guiState.selectedSlug());
             return guiState.clientStatus();
