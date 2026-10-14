@@ -21,7 +21,12 @@ class MessageDialog {
         showMessageDialogSync(message, JOptionPane.ERROR_MESSAGE, null);
     }
 
+    static void showWarningMessageDialogSync(String message) {
+        showMessageDialogSync(message, JOptionPane.WARNING_MESSAGE, null);
+    }
+
     private static void showMessageDialogSync(String message, int type, Float scale) {
+        final String title = title(type);
         try {
             if (SwingUtilities.isEventDispatchThread()) {
                 if (scale != null) {
@@ -29,9 +34,8 @@ class MessageDialog {
                     UIManager.put("OptionPane.buttonFont", new Font("Dialog", Font.PLAIN, Math.round(15 * scale)));
                     GuiComponents.scaleIcons(scale);
                 }
-                JOptionPane.showMessageDialog(null, message, "Error", type);
+                JOptionPane.showMessageDialog(null, message, title, type);
             } else {
-                String title = type == JOptionPane.ERROR_MESSAGE ? "Error" : "Info";
                 SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(null, message, title, type));
             }
         } catch (InterruptedException e) {
@@ -40,5 +44,13 @@ class MessageDialog {
         } catch (InvocationTargetException e) {
             throw new IllegalStateException("Failed to show dialog", e.getCause());
         }
+    }
+
+    private static String title(int type) {
+        return switch (type) {
+            case JOptionPane.ERROR_MESSAGE -> "Error";
+            case JOptionPane.WARNING_MESSAGE -> "Warning";
+            default -> "Info";
+        };
     }
 }

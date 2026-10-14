@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -52,6 +53,10 @@ public class GuiCommand implements Command {
 
     // https://docs.oracle.com/javase/8/docs/technotes/guides/intl/fontconfig.html
     private static final String FONTCONFIG_PROTON = "fontconfig-proton.properties";
+
+    static final String VERSION_CHECK_FAILED_MESSAGE = """
+        Could not check if client is up-to-date.
+        Using last known information.""";
 
     @FunctionalInterface
     interface GuiStarter {
@@ -132,8 +137,8 @@ public class GuiCommand implements Command {
         initialize();
         guiStarter.start(() -> {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-                ClientStatus.updateVersions(configDb, apiEndpoint);
-                return loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY));
+                return initGuiState(configDb, apiEndpoint,
+                    message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message)));
             }
         });
     }
@@ -270,6 +275,16 @@ public class GuiCommand implements Command {
             slugSelector.setItems(guiState.slugs(), guiState.selectedSlug());
             return guiState.clientStatus();
         }
+    }
+
+    static GuiState initGuiState(ConfigDb configDb, String apiEndpoint, Consumer<String> onVersionCheckFailure) {
+        try {
+            ClientStatus.updateVersions(configDb, apiEndpoint);
+        } catch (RuntimeException e) {
+            logger.info("Could not validate client versions: {}", e.getMessage());
+            onVersionCheckFailure.accept(VERSION_CHECK_FAILED_MESSAGE);
+        }
+        return loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY));
     }
 
     static GuiState loadGuiState(ConfigDb configDb, String slug) {
