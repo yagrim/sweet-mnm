@@ -40,6 +40,7 @@ import static org.mnm.ApiServerStubs.stubEmptyManifestDownload;
 import static org.mnm.ApiServerStubs.stubGameVersions;
 import static org.mnm.ApiServerStubs.stubGameVersionsForSlugs;
 import static org.mnm.ApiServerStubs.stubManifestDownload;
+import static org.mnm.ApiServerStubs.versionFor;
 import static org.mnm.TestUtils.appendToFile;
 import static org.mnm.TestUtils.deletePath;
 import static org.mnm.TestUtils.expiredToken;
@@ -151,6 +152,28 @@ class ClientInstallerTest {
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
                 .containsClient(new Client(TEST_SLUG, TEST_VERSION, UPDATED, tempDir))
+                .hasRows(1);
+        }
+    }
+
+    @Test
+    void shouldInstallFirstSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        stubAccountLogin(VALID_TOKEN);
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), "mnm-test", TEST_SLUG);
+        stubEmptyManifestDownload();
+
+        final Path dbFile = tempDir.resolve("install-default-slug.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
+
+            installer.install(options, tempDir, INSTALLING, null);
+        }
+
+        try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
+            testDatabase.assertThatTable("clients")
+                .containsClient(new Client("mnm-test", versionFor("mnm-test"), UPDATED, tempDir))
                 .hasRows(1);
         }
     }

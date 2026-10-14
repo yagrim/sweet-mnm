@@ -30,57 +30,40 @@ class SessionTest {
         Session session = Session.login("username", "password", apiConnector, tokenSupplier);
 
         assertThat(session).isNotNull();
-        assertThat(session.getSlug()).isEqualTo("mnm");
-        assertThat(session.getChunksUrl()).isEqualTo("https://clients.domain.com/chunks");
-    }
-
-    @Test
-    void shouldUseTheOnlySlugWhenNoneIsSelected(WireMockRuntimeInfo wiremock) {
-        stubAccountLogin();
-        stubGameVersionsForSlugs("https://clients.domain.com", "mnm");
-
-        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
-
         assertThat(session.getSlugs()).containsExactly("mnm");
-        assertThat(session.getSlug()).isEqualTo("mnm");
+        assertThat(session.getGameVersion("mnm").chunksUrl()).isEqualTo("https://clients.domain.com/chunks");
     }
 
     @Test
-    void shouldUseFirstSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock) {
+    void shouldReturnAllSlugsInApiOrder(WireMockRuntimeInfo wiremock) {
         stubAccountLogin();
         stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
 
         Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
 
         assertThat(session.getSlugs()).containsExactly("mnm-test", "mnm");
-        assertThat(session.getSlug()).isEqualTo("mnm-test");
-        assertThat(session.getVersion()).isEqualTo(versionFor("mnm-test"));
     }
 
     @Test
-    void shouldSelectSlug(WireMockRuntimeInfo wiremock) {
-        stubAccountLogin();
-        stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
-
-        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
-        Session selected = session.select("mnm");
-
-        assertThat(selected.getSlug()).isEqualTo("mnm");
-        assertThat(selected.getVersion()).isEqualTo(versionFor("mnm"));
-        assertThat(selected.getToken()).isEqualTo(session.getToken());
-        assertThat(selected.getSlugs()).containsExactly("mnm-test", "mnm");
-        // Original session is not modified
-        assertThat(session.getSlug()).isEqualTo("mnm-test");
-    }
-
-    @Test
-    void shouldFailWhenSelectedSlugIsNotFound(WireMockRuntimeInfo wiremock) {
+    void shouldReturnGameVersionOfEachSlug(WireMockRuntimeInfo wiremock) {
         stubAccountLogin();
         stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
 
         Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
 
-        Throwable t = catchThrowable(() -> session.select("unknown"));
+        assertThat(session.getGameVersion("mnm").slug()).isEqualTo("mnm");
+        assertThat(session.getGameVersion("mnm").version()).isEqualTo(versionFor("mnm"));
+        assertThat(session.getGameVersion("mnm-test").version()).isEqualTo(versionFor("mnm-test"));
+    }
+
+    @Test
+    void shouldFailWhenSlugIsNotFound(WireMockRuntimeInfo wiremock) {
+        stubAccountLogin();
+        stubGameVersionsForSlugs("https://clients.domain.com", "mnm-test", "mnm");
+
+        Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
+
+        Throwable t = catchThrowable(() -> session.getGameVersion("unknown"));
 
         assertThat(t)
             .isInstanceOf(RuntimeException.class)
@@ -95,8 +78,7 @@ class SessionTest {
         Session session = Session.login("username", "password", apiConnector(wiremock), new TestTokenSupplier());
 
         assertThat(session.getSlugs()).containsExactly("alpha", "beta");
-        assertThat(session.getSlug()).isEqualTo("alpha");
-        assertThat(session.select("beta").getVersion()).isEqualTo(versionFor("beta"));
+        assertThat(session.getGameVersion("beta").version()).isEqualTo(versionFor("beta"));
     }
 
     private static ApiConnector apiConnector(WireMockRuntimeInfo wiremock) {

@@ -40,7 +40,7 @@ public record ClientStatus(Client client, boolean validToken, Instant expiresAt)
         for (Client client : configDb.getClients()) {
             // Not installed clients keep showing 'Install'
             if (slugs.contains(client.slug()) && client.status() != NOT_INSTALLED) {
-                boolean upToDateClient = session.select(client.slug()).getVersion().equals(client.version());
+                boolean upToDateClient = session.getGameVersion(client.slug()).version().equals(client.version());
                 if (!upToDateClient) {
                     configDb.updateClientStatus(client.slug(), NEEDS_UPDATE);
                 }

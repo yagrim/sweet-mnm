@@ -14,9 +14,6 @@ record GuiState(List<String> slugs, String selectedSlug, ClientStatus clientStat
     // Selected when the preferred slug is not available
     static final String FALLBACK_SLUG = "mnm";
 
-    /**
-     * Selects the preferred slug if present, otherwise {@link #FALLBACK_SLUG}, otherwise the first one.
-     */
     static String selectSlug(List<String> slugs, String preferredSlug) {
         if (preferredSlug != null && slugs.contains(preferredSlug)) {
             return preferredSlug;

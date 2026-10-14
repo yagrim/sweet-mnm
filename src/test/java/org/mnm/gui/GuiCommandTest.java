@@ -1,7 +1,6 @@
 package org.mnm.gui;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -96,7 +95,7 @@ class GuiCommandTest {
     void shouldReadEmptyGuiStateWhenThereAreNoClients(@TempDir Path tempDir) {
         try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
 
-            GuiState guiState = GuiCommand.readGuiState(configDb, null);
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
 
             assertThat(guiState.slugs()).isEmpty();
             assertThat(guiState.selectedSlug()).isNull();
@@ -109,7 +108,7 @@ class GuiCommandTest {
         try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
             addClients(configDb, tempDir, "mnm-test", "mnm", "other");
 
-            GuiState guiState = GuiCommand.readGuiState(configDb, "other");
+            GuiState guiState = GuiCommand.loadGuiState(configDb, "other");
 
             assertThat(guiState.slugs()).containsExactly("mnm-test", "mnm", "other");
             assertThat(guiState.selectedSlug()).isEqualTo("other");
@@ -123,7 +122,7 @@ class GuiCommandTest {
         try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
             addClients(configDb, tempDir, "mnm-test", "mnm");
 
-            GuiState guiState = GuiCommand.readGuiState(configDb, "removed");
+            GuiState guiState = GuiCommand.loadGuiState(configDb, "removed");
 
             assertThat(guiState.selectedSlug()).isEqualTo("mnm");
         }
@@ -134,7 +133,7 @@ class GuiCommandTest {
         try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
             addClients(configDb, tempDir, "alpha", "beta");
 
-            GuiState guiState = GuiCommand.readGuiState(configDb, null);
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
 
             assertThat(guiState.selectedSlug()).isEqualTo("alpha");
         }
@@ -146,7 +145,7 @@ class GuiCommandTest {
             configDb.addClient(new Client("mnm", "1.2.3", NOT_INSTALLED, tempDir));
             configDb.addToken(new Token("mnm", expiredToken()));
 
-            GuiState guiState = GuiCommand.readGuiState(configDb, null);
+            GuiState guiState = GuiCommand.loadGuiState(configDb, null);
 
             assertThat(guiState.slugs()).containsExactly("mnm");
             assertThat(guiState.selectedSlug()).isEqualTo("mnm");
@@ -163,7 +162,7 @@ class GuiCommandTest {
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
 
-            ClientStatus clientStatus = GuiCommand.selectSlug(() -> dbFile, "mnm-test");
+            ClientStatus clientStatus = GuiCommand.storeSlug(() -> dbFile, "mnm-test");
 
             assertThat(clientStatus.client().slug()).isEqualTo("mnm-test");
             assertThat(clientStatus.validToken()).isTrue();
@@ -172,7 +171,7 @@ class GuiCommandTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             assertThat(configDb.getSettings(SELECTED_SLUG_KEY)).isEqualTo("mnm-test");
             // Stored selection is used on next start
-            assertThat(GuiCommand.readGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY)).selectedSlug()).isEqualTo("mnm-test");
+            assertThat(GuiCommand.loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY)).selectedSlug()).isEqualTo("mnm-test");
         }
     }
 

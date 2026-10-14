@@ -10,6 +10,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import org.mnm.TestUtils;
+import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -116,13 +117,11 @@ class ClientStatusTest {
             configDb.addToken(new Token(OTHER_SLUG, validToken));
             configDb.addToken(new Token(notInstalledSlug, validToken));
 
-            Session upToDateSession = sessionWithVersion(CLIENT_VERSION);
-            Session outdatedSession = sessionWithVersion("2.0.0");
             Session session = Mockito.mock(Session.class);
             when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, OTHER_SLUG, notInstalledSlug));
-            when(session.select(TEST_SLUG)).thenReturn(upToDateSession);
-            when(session.select(OTHER_SLUG)).thenReturn(outdatedSession);
-            when(session.select(notInstalledSlug)).thenReturn(outdatedSession);
+            when(session.getGameVersion(TEST_SLUG)).thenReturn(new GameVersion(TEST_SLUG, CLIENT_VERSION, null, null));
+            when(session.getGameVersion(OTHER_SLUG)).thenReturn(new GameVersion(OTHER_SLUG, "2.0.0", null, null));
+            when(session.getGameVersion(notInstalledSlug)).thenReturn(new GameVersion(notInstalledSlug, "2.0.0", null, null));
             sessionMock.when(() -> Session.login(anyString(), any())).thenReturn(session);
 
             ClientStatus.updateVersions(configDb, API_BASE_URL);
@@ -132,12 +131,6 @@ class ClientStatusTest {
             assertThat(configDb.getClient(OTHER_SLUG).status()).isEqualTo(NEEDS_UPDATE);
             assertThat(configDb.getClient(notInstalledSlug).status()).isEqualTo(NOT_INSTALLED);
         }
-    }
-
-    private static Session sessionWithVersion(String version) {
-        Session session = Mockito.mock(Session.class);
-        when(session.getVersion()).thenReturn(version);
-        return session;
     }
 
     private static void assertEmptyClientStatus(ClientStatus clientStatus) {

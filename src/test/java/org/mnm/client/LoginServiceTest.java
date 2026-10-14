@@ -1,6 +1,7 @@
 package org.mnm.client;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.Session;
 import org.mnm.api.TokenSupplier;
 import org.mnm.config.Client;
@@ -42,12 +44,7 @@ class LoginServiceTest {
         ConfigDb configDb = Mockito.mock(ConfigDb.class);
         when(configDb.getClient(TEST_SLUG)).thenReturn(null);
 
-        Session session = Mockito.mock(Session.class);
-        when(session.getSlug()).thenReturn(TEST_SLUG);
-        when(session.getVersion()).thenReturn(TEST_VERSION);
-        when(session.getToken()).thenReturn(VALID_TOKEN);
-        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG));
-        when(session.select(TEST_SLUG)).thenReturn(session);
+        Session session = mockSession(VALID_TOKEN);
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
@@ -164,12 +161,9 @@ class LoginServiceTest {
         when(configDb.getClient(TEST_SLUG)).thenReturn(null);
         when(configDb.getClient(otherSlug)).thenReturn(null);
 
-        Session session = Mockito.mock(Session.class);
-        Session testSlugSession = mockSlugSession(TEST_SLUG, TEST_VERSION);
-        Session otherSlugSession = mockSlugSession(otherSlug, otherVersion);
-        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, otherSlug));
-        when(session.select(TEST_SLUG)).thenReturn(testSlugSession);
-        when(session.select(otherSlug)).thenReturn(otherSlugSession);
+        Session session = mockSession(VALID_TOKEN,
+            new GameVersion(TEST_SLUG, TEST_VERSION, null, null),
+            new GameVersion(otherSlug, otherVersion, null, null));
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
@@ -200,12 +194,9 @@ class LoginServiceTest {
         when(configDb.getTokens(TEST_SLUG)).thenReturn(List.of(new Token(1, TEST_SLUG, VALID_TOKEN)));
         when(configDb.getTokens(otherSlug)).thenReturn(List.of(new Token(2, otherSlug, VALID_TOKEN)));
 
-        Session session = Mockito.mock(Session.class);
-        Session testSlugSession = mockSlugSession(TEST_SLUG, TEST_VERSION);
-        Session otherSlugSession = mockSlugSession(otherSlug, otherVersion);
-        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, otherSlug));
-        when(session.select(TEST_SLUG)).thenReturn(testSlugSession);
-        when(session.select(otherSlug)).thenReturn(otherSlugSession);
+        Session session = mockSession(VALID_TOKEN,
+            new GameVersion(TEST_SLUG, TEST_VERSION, null, null),
+            new GameVersion(otherSlug, otherVersion, null, null));
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq(TEST_USERNAME), eq(TEST_PASSWORD), any(), any())).thenReturn(session);
@@ -217,25 +208,21 @@ class LoginServiceTest {
         }
     }
 
-    private static Session mockSlugSession(String slug, String version) {
-        Session session = Mockito.mock(Session.class);
-        when(session.getSlug()).thenReturn(slug);
-        when(session.getVersion()).thenReturn(version);
-        when(session.getToken()).thenReturn(VALID_TOKEN);
-        return session;
-    }
-
     private static Session mockSession(String token) {
         return mockSession(token, TEST_VERSION);
     }
 
     private static Session mockSession(String token, String version) {
+        return mockSession(token, new GameVersion(TEST_SLUG, version, null, null));
+    }
+
+    private static Session mockSession(String token, GameVersion... gameVersions) {
         Session session = Mockito.mock(Session.class);
-        when(session.getSlug()).thenReturn(TEST_SLUG);
         when(session.getToken()).thenReturn(token);
-        when(session.getVersion()).thenReturn(version);
-        when(session.getSlugs()).thenReturn(List.of(TEST_SLUG));
-        when(session.select(TEST_SLUG)).thenReturn(session);
+        when(session.getSlugs()).thenReturn(Arrays.stream(gameVersions).map(GameVersion::slug).toList());
+        for (GameVersion gameVersion : gameVersions) {
+            when(session.getGameVersion(gameVersion.slug())).thenReturn(gameVersion);
+        }
         return session;
     }
 

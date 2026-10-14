@@ -18,12 +18,10 @@ public class Session {
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
     private final List<ApiConnection.GameVersion> gameVersions;
-    private final ApiConnection.GameVersion gameVersion;
     private String token;
 
-    private Session(List<ApiConnection.GameVersion> gameVersions, ApiConnection.GameVersion gameVersion, String token) {
+    private Session(List<ApiConnection.GameVersion> gameVersions, String token) {
         this.gameVersions = gameVersions;
-        this.gameVersion = gameVersion;
         this.token = token;
     }
 
@@ -68,39 +66,39 @@ public class Session {
         if (gamesVersions.isEmpty()) {
             panic("No game versions found");
         }
-        final ApiConnection.GameVersion defaultVersion = gamesVersions.get(0);
-        if (gamesVersions.size() > 1) {
-            logger.info("Multiple game slugs found: {}. Using '{}' by default, use --slug to select a different one",
-                gamesVersions.stream().map(p -> p.slug()).toList(), defaultVersion.slug());
+
+        if (logger.isDebugEnabled()) {
+            List<String> games = gamesVersions.stream()
+                .map(g -> "%s (%s)".formatted(g.slug(), g.version()))
+                .toList();
+            logger.debug("Game slugs found: {}", games);
         }
 
-        return new Session(gamesVersions, defaultVersion, connection.getToken());
+        return new Session(gamesVersions, connection.getToken());
     }
 
-    /**
-     * Returns a new Session with the same token, for the given slug.
-     */
-    public Session select(String slug) {
-        final ApiConnection.GameVersion selected = gameVersions.stream()
-            .filter(p -> p.slug().equals(slug))
-            .findFirst()
-            .orElse(null);
-        if (selected == null) {
-            panic("Slug '%s' not found, available slugs: %s".formatted(slug, getSlugs()));
-        }
-        return new Session(gameVersions, selected, token);
-    }
 
     public List<String> getSlugs() {
         return gameVersions.stream().map(ApiConnection.GameVersion::slug).toList();
     }
 
-    public ManifestHandler getManifestHandler(Path downloadsCache) {
-        logger.info("Processing Game Version: {}@{}", gameVersion.slug(), gameVersion.version());
-        return new ManifestHandler(downloadManifest(downloadsCache));
+    public ApiConnection.GameVersion getGameVersion(String slug) {
+        final ApiConnection.GameVersion gameVersion = gameVersions.stream()
+            .filter(p -> p.slug().equals(slug))
+            .findFirst()
+            .orElse(null);
+        if (gameVersion == null) {
+            panic("Slug '%s' not found, available slugs: %s".formatted(slug, getSlugs()));
+        }
+        return gameVersion;
     }
 
-    private Path downloadManifest(Path downloadsCache) {
+    public ManifestHandler getManifestHandler(ApiConnection.GameVersion gameVersion, Path downloadsCache) {
+        logger.info("Processing Game Version: {}@{}", gameVersion.slug(), gameVersion.version());
+        return new ManifestHandler(downloadManifest(gameVersion, downloadsCache));
+    }
+
+    private Path downloadManifest(ApiConnection.GameVersion gameVersion, Path downloadsCache) {
         String manifestUrl = gameVersion.manifest_url();
         String manifestName = getLastSegment(manifestUrl);
         final Path downloadPath = downloadsCache.resolve(manifestName);
@@ -120,18 +118,6 @@ public class Session {
 
         int lastSlash = url.lastIndexOf('/');
         return (lastSlash >= 0) ? url.substring(lastSlash + 1) : url;
-    }
-
-    public String getSlug() {
-        return gameVersion.slug();
-    }
-
-    public String getChunksUrl() {
-        return gameVersion.chunksUrl();
-    }
-
-    public String getVersion() {
-        return gameVersion.version();
     }
 
     public String getToken() {

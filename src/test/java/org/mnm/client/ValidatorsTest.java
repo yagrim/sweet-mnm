@@ -1,10 +1,13 @@
 package org.mnm.client;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.ApiConnector;
 import org.mnm.api.Session;
 import org.mnm.config.Client;
@@ -31,8 +34,7 @@ class ValidatorsTest {
     void shouldAllowMatchingVersion() {
         Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
-        when(session.getVersion()).thenReturn("1.2.3");
-        when(session.select("mnm")).thenReturn(session);
+        when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "1.2.3", null, null));
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
@@ -48,8 +50,7 @@ class ValidatorsTest {
     void shouldPanicWhenVersionDiffers() {
         Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
-        when(session.getVersion()).thenReturn("2.0.0");
-        when(session.select("mnm")).thenReturn(session);
+        when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "2.0.0", null, null));
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);
@@ -64,11 +65,10 @@ class ValidatorsTest {
     void shouldCompareVersionOfClientSlugWhenMultipleAreFound() {
         Client client = new Client("mnm", "1.2.3", Client.Status.UPDATED, null);
         Session session = Mockito.mock(Session.class);
-        Session mnmSession = Mockito.mock(Session.class);
-        // Default (first) slug has a different version
-        when(session.getVersion()).thenReturn("9.9.9");
-        when(session.select("mnm")).thenReturn(mnmSession);
-        when(mnmSession.getVersion()).thenReturn("1.2.3");
+        // First slug has a different version
+        when(session.getSlugs()).thenReturn(List.of("mnm-test", "mnm"));
+        when(session.getGameVersion("mnm-test")).thenReturn(new GameVersion("mnm-test", "9.9.9", null, null));
+        when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "1.2.3", null, null));
 
         try (MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
             sessionMock.when(() -> Session.login(eq("token"), any())).thenReturn(session);

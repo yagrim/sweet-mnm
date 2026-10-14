@@ -365,7 +365,7 @@ Tests:
   In the Swing thread, do these steps:
 .. Call `SlugSelectorPanel.setItems`.
 .. Send the event `refresh(ClientStatus)`.
-. Change `GuiStarter` to work with `GuiState`.
+. Change `GuiInitializer` to work with `GuiState`.
 . Add the action `SelectSlugAction` in `GuiCommand`.
   When the user changes the selection, the action does these steps in the Swing thread:
 .. Write the slug to the settings store with the key `ui.selected-slug`.

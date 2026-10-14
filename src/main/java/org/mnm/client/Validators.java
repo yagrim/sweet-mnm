@@ -11,7 +11,7 @@ public class Validators {
 
     public static void checkVersion(String token, Client client) {
         ApiConnector apiConnector = Factories.apiConnector(API_BASE_URL);
-        String sessionVersion = Session.login(token, apiConnector).select(client.slug()).getVersion();
+        String sessionVersion = Session.login(token, apiConnector).getGameVersion(client.slug()).version();
         if (!sessionVersion.equals(client.version())) {
             panic("Version mismatch: run 'repair' to update the client");
         }

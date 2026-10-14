@@ -9,7 +9,8 @@ import javax.swing.JPanel;
 import java.awt.Dimension;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
+
+import org.mnm.events.ClientEventHandler;
 
 import static org.mnm.gui.Style.BASE_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
@@ -19,14 +20,13 @@ import static org.mnm.gui.Style.SCALE;
  */
 class SlugSelectorPanel extends JPanel {
 
-    // Longer slugs are truncated in the dropdown, full name is shown in the tooltip
-    static final int MAX_VISIBLE_CHARS = 8;
+    private static final int MAX_VISIBLE_CHARS = 8;
 
     private final JComboBox<String> slugs;
     // JComboBox fires ActionEvents when items are changed programmatically, those must not notify a selection
     private boolean updatingItems = false;
 
-    SlugSelectorPanel(Consumer<String> selectionAction, float uiScaling) {
+    SlugSelectorPanel(GuiCommand.SelectSlugAction selectSlugAction, float uiScaling) {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBorder(BorderFactory.createEmptyBorder(0, 0, 2 * SCALE, 0));
 
@@ -40,9 +40,9 @@ class SlugSelectorPanel extends JPanel {
         this.setMaximumSize(new Dimension(Integer.MAX_VALUE, slugs.getPreferredSize().height));
 
         slugs.addActionListener(_ -> {
-            slugs.setToolTipText(getSelectedSlug());
             if (!updatingItems && getSelectedSlug() != null) {
-                selectionAction.accept(getSelectedSlug());
+                ClientEventHandler.getInstance()
+                    .refresh(selectSlugAction.select(getSelectedSlug()));
             }
         });
         adjustWidth(List.of());
