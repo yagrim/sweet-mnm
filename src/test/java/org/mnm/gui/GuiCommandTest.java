@@ -149,6 +149,7 @@ class GuiCommandTest {
 
             assertThat(guiState.slugs()).containsExactly("mnm");
             assertThat(guiState.selectedSlug()).isEqualTo("mnm");
+            assertThat(guiState.clientStatus().client()).isEqualTo(new Client("mnm", "1.2.3", NOT_INSTALLED, tempDir));
             assertThat(guiState.clientStatus().validToken()).isFalse();
         }
     }

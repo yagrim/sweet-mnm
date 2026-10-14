@@ -49,15 +49,15 @@ class ClientStatusTest {
 
     @Test
     void shouldReadClientStatusWhenTokenIsInvalid(@TempDir Path tempDir) {
-        shouldReadEmptyClientStatus(expiredToken(), tempDir);
+        shouldReadClientStatusWithoutValidToken(expiredToken(), tempDir);
     }
 
     @Test
     void shouldReadClientStatusWhenTokenIsMissing(@TempDir Path tempDir) {
-        shouldReadEmptyClientStatus(null, tempDir);
+        shouldReadClientStatusWithoutValidToken(null, tempDir);
     }
 
-    private static void shouldReadEmptyClientStatus(String token, Path tempDir) {
+    private static void shouldReadClientStatusWithoutValidToken(String token, Path tempDir) {
         try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
             configDb.addClient(new Client(TEST_SLUG, CLIENT_VERSION, UPDATED, tempDir));
             if (token != null) {
@@ -66,7 +66,10 @@ class ClientStatusTest {
 
             ClientStatus clientStatus = ClientStatus.read(configDb, TEST_SLUG);
 
-            assertEmptyClientStatus(clientStatus);
+            // Client is kept, so its slug is still available
+            assertThat(clientStatus.client()).isEqualTo(new Client(TEST_SLUG, CLIENT_VERSION, UPDATED, tempDir));
+            assertThat(clientStatus.validToken()).isFalse();
+            assertThat(clientStatus.expiresAt()).isNull();
         }
     }
 

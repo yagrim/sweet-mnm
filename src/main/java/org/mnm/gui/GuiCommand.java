@@ -275,7 +275,7 @@ public class GuiCommand implements Command {
         final ClientStatus clientStatus = selectedSlug == null
             ? new ClientStatus(null, false, null)
             : ClientStatus.read(configDb, selectedSlug);
-        return new GuiState(slugs, selectedSlug, clientStatus);
+        return new GuiState(slugs, clientStatus);
     }
 
     static ClientStatus storeSlug(Supplier<Path> configDbLocator, String slug) {

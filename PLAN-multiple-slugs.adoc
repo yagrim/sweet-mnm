@@ -330,8 +330,9 @@ In this step, the dropdown menu is not connected to the GUI.
 . Make the width of the dropdown menu fit the longest slug.
   The maximum width is 8 characters.
   The tooltip shows the full slug.
-. The dropdown menu is always enabled.
+. The dropdown menu is enabled when there is one slug or more.
   A disabled dropdown menu can look like an error to the user.
+  When there is no slug, disable the dropdown menu.
   During a repair, the modal progress window prevents a change of the selection.
 
 CAUTION: When the code changes the items of the `JComboBox`, the `JComboBox` sends an `ActionEvent`.

@@ -115,12 +115,12 @@ public class InfoPanel extends JPanel
                     Last operation was interrupted: Re-run Install
                     Token expires at: %s""".formatted(client.expiresAt());
                 this.updateText(message);
-            } else if (client.validToken()) {
+            } else if (!client.validToken()) {
+                // Missing (logout) or expired token
+                this.updateText("No valid token: run Login");
+            } else {
                 String message;
-                if (!client.validToken()) {
-                    message = "Token expired: run Logout, and then Login";
-                    showInfoMessageDialogSync(message);
-                } else if (client.statusIs(NEEDS_UPDATE)) {
+                if (client.statusIs(NEEDS_UPDATE)) {
                     message = "Client update detected: run Repair";
                     showInfoMessageDialogSync(message);
                 } else {

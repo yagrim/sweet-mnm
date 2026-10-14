@@ -32,8 +32,9 @@ class SlugSelectorPanel extends JPanel {
 
         JLabel label = new JLabel("Game");
         label.setToolTipText("Game slug used to install, repair and play");
-        // Always enabled, a disabled selector looks like an error to users
+        // Only disabled when there are no slugs, otherwise a disabled selector looks like an error to users
         slugs = new JComboBox<>();
+        slugs.setEnabled(false);
 
         GuiComponents.setFontSize(label, BASE_FONT_SIZE * uiScaling);
         GuiComponents.setFontSize(slugs, BASE_FONT_SIZE * uiScaling);
@@ -63,6 +64,7 @@ class SlugSelectorPanel extends JPanel {
         } finally {
             updatingItems = false;
         }
+        slugs.setEnabled(!items.isEmpty());
         adjustWidth(items);
     }
 

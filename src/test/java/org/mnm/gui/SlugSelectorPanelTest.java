@@ -15,6 +15,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.Refreshable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mnm.ApiServerStubs.TEST_VERSION;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.ReflectionTestTools.getField;
 
@@ -34,9 +35,9 @@ class SlugSelectorPanelTest {
     }
 
     @Test
-    void shouldBeEmptyAndEnabledByDefault() {
+    void shouldBeEmptyAndDisabledByDefault() {
         assertThat(slugs.getItemCount()).isZero();
-        assertThat(slugs.isEnabled()).isTrue();
+        assertThat(slugs.isEnabled()).isFalse();
         assertThat(panel.getSelectedSlug()).isNull();
     }
 
@@ -57,6 +58,16 @@ class SlugSelectorPanelTest {
 
         assertThat(selections).containsExactly("mnm-test");
         assertThat(panel.getSelectedSlug()).isEqualTo("mnm-test");
+    }
+
+    @Test
+    void shouldBeDisabledWithoutSlugs() {
+        panel.setItems(List.of("mnm"), "mnm");
+
+        panel.setItems(List.of(), null);
+
+        assertThat(slugs.isEnabled()).isFalse();
+        assertThat(panel.getSelectedSlug()).isNull();
     }
 
     @Test
@@ -105,7 +116,7 @@ class SlugSelectorPanelTest {
     @Test
     void shouldRefreshWithStatusOfSelectedSlug(@TempDir Path tempDir) {
         // Event handler is shared, other registered panels also receive the status
-        final ClientStatus selectedStatus = new ClientStatus(new Client("mnm-test", "1.2.3", UPDATED, tempDir), true, null);
+        final ClientStatus selectedStatus = new ClientStatus(new Client("mnm-test", TEST_VERSION, UPDATED, tempDir), true, null);
         final AtomicReference<ClientStatus> refreshed = new AtomicReference<>();
         ClientEventHandler.getInstance().register((Refreshable) refreshed::set);
         SlugSelectorPanel selector = new SlugSelectorPanel(slug -> slug.equals("mnm-test") ? selectedStatus : null, 1f);

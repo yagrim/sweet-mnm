@@ -50,19 +50,21 @@ public record ClientStatus(Client client, boolean validToken, Instant expiresAt)
 
     /**
      * Reads the status of a client from the database, without API calls.
+     * The client is kept when its token is missing or expired.
      */
     static ClientStatus read(ConfigDb configDb, String slug) {
         Client client = configDb.getClient(slug);
-        if (client != null) {
-            List<Token> tokens = configDb.getTokens(slug);
-            if (!tokens.isEmpty()) {
-                JwtParser.JwtClaims tokenClaims = JwtParser.parse(tokens.get(0).token());
-                if (!tokenClaims.isExpired()) {
-                    return new ClientStatus(client, true, tokenClaims.expirationTime());
-                }
+        if (client == null) {
+            return new ClientStatus(null, false, null);
+        }
+        List<Token> tokens = configDb.getTokens(slug);
+        if (!tokens.isEmpty()) {
+            JwtParser.JwtClaims tokenClaims = JwtParser.parse(tokens.get(0).token());
+            if (!tokenClaims.isExpired()) {
+                return new ClientStatus(client, true, tokenClaims.expirationTime());
             }
         }
-        return new ClientStatus(null, false, null);
+        return new ClientStatus(client, false, null);
     }
 
     public boolean statusIs(Client.Status status) {
