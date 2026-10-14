@@ -1,0 +1,287 @@
+= Authentication workflow
+:api-base-url: https://account.monstersandmemories.com/api
+:toc:
+
+This document describes how sweet-mnm authenticates against the Monsters & Memories account API, which REST operations are involved, and how to reproduce each step with `curl`.
+
+The relevant code lives in `org.mnm.api`:
+
+* `RestClient`: thin JSON-over-HTTP wrapper (`java.net.http.HttpClient`).
+* `ApiConnector`: unauthenticated operations (login, 2FA).
+* `ApiConnection`: authenticated operations, holds the token (`ApiSession`).
+* `Session`: high level entry point used by the rest of the application; logs in and resolves the game version.
+* `TokenSupplier`: callback used to obtain a token when 2FA is required (`CliTwoFactorTokenSupplier`, `PopUpTwoFactorTokenSupplier`).
+
+== Base URL and conventions
+
+Base URL is `{api-base-url}/` (`Environment.API_BASE_URL`).
+When dev flags are enabled, the GUI and the launcher login command (`TokenUpdater`) use `devFlags.apiEndpoint()` instead.
+
+All requests are JSON.
+`POST` requests send `Content-Type: application/json; charset=utf-8`.
+
+Responses carry two levels of status:
+
+* HTTP status code.
+Anything other than `200` is always an error (`ApiHelper.parseLoginResponse`).
+* API `status` field in the body.
+`0` means success.
+Other values seen so far:
+** `1`: Malformed request (reported as `statusCode`, not `status`).
+** `4`: Incorrect email/password (reported as `statusCode`, not `status`).
+** `6`: Two-factor related.
+The exact meaning depends on the `code` field (see below).
+Note that `6` is *also* returned on success by some 2FA endpoints.
+
+Known rate limits: 5 requests per 60 seconds, answered with HTTP `429`.
+
+[,json]
+----
+{"error":"Too many requests","message":"Rate limit exceeded. Maximum 5 requests per 60 seconds."}
+{"error":"Too many sign-in attempts for this account. Wait a minute and try again.","message":"Rate limit exceeded. Maximum 5 requests per 60 seconds."}
+{"error":"Too many attempts. Wait a minute and try again.","code":"two_factor_rate_limited","status":6}
+----
+
+Any error is surfaced as an `ApiException` that keeps the HTTP status and body.
+`getError()` returns the `error` field, used to display messages in the GUI.
+
+== Overview
+
+[source]
+----
+                 POST account/login
+                         │
+        ┌────────────────┼───────────────────────────┐
+   status=0          status=6 and                 any other
+   (token)     code=two_factor_required            → error
+        │                │
+        │        TokenSupplier.getToken(method, methods, challenge_token)
+        │                │  (user reads code from email)
+        │                │
+        │                ├──(optional) POST account/login/2fa/{method}   resend code
+        │                │
+        │        POST account/login/2fa  → status=0 (token)
+        │                │
+        └───────┬────────┘
+                ▼
+       ApiConnection(token)
+                │
+       GET game/versions?token=...   → slug, version, manifest_url, chunks_url
+                │
+             Session
+----
+
+The token is a JWT.
+It is persisted in the local config database (`ConfigDb`, table of tokens per slug) so later runs can skip the username/password step, as long as `JwtParser` reports it is not expired.
+
+== REST operations
+
+=== 1. Login: `POST account/login`
+
+`ApiConnector.login(username, password, tokenSupplier)`
+
+Request body:
+
+[,json]
+----
+{
+  "email": "user@example.com",
+  "password": "secret",
+  "version": 21
+}
+----
+
+`version` is the API/launcher version (`ApiConnector.API_VERSION`).
+The server may use it to decide whether the client is able to handle 2FA.
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+
+curl -s -X POST "$API/account/login" \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d '{"email":"user@example.com","password":"secret","version":21}'
+----
+
+Possible outcomes:
+
+.Success, no 2FA (`status=0`)
+[,json]
+----
+{"status":0,"token":"eyJhbGciOi..."}
+----
+
+.2FA required (`status=6`, `code=two_factor_required`)
+[,json]
+----
+{
+  "error": "Two-factor authentication required. Update your launcher if no verification prompt appears.",
+  "code": "two_factor_required",
+  "status": 6,
+  "methods": ["email"],
+  "method": "email",
+  "challenge_token": "my-challenge-token",
+  "expires_in": 300
+}
+----
+
+At this point the server has already sent a verification code using `method`.
+`challenge_token` identifies the pending login and expires after `expires_in` seconds.
+
+.Invalid credentials
+[,json]
+----
+{"error":"Incorrect Email/Password","statusCode":4}
+----
+
+Handling in code:
+
+* `status == 0` → use `token`.
+* `status == 6` and `code == "two_factor_required"` → call `TokenSupplier.getToken(method, methods, challenge_token)`.
+* Anything else → `ApiException`.
+
+=== 2. Submit 2FA code: `POST account/login/2fa`
+
+`ApiConnector.twoFactorAuthentication(method, code, challengeToken)`
+
+Called from the `TokenSupplier` implementations once the user enters the code:
+
+* CLI (`CliTwoFactorTokenSupplier`): prompts `Code:` on stdin.
+Only `email` is supported, anything else throws.
+* GUI (`PopUpTwoFactorTokenSupplier`): modal dialog; on error the dialog stays open and shows the `error` message so the user can retry.
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+
+curl -s -X POST "$API/account/login/2fa" \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d '{"method":"email","code":"123456","challenge_token":"my-challenge-token"}'
+----
+
+.Success
+[,json]
+----
+{"status":0,"token":"eyJhbGciOi..."}
+----
+
+.Invalid code (HTTP 200)
+[,json]
+----
+{"error":"Invalid verification code. Please try again.","code":"two_factor_invalid","status":6}
+----
+
+.Too many attempts (HTTP 429)
+[,json]
+----
+{"error":"Too many attempts. Wait a minute and try again.","code":"two_factor_rate_limited","status":6}
+----
+
+This call uses `parseResponse`, so both a non-200 HTTP status and a non-zero `status` are errors.
+
+=== 3. Resend 2FA code: `POST account/login/2fa/{method}`
+
+`ApiConnector.resendVerificationCode(challengeToken, method)`
+
+Only used by the GUI ("Resend email code" button).
+The method is part of the path.
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+
+curl -s -X POST "$API/account/login/2fa/email" \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d '{"challenge_token":"my-challenge-token"}'
+----
+
+WARNING: Success is reported with `status=6`, so this call is validated only by HTTP status (`parseLoginResponse`).
+
+=== 4. Game versions: `GET game/versions?token=...`
+
+`ApiConnection.getGamesVersions()`
+
+First authenticated call made after login (`Session.buildSession`).
+It also acts as the de-facto token validation when logging in with a stored token (`Session.login(token, ...)`), since `ApiConnector.login(token)` does no network call.
+The token is passed as a query parameter.
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+
+curl -s "$API/game/versions?token=$TOKEN"
+----
+
+[,json]
+----
+{
+  "versions": [{
+    "version": "publish-0.24.1.0-65ab2c20cf879a5a25ea4212df4f6774ef96774e",
+    "slug": "mnm",
+    "chunks_url": "https://clients.domain.com/chunks",
+    "manifest_url": "https://clients.domain.com/manifests/..."
+  }]
+}
+----
+
+Only the HTTP status is checked here.
+If several slugs are returned, `Session` currently selects `mnm`.
+
+=== Unused authenticated operations
+
+`ApiConnection` defines two more operations that are currently not called anywhere in the application.
+They use the token in the `Authorization` header (raw token, no `Bearer` prefix).
+
+.`GET account/me` (`isTokenValid`)
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+
+curl -s "$API/account/me" -H "Authorization: $TOKEN"
+----
+
+.`GET account/games` (`getGamesInfo`)
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+
+curl -s "$API/account/games" -H "Authorization: $TOKEN"
+----
+
+Response contains a `games` object keyed by id, each entry with `dir`, `name`, `uri_base` and `uri_key`.
+
+== Full example script
+
+[,bash,subs="+attributes"]
+----
+#!/usr/bin/env bash
+set -euo pipefail
+
+API={api-base-url}
+read -rp 'Email: ' EMAIL
+read -rsp 'Password: ' PASSWORD; echo
+
+RESP=$(curl -s -X POST "$API/account/login" \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d "$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" '{email:$e,password:$p,version:21}')")
+
+STATUS=$(jq -r '.status' <<<"$RESP")
+if [[ "$STATUS" == 0 ]]; then
+  TOKEN=$(jq -r '.token' <<<"$RESP")
+elif [[ "$STATUS" == 6 && $(jq -r '.code' <<<"$RESP") == two_factor_required ]]; then
+  METHOD=$(jq -r '.method' <<<"$RESP")
+  CHALLENGE=$(jq -r '.challenge_token' <<<"$RESP")
+  read -rp "Verification code ($METHOD): " CODE
+  TOKEN=$(curl -s -X POST "$API/account/login/2fa" \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "$(jq -n --arg m "$METHOD" --arg c "$CODE" --arg t "$CHALLENGE" '{method:$m,code:$c,challenge_token:$t}')" \
+    | jq -r '.token')
+else
+  echo "Login failed: $RESP" >&2; exit 1
+fi
+
+curl -s "$API/game/versions?token=$TOKEN" | jq .
+----
