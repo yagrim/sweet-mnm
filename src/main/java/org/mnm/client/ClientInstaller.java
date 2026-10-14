@@ -187,7 +187,7 @@ public class ClientInstaller {
 
     private static String defaultSlug(Session session) {
         final List<String> slugs = session.getSlugs();
-        final String slug = slugs.get(0);
+        final String slug = SlugSelection.select(slugs, null);
         if (slugs.size() > 1) {
             logger.info("Multiple game slugs found: {}. Using '{}' by default, use --slug to select a different one", slugs, slug);
         }

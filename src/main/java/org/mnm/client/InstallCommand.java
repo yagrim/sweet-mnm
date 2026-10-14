@@ -57,7 +57,7 @@ public class InstallCommand implements Command {
             Options:
               --username      MnM account username (required)
               --password      MnM account password (required when --username is set)
-              --slug          Game slug to install when the account has more than one (default: first one)
+              --slug          Game slug to install when the account has more than one (default: mnm, or the first one)
               --file-check    Check files using external process or in-memory method (in-memory, xxhsum (default))
               --debug         Enables debug messages
               --help          Shows this help

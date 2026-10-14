@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.util.Comparator;
 import java.util.List;
 
+import org.mnm.client.SlugSelection;
 import org.mnm.events.ClientEventHandler;
 
 import static org.mnm.gui.Style.BASE_FONT_SIZE;
@@ -74,7 +75,7 @@ class SlugSelectorPanel extends JPanel {
     private void adjustWidth(List<String> items) {
         final String longest = items.stream()
             .max(Comparator.comparingInt(String::length))
-            .orElse(GuiState.FALLBACK_SLUG);
+            .orElse(SlugSelection.DEFAULT_SLUG);
         slugs.setPrototypeDisplayValue(longest.length() > MAX_VISIBLE_CHARS ? longest.substring(0, MAX_VISIBLE_CHARS) : longest);
         slugs.setMaximumSize(slugs.getPreferredSize());
         revalidate();

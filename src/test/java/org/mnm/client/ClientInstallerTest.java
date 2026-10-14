@@ -157,9 +157,19 @@ class ClientInstallerTest {
     }
 
     @Test
-    void shouldInstallFirstSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+    void shouldInstallMnmSlugWhenMultipleAreFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        // 'mnm' is not the first one
+        shouldInstallDefaultSlug(wiremock, tempDir, TEST_SLUG, "mnm-test", TEST_SLUG);
+    }
+
+    @Test
+    void shouldInstallFirstSlugWhenMnmIsNotFoundAndNoneIsSelected(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) {
+        shouldInstallDefaultSlug(wiremock, tempDir, "alpha", "alpha", "beta");
+    }
+
+    private static void shouldInstallDefaultSlug(WireMockRuntimeInfo wiremock, Path tempDir, String expectedSlug, String... slugs) {
         stubAccountLogin(VALID_TOKEN);
-        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), "mnm-test", TEST_SLUG);
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), slugs);
         stubEmptyManifestDownload();
 
         final Path dbFile = tempDir.resolve("install-default-slug.db");
@@ -173,7 +183,7 @@ class ClientInstallerTest {
 
         try (var testDatabase = ConfigTestDatabase.open(dbFile)) {
             testDatabase.assertThatTable("clients")
-                .containsClient(new Client("mnm-test", versionFor("mnm-test"), UPDATED, tempDir))
+                .containsClient(new Client(expectedSlug, versionFor(expectedSlug), UPDATED, tempDir))
                 .hasRows(1);
         }
     }

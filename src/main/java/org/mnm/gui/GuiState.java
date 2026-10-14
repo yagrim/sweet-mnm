@@ -10,20 +10,7 @@ import java.util.List;
  */
 record GuiState(List<String> slugs, ClientStatus clientStatus) {
 
-    // Selected when the preferred slug is not available
-    static final String FALLBACK_SLUG = "mnm";
-
     String selectedSlug() {
         return clientStatus.client() == null ? null : clientStatus.client().slug();
-    }
-
-    static String selectSlug(List<String> slugs, String preferredSlug) {
-        if (preferredSlug != null && slugs.contains(preferredSlug)) {
-            return preferredSlug;
-        }
-        if (slugs.contains(FALLBACK_SLUG)) {
-            return FALLBACK_SLUG;
-        }
-        return slugs.isEmpty() ? null : slugs.get(0);
     }
 }

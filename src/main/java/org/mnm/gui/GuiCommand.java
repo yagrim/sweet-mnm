@@ -27,6 +27,7 @@ import org.mnm.client.Factories;
 import org.mnm.client.InstallerOptions;
 import org.mnm.client.LoginService;
 import org.mnm.client.RunnerOptions;
+import org.mnm.client.SlugSelection;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbLocator;
@@ -271,7 +272,7 @@ public class GuiCommand implements Command {
 
     static GuiState loadGuiState(ConfigDb configDb, String slug) {
         final List<String> slugs = configDb.getClients().stream().map(Client::slug).toList();
-        final String selectedSlug = GuiState.selectSlug(slugs, slug);
+        final String selectedSlug = SlugSelection.select(slugs, slug);
         final ClientStatus clientStatus = selectedSlug == null
             ? new ClientStatus(null, false, null)
             : ClientStatus.read(configDb, selectedSlug);
