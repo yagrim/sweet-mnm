@@ -1,16 +1,22 @@
 package org.mnm.gui;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import org.mnm.LoggerHandler;
+import org.mnm.SystemOutCaptureExtension;
+import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
@@ -25,13 +31,19 @@ import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
 import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
+import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.config.Client.Status.UPDATED;
+import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 // TODO update tests to cover
 // Test buttons state change after install, logout
 @WireMockTest(httpsEnabled = true)
+@ExtendWith(SystemOutCaptureExtension.class)
 class GuiCommandTest {
 
     @Test
@@ -173,6 +185,48 @@ class GuiCommandTest {
             assertThat(configDb.getSettings(SELECTED_SLUG_KEY)).isEqualTo("mnm-test");
             // Stored selection is used on next start
             assertThat(GuiCommand.loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY)).selectedSlug()).isEqualTo("mnm-test");
+        }
+    }
+
+    @Test
+    void shouldInitGuiStateFromConfigDbWhenVersionCheckFails(@TempDir Path tempDir, SystemOutCaptureExtension out) {
+        LoggerHandler.setInfo(true);
+        final List<String> messages = new ArrayList<>();
+
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"));
+             MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            addClients(configDb, tempDir, "mnm-test", "mnm");
+            configDb.putSettings(SELECTED_SLUG_KEY, "mnm-test");
+            sessionMock.when(() -> Session.login(anyString(), any())).thenThrow(new RuntimeException("Connection refused"));
+
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, messages::add);
+
+            assertThat(messages).containsExactly(GuiCommand.VERSION_CHECK_FAILED_MESSAGE);
+            assertThat(out.getOutput()).contains("INFO  GuiCommand - Could not validate client versions: Connection refused");
+            assertThat(guiState.slugs()).containsExactly("mnm-test", "mnm");
+            assertThat(guiState.selectedSlug()).isEqualTo("mnm-test");
+            assertThat(guiState.clientStatus().client()).isEqualTo(new Client("mnm-test", "1.2.3", UPDATED, tempDir));
+            assertThat(guiState.clientStatus().validToken()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldInitGuiStateWithUpdatedVersions(@TempDir Path tempDir) {
+        final List<String> messages = new ArrayList<>();
+
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"));
+             MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            addClients(configDb, tempDir, "mnm");
+
+            Session session = Mockito.mock(Session.class);
+            when(session.getSlugs()).thenReturn(List.of("mnm"));
+            when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "2.0.0", null, null));
+            sessionMock.when(() -> Session.login(anyString(), any())).thenReturn(session);
+
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, messages::add);
+
+            assertThat(messages).isEmpty();
+            assertThat(guiState.clientStatus().client().status()).isEqualTo(NEEDS_UPDATE);
         }
     }
 
