@@ -19,7 +19,7 @@ public class ReleaseChecker {
     static final String LATEST_VERSION_KEY = "release.latest-version";
 
     // Unauthenticated GitHub API calls have a limit of 60 per hour
-    static final Duration CHECK_INTERVAL = Duration.ofDays(1);
+    static final Duration CHECK_INTERVAL = Duration.ofHours(12);
 
     private final GithubConnector githubConnector;
     private final String currentVersion;

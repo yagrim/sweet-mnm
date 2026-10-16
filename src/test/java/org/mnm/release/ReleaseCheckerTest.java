@@ -1,6 +1,7 @@
 package org.mnm.release;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -98,6 +99,19 @@ class ReleaseCheckerTest {
         verify(1, anyRequestedFor(anyUrl()));
         assertThat(settings.get(LAST_CHECK_KEY)).isEqualTo(NOW.toString());
         assertThat(settings.get(LATEST_VERSION_KEY)).isEqualTo("v2.0.0");
+    }
+
+    @Test
+    void shouldCheckAgainAfter12Hours(WireMockRuntimeInfo wiremock) {
+        stubLatestRelease("v2.0.0");
+
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        settings.put(LAST_CHECK_KEY, NOW.minus(Duration.ofHours(12)).toString());
+        settings.put(LATEST_VERSION_KEY, "v1.5.0");
+
+        assertThat(checker(wiremock, "1.4.0").findNewRelease(settings)).contains("2.0.0");
+
+        verify(1, anyRequestedFor(anyUrl()));
     }
 
     @Test
