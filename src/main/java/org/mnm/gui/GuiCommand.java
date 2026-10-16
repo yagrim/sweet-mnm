@@ -35,8 +35,10 @@ import org.mnm.config.ConfigDbLocator;
 import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.Environment;
 import org.mnm.config.OS;
+import org.mnm.config.SettingsStore;
 import org.mnm.config.VersionDetails;
 import org.mnm.events.ClientEventHandler;
+import org.mnm.release.ReleaseChecker;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
@@ -112,6 +114,7 @@ public class GuiCommand implements Command {
 
     private JFrame frame;
     private SlugSelectorPanel slugSelector;
+    private NewReleaseBar newReleaseBar;
 
     public GuiCommand() {
         this(new ConfigDbLocator());
@@ -140,7 +143,8 @@ public class GuiCommand implements Command {
         initialize();
         guiStarter.start(() -> {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-                return initGuiState(configDb, apiEndpoint,
+                // Created here, so that it is not kept after initialization
+                return initGuiState(configDb, apiEndpoint, Factories.releaseChecker(), new ConfigDbSettingsStore(configDbLocator),
                     message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message)));
             }
         });
@@ -212,12 +216,14 @@ public class GuiCommand implements Command {
                 final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(slugSelector.getSelectedSlug()), uiScaling);
 
                 final MainTabs tabs = new MainTabs(settingsStore, clientPanel, optionsPanel);
+                this.newReleaseBar = new NewReleaseBar(uiScaling);
 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 Container contentPane = frame.getContentPane();
                 contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
                 contentPane.add(tabs);
                 contentPane.add(playPanel);
+                contentPane.add(newReleaseBar);
 
                 frame.setResizable(false);
                 frame.pack();
@@ -252,6 +258,9 @@ public class GuiCommand implements Command {
         //   requires a new concept that has the information of the Client and the Slugs.
         slugSelector.setItems(guiState.slugs(), guiState.selectedSlug());
         ClientEventHandler.getInstance().refresh(guiState.clientStatus());
+        if (guiState.newRelease() != null) {
+            newReleaseBar.showRelease(guiState.newRelease());
+        }
     }
 
     void close() {
@@ -286,23 +295,32 @@ public class GuiCommand implements Command {
     }
 
     // Consumer only for tests
-    static GuiState initGuiState(ConfigDb configDb, String apiEndpoint, Consumer<String> onVersionCheckFailure) {
+    static GuiState initGuiState(ConfigDb configDb, String apiEndpoint, ReleaseChecker releaseChecker,
+                                 SettingsStore settingsStore, Consumer<String> onVersionCheckFailure) {
         try {
             ClientStatus.updateVersions(configDb, apiEndpoint);
         } catch (RuntimeException e) {
             logger.info("Could not validate client versions: {}", e.getMessage());
             onVersionCheckFailure.accept(VERSION_CHECK_FAILED_MESSAGE);
         }
-        return loadGuiState(configDb, configDb.getSettings(SELECTED_SLUG_KEY));
+        return guiStateBuilder(configDb, configDb.getSettings(SELECTED_SLUG_KEY))
+            .newRelease(releaseChecker.findNewRelease(settingsStore).orElse(null))
+            .build();
     }
 
     static GuiState loadGuiState(ConfigDb configDb, String slug) {
+        return guiStateBuilder(configDb, slug).build();
+    }
+
+    private static GuiState.Builder guiStateBuilder(ConfigDb configDb, String slug) {
         final List<String> slugs = configDb.getClients().stream().map(Client::slug).toList();
         final String selectedSlug = SlugSelection.select(slugs, slug);
         final ClientStatus clientStatus = selectedSlug == null
             ? new ClientStatus(null, false, null)
             : ClientStatus.read(configDb, selectedSlug);
-        return new GuiState(slugs, clientStatus);
+        return GuiState.builder()
+            .slugs(slugs)
+            .clientStatus(clientStatus);
     }
 
     static ClientStatus storeSlug(Supplier<Path> configDbLocator, String slug) {

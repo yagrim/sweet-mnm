@@ -17,6 +17,7 @@ class ApiHelper {
     /**
      * Processes response throwing an exception based on HTTP status code only.
      */
+    // TODO rename this method, is generic, not specific to login
     static ApiResponse parseLoginResponse(ApiResponse apiResponse) {
         int statusCode = apiResponse.statusCode();
         if (statusCode != 200) {

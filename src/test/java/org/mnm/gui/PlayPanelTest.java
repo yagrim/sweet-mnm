@@ -141,7 +141,6 @@ class PlayPanelTest {
         assertThat(play.isEnabled()).isTrue();
     }
 
-
     private PlayPanel initComponents() {
         PlayPanel playPanel = new PlayPanel(options -> {
         }, () -> null);
