@@ -4,6 +4,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import java.awt.BorderLayout;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +42,7 @@ class NewReleaseBarTest {
     }
 
     @Test
+    @Disabled("java.awt.HeadlessException in CI")
     void shouldResizeWindowWhenShown() {
         NewReleaseBar bar = new NewReleaseBar(1f);
         JFrame frame = new JFrame();
@@ -59,6 +61,7 @@ class NewReleaseBarTest {
     }
 
     @Test
+    @Disabled("java.awt.HeadlessException in CI")
     void shouldNotChangeWindowWidthWhenShown() {
         NewReleaseBar bar = new NewReleaseBar(1f);
         JFrame frame = new JFrame();
