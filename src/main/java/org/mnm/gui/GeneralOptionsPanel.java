@@ -12,10 +12,9 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.mnm.LoggerHandler;
 import org.mnm.client.Installation;
@@ -36,13 +35,10 @@ import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
 import static org.mnm.gui.CredentialsHandler.HIDE_CREDENTIALS;
-import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
 import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel
     implements RepairListener, Refreshable {
-
-    private static final Logger logger = LoggerFactory.getLogger(GeneralOptionsPanel.class);
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
@@ -175,11 +171,11 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
                 final Path downloadsPath = getDownloadsPath(clientStatus.client());
                 FileUtils.deleteFolder(downloadsPath);
                 clearCache.setText("Clear cache (empty)");
-            } catch (Exception e) {
-                logger.error("", e);
-                showErrorMessageDialogSync("Error: " + e.getMessage());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e.getMessage(), e);
+            } finally {
+                refresh(clientStatus);
             }
-            refresh(clientStatus);
         }
     }
 
