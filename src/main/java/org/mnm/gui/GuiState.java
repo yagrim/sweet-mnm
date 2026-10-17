@@ -3,7 +3,7 @@ package org.mnm.gui;
 import java.util.List;
 
 /**
- * Information required to initialize the GUI: available slugs, the status of the selected one and new launcher release.
+ * Wrapper for information to initialize the GUI.
  *
  * @param slugs        slugs of the clients in the config database
  * @param clientStatus status of the selected client, without client when there are no clients

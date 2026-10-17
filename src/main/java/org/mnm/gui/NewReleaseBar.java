@@ -55,8 +55,6 @@ class NewReleaseBar extends JPanel {
         label.setText("New version of Sweet v%s available!".formatted(newVersion));
         this.setVisible(true);
 
-        // The window is not resizable and is packed before the bar is visible.
-        // Do not use pack(): other components can be wider now and change the width.
         Window window = SwingUtilities.getWindowAncestor(this);
         if (window != null) {
             window.setSize(window.getWidth(), window.getHeight() + getPreferredSize().height);
@@ -64,7 +62,6 @@ class NewReleaseBar extends JPanel {
         }
     }
 
-    // Prevent BoxLayout from making the bar taller than its content
     @Override
     public Dimension getMaximumSize() {
         return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);

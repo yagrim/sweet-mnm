@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FactoriesTest {
 
-    // Test builds have version 0.0.1-SNAPSHOT, so the check does not call GitHub
     @Test
     void shouldCreateReleaseCheckerWithCurrentVersion() {
         ReleaseChecker releaseChecker = Factories.releaseChecker();

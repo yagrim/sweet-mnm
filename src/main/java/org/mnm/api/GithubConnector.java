@@ -21,7 +21,6 @@ public class GithubConnector {
         this.restClient = restClient;
     }
 
-    // The latest release does not include drafts and pre-releases
     public Release getLatestRelease() {
         ApiResponse response = parseLoginResponse(restClient.get(LATEST_RELEASE_PATH, HEADERS));
 

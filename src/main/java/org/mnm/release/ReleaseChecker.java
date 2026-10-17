@@ -18,7 +18,8 @@ public class ReleaseChecker {
     static final String LAST_CHECK_KEY = "release.last-check";
     static final String LATEST_VERSION_KEY = "release.latest-version";
 
-    // Unauthenticated GitHub API calls have a limit of 60 per hour
+    // Unauthenticated GitHub API is limited to 60 per hour
+    // https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users
     static final Duration CHECK_INTERVAL = Duration.ofHours(12);
 
     private final GithubConnector githubConnector;
@@ -32,8 +33,6 @@ public class ReleaseChecker {
         this.clock = clock;
     }
 
-    // Returns the latest version when it is newer than the current one.
-    // It never throws: a failed check must not stop the launcher.
     public Optional<String> findNewRelease(SettingsStore settingsStore) {
         try {
             final Optional<ReleaseVersion> current = ReleaseVersion.parse(currentVersion);

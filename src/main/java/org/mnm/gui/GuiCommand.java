@@ -143,9 +143,13 @@ public class GuiCommand implements Command {
         initialize();
         guiStarter.start(() -> {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-                // Created here, so that it is not kept after initialization
-                return initGuiState(configDb, apiEndpoint, Factories.releaseChecker(), new ConfigDbSettingsStore(configDbLocator),
-                    message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message)));
+                return initGuiState(
+                    configDb,
+                    apiEndpoint,
+                    Factories.releaseChecker(),
+                    new ConfigDbSettingsStore(configDbLocator),
+                    message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message))
+                );
             }
         });
     }
