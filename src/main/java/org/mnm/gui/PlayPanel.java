@@ -35,6 +35,7 @@ public class PlayPanel extends JPanel
     private static final Logger logger = LoggerFactory.getLogger(PlayPanel.class);
 
     final JButton play;
+    final VersionPanel versionPanel;
 
     public PlayPanel(
         GuiCommand.PlayAction runAction,
@@ -61,7 +62,8 @@ public class PlayPanel extends JPanel
             }
         });
         this.add(play);
-        this.add(new VersionPanel(uiScaling));
+        this.versionPanel = new VersionPanel(uiScaling);
+        this.add(versionPanel);
 
         ClientEventHandler.getInstance().register(this);
     }
@@ -76,13 +78,14 @@ public class PlayPanel extends JPanel
     static class VersionPanel extends JPanel {
 
         private final JLabel label;
+        private final String text;
 
         VersionPanel(float uiScaling) {
             super(new FlowLayout(FlowLayout.RIGHT, 0, 0));
             this.setBorder(BorderFactory.createEmptyBorder(0, SCALE, SCALE, SCALE));
 
             VersionDetails version = Environment.versionDetails();
-            String text = "Sweet v%s (%s)".formatted(version.version(), version.gitSha());
+            this.text = "Sweet v%s (%s)".formatted(version.version(), version.gitSha());
 
             this.label = new JLabel(text);
             label.setForeground(Color.GRAY);

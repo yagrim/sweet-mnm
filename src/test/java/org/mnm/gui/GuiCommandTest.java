@@ -3,6 +3,8 @@ package org.mnm.gui;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -24,6 +26,7 @@ import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.Token;
+import org.mnm.release.ReleaseChecker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
@@ -199,7 +202,7 @@ class GuiCommandTest {
             configDb.putSettings(SELECTED_SLUG_KEY, "mnm-test");
             sessionMock.when(() -> Session.login(anyString(), any())).thenThrow(new RuntimeException("Connection refused"));
 
-            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, messages::add);
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, Mockito.mock(ReleaseChecker.class), new InMemorySettingsStore(Map.of()), messages::add);
 
             assertThat(messages).containsExactly(GuiCommand.VERSION_CHECK_FAILED_MESSAGE);
             assertThat(out.getOutput()).contains("INFO  GuiCommand - Could not validate client versions: Connection refused");
@@ -223,10 +226,26 @@ class GuiCommandTest {
             when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "2.0.0", null, null));
             sessionMock.when(() -> Session.login(anyString(), any())).thenReturn(session);
 
-            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, messages::add);
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, Mockito.mock(ReleaseChecker.class), new InMemorySettingsStore(Map.of()), messages::add);
 
             assertThat(messages).isEmpty();
             assertThat(guiState.clientStatus().client().status()).isEqualTo(NEEDS_UPDATE);
+            assertThat(guiState.newRelease()).isNull();
+        }
+    }
+
+    @Test
+    void shouldInitGuiStateWithNewRelease(@TempDir Path tempDir) {
+        final ReleaseChecker releaseChecker = Mockito.mock(ReleaseChecker.class);
+        final InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of());
+
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"))) {
+            when(releaseChecker.findNewRelease(settingsStore)).thenReturn(Optional.of("1.5.0"));
+
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, releaseChecker, settingsStore, _ -> {});
+
+            assertThat(guiState.newRelease()).isEqualTo("1.5.0");
+            assertThat(guiState.slugs()).isEmpty();
         }
     }
 

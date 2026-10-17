@@ -1,17 +1,24 @@
 package org.mnm.client;
 
+import java.time.Clock;
+
 import org.mnm.api.ApiConnector;
+import org.mnm.api.GithubConnector;
 import org.mnm.api.RestClient;
 import org.mnm.api.TokenSupplier;
 import org.mnm.cli.CliTwoFactorTokenSupplier;
 import org.mnm.cli.LineReader;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.Environment;
+import org.mnm.release.ReleaseChecker;
 
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.getWorkDir;
 
 public class Factories {
+
+    private static final String GITHUB_API_URL = "https://api.github.com/";
 
     static void installer(InstallerOptions options, ConfigDb configDb, Client.Status status) {
         ApiConnector apiConnector = apiConnector(API_BASE_URL);
@@ -27,5 +34,10 @@ public class Factories {
 
     public static ApiConnector apiConnector(String apiBaseUrl) {
         return new ApiConnector(new RestClient(apiBaseUrl));
+    }
+
+    public static ReleaseChecker releaseChecker() {
+        GithubConnector githubConnector = new GithubConnector(new RestClient(GITHUB_API_URL));
+        return new ReleaseChecker(githubConnector, Environment.versionDetails().version(), Clock.systemUTC());
     }
 }
