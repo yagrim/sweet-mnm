@@ -4380,6 +4380,10 @@
       "glob": "javax/swing/plaf/metal/icons/ocean/paletteClose.gif"
     },
     {
+      "module": "java.desktop",
+      "glob": "javax/swing/plaf/metal/icons/ocean/warning.png"
+    },
+    {
       "module": "java.base",
       "glob": "jdk/internal/icu/impl/data/icudt76b/nfkc.nrm"
     },
