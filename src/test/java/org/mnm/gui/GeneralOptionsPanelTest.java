@@ -4,24 +4,32 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.SettingsStore;
+import org.mnm.tools.FileUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 class GeneralOptionsPanelTest {
 
@@ -94,6 +102,47 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldClearCache(@TempDir Path tempDir) throws IOException {
+        GeneralOptionsPanel panel = panelWithCache(tempDir);
+        JButton clearCacheButton = button(panel, "clearCache");
+
+        try (MockedStatic<ConfirmationDialog> dialogMock = Mockito.mockStatic(ConfirmationDialog.class)) {
+            dialogMock.when(() -> ConfirmationDialog.showConfirmationDialog(any(), anyString(), anyString()))
+                .thenReturn(JOptionPane.OK_OPTION);
+
+            clearCacheButton.doClick();
+        }
+
+        assertThat(tempDir.resolve("downloads").resolve("cache")).doesNotExist();
+        assertThat(clearCacheButton.isEnabled()).isFalse();
+        assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
+    }
+
+    @Test
+    void shouldThrowErrorAndRefreshWhenClearCacheFails(@TempDir Path tempDir) throws IOException {
+        GeneralOptionsPanel panel = panelWithCache(tempDir);
+        JButton clearCacheButton = button(panel, "clearCache");
+
+        try (MockedStatic<ConfirmationDialog> dialogMock = Mockito.mockStatic(ConfirmationDialog.class);
+             MockedStatic<FileUtils> fileUtilsMock = Mockito.mockStatic(FileUtils.class, Mockito.CALLS_REAL_METHODS)) {
+            dialogMock.when(() -> ConfirmationDialog.showConfirmationDialog(any(), anyString(), anyString()))
+                .thenReturn(JOptionPane.OK_OPTION);
+            // Deletes the file and then fails, to simulate a partial delete
+            fileUtilsMock.when(() -> FileUtils.deleteFolder(any())).thenAnswer(invocation -> {
+                Files.delete(tempDir.resolve("downloads").resolve("cache"));
+                throw new IOException("Access denied");
+            });
+
+            assertThatThrownBy(clearCacheButton::doClick)
+                .isInstanceOf(UncheckedIOException.class)
+                .hasMessage("Access denied");
+        }
+
+        assertThat(clearCacheButton.isEnabled()).isFalse();
+        assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
+    }
+
+    @Test
     void shouldNotUpdateUIScalingWhenNotModified() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         GeneralOptionsPanel panel = panel(settings);
@@ -154,6 +203,16 @@ class GeneralOptionsPanelTest {
 
     private static JCheckBox option(GeneralOptionsPanel panel, String fieldName) {
         return (JCheckBox) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    private static GeneralOptionsPanel panelWithCache(Path tempDir) throws IOException {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new JPanel());
+        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        Files.writeString(downloadsPath.resolve("cache"), "cache");
+        Client client = new Client("test", "1.0.0", Client.Status.UPDATED, tempDir);
+        panel.refresh(new ClientStatus(client, false, null));
+        return panel;
     }
 
     private static JButton button(GeneralOptionsPanel panel, String fieldName) {

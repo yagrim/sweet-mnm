@@ -17,6 +17,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,9 +101,8 @@ class ClientPathPanel extends JPanel
         } catch (IOException e) {
             try {
                 new ProcessBuilder(OS.isWindows() ? "explorer.exe" : "xdg-open", location).start();
-            } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
-                throw new RuntimeException(ex);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex.getMessage(), ex);
             }
         }
     }
