@@ -141,6 +141,7 @@ public class GuiCommand implements Command {
         final String apiEndpoint = devFlags.enabled() ? devFlags.apiEndpoint() : API_BASE_URL;
 
         initialize();
+        UncaughtErrorHandler.install();
         guiStarter.start(() -> {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
                 return initGuiState(
