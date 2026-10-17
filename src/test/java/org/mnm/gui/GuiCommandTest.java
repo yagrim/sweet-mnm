@@ -1,5 +1,7 @@
 package org.mnm.gui;
 
+import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.Optional;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -32,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 import static org.mnm.ApiServerStubs.stubAccountLogin;
 import static org.mnm.ApiServerStubs.stubGameVersions;
+import static org.mnm.ApiServerStubs.stubGameVersionsForSlugs;
 import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
@@ -92,6 +96,42 @@ class GuiCommandTest {
         ));
 
         // TODO validate buttons
+        command.close();
+    }
+
+    @Test
+    @Disabled("java.awt.HeadlessException in CI")
+    void shouldShowNewSlugsFromApiInSlugSelectorOnStart(WireMockRuntimeInfo wiremock, @TempDir Path tempDir) throws Exception {
+        stubAccountLogin();
+        stubGameVersionsForSlugs(wiremock.getHttpBaseUrl(), "mnm", "mnm-test");
+
+        final Path dbFile = tempDir.resolve("config.db");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(testClient());
+            configDb.addToken(new Token("mnm", validToken()));
+        }
+
+        GuiCommand command = new GuiCommand(() -> dbFile);
+        command.run(Arguments.parse(
+            "--dev-options", "true",
+            "--api-endpoint", wiremock.getHttpBaseUrl()
+        ));
+
+        final JComboBox<?> slugs = (JComboBox<?>) ReflectionTestTools.get(ReflectionTestTools.get(command, "slugSelector"), "slugs");
+        // The GUI state loads asynchronously after the window shows
+        final List<String> items = new ArrayList<>();
+        final long deadline = System.currentTimeMillis() + 10_000;
+        while (items.size() < 2 && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+            SwingUtilities.invokeAndWait(() -> {
+                items.clear();
+                for (int i = 0; i < slugs.getItemCount(); i++) {
+                    items.add((String) slugs.getItemAt(i));
+                }
+            });
+        }
+
+        assertThat(items).containsExactly("mnm", "mnm-test");
         command.close();
     }
 
@@ -231,6 +271,25 @@ class GuiCommandTest {
             assertThat(messages).isEmpty();
             assertThat(guiState.clientStatus().client().status()).isEqualTo(NEEDS_UPDATE);
             assertThat(guiState.newRelease()).isNull();
+        }
+    }
+
+    @Test
+    void shouldInitGuiStateWithNewSlugsFromApi(@TempDir Path tempDir) {
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"));
+             MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            addClients(configDb, tempDir, "mnm");
+
+            Session session = Mockito.mock(Session.class);
+            when(session.getSlugs()).thenReturn(List.of("mnm", "mnm-test"));
+            when(session.getGameVersion("mnm")).thenReturn(new GameVersion("mnm", "1.2.3", null, null));
+            when(session.getGameVersion("mnm-test")).thenReturn(new GameVersion("mnm-test", "2.0.0", null, null));
+            sessionMock.when(() -> Session.login(anyString(), any())).thenReturn(session);
+
+            GuiState guiState = GuiCommand.initGuiState(configDb, API_BASE_URL, Mockito.mock(ReleaseChecker.class), new InMemorySettingsStore(Map.of()), _ -> {});
+
+            assertThat(guiState.slugs()).containsExactly("mnm", "mnm-test");
+            assertThat(guiState.selectedSlug()).isEqualTo("mnm");
         }
     }
 

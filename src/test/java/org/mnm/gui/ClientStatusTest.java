@@ -24,6 +24,7 @@ import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
+import static org.mnm.config.Environment.getWorkDir;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -133,6 +134,29 @@ class ClientStatusTest {
             assertThat(configDb.getClient(TEST_SLUG).status()).isEqualTo(UPDATED);
             assertThat(configDb.getClient(OTHER_SLUG).status()).isEqualTo(NEEDS_UPDATE);
             assertThat(configDb.getClient(notInstalledSlug).status()).isEqualTo(NOT_INSTALLED);
+        }
+    }
+
+    @Test
+    void shouldAddNewSlugsFromApi(@TempDir Path tempDir) {
+        final String validToken = TestUtils.testToken(Instant.now().plus(5, MINUTES));
+
+        try (ConfigDb configDb = ConfigDb.open(tempDir.resolve("config.db"));
+             MockedStatic<Session> sessionMock = Mockito.mockStatic(Session.class)) {
+            configDb.addClient(new Client(TEST_SLUG, CLIENT_VERSION, UPDATED, tempDir));
+            configDb.addToken(new Token(TEST_SLUG, validToken));
+
+            Session session = Mockito.mock(Session.class);
+            when(session.getSlugs()).thenReturn(List.of(TEST_SLUG, OTHER_SLUG));
+            when(session.getGameVersion(TEST_SLUG)).thenReturn(new GameVersion(TEST_SLUG, CLIENT_VERSION, null, null));
+            when(session.getGameVersion(OTHER_SLUG)).thenReturn(new GameVersion(OTHER_SLUG, "2.0.0", null, null));
+            sessionMock.when(() -> Session.login(anyString(), any())).thenReturn(session);
+
+            ClientStatus.updateVersions(configDb, API_BASE_URL);
+
+            assertThat(configDb.getClient(TEST_SLUG).status()).isEqualTo(UPDATED);
+            assertThat(configDb.getClient(OTHER_SLUG)).isEqualTo(new Client(OTHER_SLUG, "2.0.0", NOT_INSTALLED, getWorkDir()));
+            assertThat(configDb.getTokens(OTHER_SLUG)).extracting(Token::token).containsExactly(validToken);
         }
     }
 
