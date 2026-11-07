@@ -24,6 +24,8 @@ import org.mnm.tools.FileUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -143,6 +145,39 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldRestorePersistedCacheAutoClearOptions() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
+            CACHE_AUTO_CLEAR_KEY, "false",
+            CACHE_RETENTION_DAYS_KEY, "30"));
+
+        GeneralOptionsPanel panel = panel(settings);
+
+        assertThat(option(panel, "autoClearCacheOption").isSelected()).isFalse();
+        assertThat(cacheRetentionSelector(panel).getSelectedItem()).isEqualTo(30);
+        assertThat(cacheRetentionSelector(panel).isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldPersistModifiedCacheAutoClearOptions() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        GeneralOptionsPanel panel = panel(settings);
+        JComboBox<Integer> selector = cacheRetentionSelector(panel);
+
+        selector.setSelectedItem(15);
+        assertThat(settings.get(CACHE_RETENTION_DAYS_KEY)).isEqualTo("15");
+        selector.setSelectedItem(5);
+        assertThat(settings.get(CACHE_RETENTION_DAYS_KEY)).isEqualTo("5");
+
+        option(panel, "autoClearCacheOption").doClick();
+        assertThat(settings.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("false");
+        assertThat(selector.isEnabled()).isFalse();
+
+        option(panel, "autoClearCacheOption").doClick();
+        assertThat(settings.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("true");
+        assertThat(selector.isEnabled()).isTrue();
+    }
+
+    @Test
     void shouldNotUpdateUIScalingWhenNotModified() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         GeneralOptionsPanel panel = panel(settings);
@@ -221,6 +256,11 @@ class GeneralOptionsPanelTest {
 
     private static JLabel label(GeneralOptionsPanel panel, String fieldName) {
         return (JLabel) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JComboBox<Integer> cacheRetentionSelector(GeneralOptionsPanel panel) {
+        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "cacheRetentionSelector");
     }
 
     @SuppressWarnings("unchecked")

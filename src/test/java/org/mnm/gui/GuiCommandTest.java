@@ -2,11 +2,19 @@ package org.mnm.gui;
 
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -25,9 +33,12 @@ import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
+import org.mnm.client.CacheCleaner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.ConfigDbSettingsStore;
+import org.mnm.config.SettingsStore;
 import org.mnm.config.Token;
 import org.mnm.release.ReleaseChecker;
 
@@ -40,6 +51,8 @@ import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
+import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
@@ -133,6 +146,63 @@ class GuiCommandTest {
 
         assertThat(items).containsExactly("mnm", "mnm-test");
         command.close();
+    }
+
+    @Test
+    void shouldSetCacheOptionsOnFirstStartAndClearCacheOnNextStart(@TempDir Path tempDir) throws Exception {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path clientPath = tempDir.resolve("client");
+        final Path oldFile = Files.createDirectories(clientPath.resolve("downloads").resolve("bundles")).resolve("old.bin");
+        final Path newFile = clientPath.resolve("downloads").resolve("manifest.json");
+        Files.writeString(oldFile, "12345");
+        Files.writeString(newFile, "123");
+        Files.setLastModifiedTime(oldFile, FileTime.from(Instant.now().minus(Duration.ofDays(11))));
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(new Client("mnm", "1.2.3", UPDATED, clientPath));
+            configDb.addClient(new Client("mnm-test", "1.2.3", UPDATED, clientPath));
+        }
+
+        final SettingsStore settingsStore = new ConfigDbSettingsStore(() -> dbFile);
+        final AtomicReference<CompletableFuture<CacheCleaner.Result>> cleanup = new AtomicReference<>();
+        final Runnable cacheCleanupAction = () -> cleanup.set(GuiCommand.startCacheCleanup(() -> dbFile));
+
+        GuiCommand.initCacheAndStartCleanup(settingsStore, cacheCleanupAction);
+
+        assertThat(cleanup.get()).isNull();
+        assertThat(oldFile).exists();
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            assertThat(configDb.getSettings(CACHE_AUTO_CLEAR_KEY)).isEqualTo("true");
+            assertThat(configDb.getSettings(CACHE_RETENTION_DAYS_KEY)).isEqualTo("10");
+        }
+
+        GuiCommand.initCacheAndStartCleanup(settingsStore, cacheCleanupAction);
+
+        assertThat(cleanup.get().get(10, TimeUnit.SECONDS)).isEqualTo(new CacheCleaner.Result(1, 5));
+        assertThat(oldFile).doesNotExist();
+        assertThat(newFile).exists();
+    }
+
+    @Test
+    void shouldNotStartCacheCleanupWhenOnlyRetentionDaysIsSet() {
+        final InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(CACHE_RETENTION_DAYS_KEY, "30"));
+        final AtomicInteger cleanups = new AtomicInteger();
+
+        GuiCommand.initCacheAndStartCleanup(settingsStore, cleanups::incrementAndGet);
+
+        assertThat(cleanups.get()).isZero();
+        assertThat(settingsStore.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("true");
+        assertThat(settingsStore.get(CACHE_RETENTION_DAYS_KEY)).isEqualTo("30");
+    }
+
+    @Test
+    void shouldStartCacheCleanupWhenAutoClearIsSet() {
+        final InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(CACHE_AUTO_CLEAR_KEY, "true"));
+        final AtomicInteger cleanups = new AtomicInteger();
+
+        GuiCommand.initCacheAndStartCleanup(settingsStore, cleanups::incrementAndGet);
+
+        assertThat(cleanups.get()).isEqualTo(1);
+        assertThat(settingsStore.get(CACHE_RETENTION_DAYS_KEY)).isNull();
     }
 
     @Test

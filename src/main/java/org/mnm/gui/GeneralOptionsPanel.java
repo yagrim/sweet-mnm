@@ -27,9 +27,14 @@ import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Settings.CACHE_RETENTION_DAYS;
+import static org.mnm.config.Settings.DEFAULT_CACHE_AUTO_CLEAR;
 import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
+import static org.mnm.config.Settings.readCacheRetentionDays;
 import static org.mnm.config.Settings.readUiScaling;
+import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -43,12 +48,16 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
     private final JCheckBox hideCredentials;
+    private final CheckboxOption autoClearCacheOption;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
     private final JLabel uiScalingLabel = new JLabel("Font Scaling");
     private final JComboBox<Float> uiScalingSelector = new JComboBox<>();
     private final JPanel uiScalingPanel = new JPanel();
+    private final JLabel cacheRetentionLabel = new JLabel("Delete cached files after (days)");
+    private final JComboBox<Integer> cacheRetentionSelector = new JComboBox<>();
+    private final JPanel cacheRetentionPanel = new JPanel();
 
     private final CredentialsHandler credentialsHandler;
 
@@ -82,6 +91,24 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         clearCache.addActionListener(_ -> handleClearCache(parent, clearCache));
 
+        autoClearCacheOption = new CheckboxOption("Auto-clear cache", settingsStore, CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR);
+        autoClearCacheOption.setToolTipText("Delete old cached files on startup");
+        autoClearCacheOption.addActionListener(_ -> cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected()));
+
+        CACHE_RETENTION_DAYS.forEach(cacheRetentionSelector::addItem);
+        cacheRetentionSelector.setSelectedItem(readCacheRetentionDays(settingsStore));
+        cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected());
+        // triggers only when value changes
+        cacheRetentionSelector.addItemListener(evt -> {
+            if (evt.getStateChange() == ItemEvent.SELECTED) {
+                settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, (Integer) cacheRetentionSelector.getSelectedItem());
+            }
+        });
+        cacheRetentionPanel.add(cacheRetentionLabel);
+        cacheRetentionPanel.add(cacheRetentionSelector);
+        cacheRetentionPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        cacheRetentionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
         hideCredentials.setToolTipText("aka. Streamer mode");
 
@@ -111,12 +138,14 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         this.add(debugOption);
         this.add(inMemoryHashingOption);
-        this.add(clearCache);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(hideCredentials);
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(uiScalingPanel);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(clearCache);
+        this.add(autoClearCacheOption);
+        this.add(cacheRetentionPanel);
         this.add(Box.createVerticalStrut(SCALE));
 
         // post-init

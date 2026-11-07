@@ -9,6 +9,9 @@ public interface SettingsStore {
     String OPTIONS_FONT_SCALING_KEY = "ui.scaling";
     String SELECTED_SLUG_KEY = "ui.selected-slug";
 
+    String CACHE_AUTO_CLEAR_KEY = "cache.auto-clear";
+    String CACHE_RETENTION_DAYS_KEY = "cache.retention-days";
+
     String MANGOHUD_KEY = "linux.mangohud";
 
     String PROTON_USE_WINED3D = "linux.proton.proton-use-wined3d";
@@ -44,6 +47,15 @@ public interface SettingsStore {
 
     default void putBoolean(String key, boolean value) {
         put(key, Boolean.toString(value));
+    }
+
+    default int getInt(String key, int defaultValue) {
+        String value = get(key);
+        return value == null ? defaultValue : Integer.parseInt(value);
+    }
+
+    default void putInt(String key, int value) {
+        put(key, Integer.toString(value));
     }
 
     default float getFloat(String key, float defaultValue) {
