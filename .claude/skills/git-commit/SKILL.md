@@ -62,6 +62,10 @@ closes #<issue-id>
 * Get the issue number from the branch name. If the branch name has no issue number, ask the user for it.
 * Add the line only when there is an associated issue.
 
+### Trailers
+
+* Do not add a `Co-Authored-By` line or other attribution lines.
+
 ## Language
 
 Use ASD-STE100 Simplified Technical English (see `CLAUDE.md`).
