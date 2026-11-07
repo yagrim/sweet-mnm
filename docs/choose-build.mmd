@@ -1,0 +1,26 @@
+---
+config:
+    theme: neutral
+    look: handDrawn
+    handDrawnSeed: 1
+    layout: dagre
+---
+flowchart TD
+    start([Start]) --> wine{Do you use plain Wine?}
+    wine -- Yes --> noWine[No build works with plain Wine.<br/>Install Proton 10+ with Steam or UMU.]
+    noWine --> steam
+    wine -- No --> steam{Do you prefer to launch from Steam?}
+    steam -- Yes --> windows
+    steam -- No --> umu{Is UMU installed and working?}
+    umu -- No --> installUmu{Is it OK for you to install UMU?}
+    installUmu -- No --> windows
+    installUmu -- Yes --> features
+    umu -- Yes --> features{Do you want MangoHud and<br/>other Linux features?}
+    features -- Yes --> linux
+    features -- No --> control{Do you want fine control over<br/>the installation and runtime?}
+    control -- Yes --> linux
+    control -- No --> both[Both builds work for you.<br/>But Linux may suit you better.]
+    both --> linux
+
+    windows[[Windows build]]
+    linux[[Linux build]]

@@ -1,4 +1,4 @@
-.PHONY: help install test clean uninstall native native-install
+.PHONY: help install test clean uninstall native native-install docs
 
 PREFIX := $(HOME)/.local/bin
 APPDIR := $(PREFIX)/sweet-mnm
@@ -16,6 +16,7 @@ help:
 	@echo "  install  - Build and install distribution into ~/.local/bin"
 	@echo "  test     - Run tests"
 	@echo "  clean    - Clean build artifacts"
+	@echo "  docs     - Generate documentation diagrams"
 
 clean:
 	@$(GRADLEW) clean
@@ -46,6 +47,9 @@ native-install: install native
 	@rm -rf $(APPBINDIR)
 	@cp -r build/native/nativeCompile/ $(APPBINDIR)
 	@ln -sf $(APPBINDIR)/sweet $(PREFIX)/sweet
+
+docs:
+	@./scripts/generate_diagrams.sh
 
 %:
 	@:
