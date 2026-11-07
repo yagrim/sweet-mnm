@@ -10,6 +10,24 @@ permissions:
   contents: read
 
 jobs:
+  test-docs:
+    name: Test docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Check that the SVG is committed
+        run: git ls-files --error-unmatch docs/images/choose-build.svg
+      - name: Generate diagrams
+        run: make docs
+      - name: Check that the generated SVG has not changed
+        run: |
+          if ! git diff --exit-code -- docs/images/choose-build.svg; then
+            echo "docs/images/choose-build.svg is not up to date."
+            echo "Run 'make docs' and commit the result."
+            exit 1
+          fi
+
   test:
     name: Gradle tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
