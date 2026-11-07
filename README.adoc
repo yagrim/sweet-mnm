@@ -16,13 +16,13 @@ NOTE: If you are looking for macOS help, that is the place -> https://github.com
 == Motivation
 
 The current https://account.monstersandmemories.com/launcher[official launcher] does not play nice with Linux.
-Even though it's a native Linux app, there are several issues that require tinkering, specially for SteamDeck users.
+Even though it's a native Linux app, there are several issues that require tinkering, especially for Steam Deck users.
 
 That's why we created an alternative launcher that should provide an easy end-to-end experience:
 
 * Single self-contained package with all required files: `Download > Extract > Run`.
 * Windows build compatible with Proton 10+ (e.g. Steam, UMU, or PROTON-GE + Lutris).
-Setup and run the client directly from Sweet Launcher, no need for tinkering.
+Set up and run the client directly from Sweet Launcher, no need for tinkering.
 * Linux build with dedicated Linux features (Proton and Wine prefix configuration).
 Requires https://github.com/Open-Wine-Components/umu-launcher[UMU] installed (and MangoHud, if you want to use it).
 * Better session management.
@@ -30,12 +30,13 @@ You can see when your token will expire, and you'll get a message when the time 
 
 Note however, it won't work on other WINE distributions.
 
+// Section ID kept for backward compatibility with https://monstersandmemories.miraheze.org/wiki/MnM_on_Linux
 [#getting-started-recommended-method]
 == Getting Started
 
 === Which build should I use?
 
-* If UMU is installed, and you are more confortable with Linux minimal setups, use the <<linux-build,Linux build>>.
+* If UMU is installed, and you are more comfortable with minimal Linux setups, use the <<linux-build,Linux build>>.
 * If you cannot or don't want to install UMU, use the <<windows-build,Windows build>>.
 
 For the pros and cons of each build and a step-by-step guide, see link:docs/choose-build.adoc[Select the Windows or the Linux build].
@@ -48,7 +49,7 @@ For the pros and cons of each build and a step-by-step guide, see link:docs/choo
 . Download the Linux build (`linux-X64.zip`) from the https://github.com/yagrim/sweet-mnm/releases[latest release] (under `Assets`).
 . Extract all files where you want to install the game client.
 . Run `./sweet gui`.
-. Log in and install the client, see <<first-start>>.
+. Log in and install the client (see <<first-start>>).
 . (Optional) Under "Options", configure MangoHud, the UMU options (GameId, ProtonPath, WinePrefix) and the Proton settings.
 
 TIP: After the client is installed, Sweet saves its path.
@@ -59,7 +60,7 @@ Add `sweet` to your `PATH` to run `sweet gui` from any location.
 
 . Download the Windows build from the https://github.com/yagrim/sweet-mnm/releases[latest release] (under `Assets`).
 . Extract all files where you want to install the game client.
-. Setup "sweet.exe" in you preferred Proton environment adding the "gui" option. For example in Steam:
+. Set up "sweet.exe" in your preferred Proton environment and add the "gui" option. For example, in Steam:
 +
 image::docs/steam.png[]
 . Start it! See <<first-start>>.

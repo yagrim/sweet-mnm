@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-MERMAID_IMAGE=${MERMAID_IMAGE:-minlag/mermaid-cli:11.4.2}
+MERMAID_IMAGE=${MERMAID_IMAGE:-minlag/mermaid-cli:12.0.1}
 DOCS_DIR="$(cd "$(dirname "$0")/../docs" && pwd)"
 IMAGES_DIR="$DOCS_DIR/images"
 
