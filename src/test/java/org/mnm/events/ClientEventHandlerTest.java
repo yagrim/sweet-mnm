@@ -40,4 +40,14 @@ class ClientEventHandlerTest {
         assertThat(ref2.get()).isEqualTo(99);
     }
 
+    @Test
+    void shouldCallCacheListenerWhenCacheIsCleared() {
+        final var calls = new AtomicInteger();
+        eventHandler.register((CacheListener) calls::incrementAndGet);
+
+        eventHandler.cacheCleared();
+
+        assertThat(calls.get()).isEqualTo(1);
+    }
+
 }

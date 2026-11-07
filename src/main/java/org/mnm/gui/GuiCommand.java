@@ -344,9 +344,11 @@ public class GuiCommand implements Command {
                 }
                 return new CacheCleaner(new ConfigDbSettingsStore(configDbLocator)).clean(clientPaths);
             })
-            .whenComplete((_, error) -> {
+            .whenComplete((result, error) -> {
                 if (error != null) {
                     logger.warn("Cache auto-clear failed: {}", error.getMessage());
+                } else if (result.deletedFiles() > 0) {
+                    SwingUtilities.invokeLater(() -> ClientEventHandler.getInstance().cacheCleared());
                 }
             });
     }

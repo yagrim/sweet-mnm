@@ -40,6 +40,8 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.SettingsStore;
 import org.mnm.config.Token;
+import org.mnm.events.CacheListener;
+import org.mnm.events.ClientEventHandler;
 import org.mnm.release.ReleaseChecker;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -180,6 +182,34 @@ class GuiCommandTest {
         assertThat(cleanup.get().get(10, TimeUnit.SECONDS)).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(oldFile).doesNotExist();
         assertThat(newFile).exists();
+    }
+
+    @Test
+    void shouldSendCacheClearedEventOnlyWhenFilesAreDeleted(@TempDir Path tempDir) throws Exception {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path clientPath = tempDir.resolve("client");
+        final Path oldFile = Files.createDirectories(clientPath.resolve("downloads")).resolve("old.bin");
+        Files.writeString(oldFile, "12345");
+        Files.setLastModifiedTime(oldFile, FileTime.from(Instant.now().minus(Duration.ofDays(11))));
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(new Client("mnm", "1.2.3", UPDATED, clientPath));
+        }
+        final AtomicInteger events = new AtomicInteger();
+        ClientEventHandler.getInstance().clear();
+        ClientEventHandler.getInstance().register((CacheListener) events::incrementAndGet);
+        try {
+            GuiCommand.startCacheCleanup(() -> dbFile).get(10, TimeUnit.SECONDS);
+            // Waits for the event sent to the Swing thread
+            SwingUtilities.invokeAndWait(() -> {});
+            assertThat(oldFile).doesNotExist();
+            assertThat(events.get()).isEqualTo(1);
+
+            GuiCommand.startCacheCleanup(() -> dbFile).get(10, TimeUnit.SECONDS);
+            SwingUtilities.invokeAndWait(() -> {});
+            assertThat(events.get()).isEqualTo(1);
+        } finally {
+            ClientEventHandler.getInstance().clear();
+        }
     }
 
     @Test

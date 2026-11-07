@@ -10,7 +10,8 @@ public class ClientEventHandler implements
     LoginListener, RepairListener, Refreshable, FilesValidationListener,
     RepairFilesListener, AssemblyListener,
     DownloadListener,
-    InstallationListener {
+    InstallationListener,
+    CacheListener {
 
     private static final ClientEventHandler instance = new ClientEventHandler();
 
@@ -130,6 +131,13 @@ public class ClientEventHandler implements
         listeners.stream()
             .filter(l -> l instanceof AssemblyListener)
             .forEach(listener -> ((AssemblyListener) listener).dataAssembled(bytes));
+    }
+
+    @Override
+    public void cacheCleared() {
+        listeners.stream()
+            .filter(l -> l instanceof CacheListener)
+            .forEach(listener -> ((CacheListener) listener).cacheCleared());
     }
 
     @Override

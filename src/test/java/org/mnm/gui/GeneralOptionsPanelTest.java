@@ -104,6 +104,26 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldUpdateOnlyClearCacheButtonWhenCacheIsCleared(@TempDir Path tempDir) throws IOException {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
+        CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
+        credentialsHandler.saveStoreCredentials(true);
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new JPanel());
+        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        Files.writeString(downloadsPath.resolve("cache"), "cache");
+        panel.refresh(new ClientStatus(new Client("test", "1.0.0", Client.Status.UPDATED, tempDir), false, null));
+        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+
+        credentialsHandler.saveStoreCredentials(false);
+        Files.delete(downloadsPath.resolve("cache"));
+        panel.cacheCleared();
+
+        assertThat(button(panel, "clearCache").getText()).isEqualTo("Clear cache (empty)");
+        assertThat(button(panel, "clearCache").isEnabled()).isFalse();
+        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+    }
+
+    @Test
     void shouldClearCache(@TempDir Path tempDir) throws IOException {
         GeneralOptionsPanel panel = panelWithCache(tempDir);
         JButton clearCacheButton = button(panel, "clearCache");

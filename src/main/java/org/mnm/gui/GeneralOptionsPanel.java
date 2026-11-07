@@ -21,6 +21,7 @@ import org.mnm.client.Installation;
 import org.mnm.config.Client;
 import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
+import org.mnm.events.CacheListener;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
@@ -43,7 +44,7 @@ import static org.mnm.gui.CredentialsHandler.HIDE_CREDENTIALS;
 import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel
-    implements RepairListener, Refreshable {
+    implements RepairListener, Refreshable, CacheListener {
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
@@ -170,9 +171,18 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     @Override
+    public void cacheCleared() {
+        refreshClearCache();
+    }
+
+    @Override
     public void refresh(ClientStatus clientStatus) {
         this.clientStatus = clientStatus;
+        refreshClearCache();
+        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
+    }
 
+    private void refreshClearCache() {
         long folderSize = 0;
         if (clientStatus != null && clientStatus.client() != null) {
             final Path downloadsPath = getDownloadsPath(clientStatus.client());
@@ -181,7 +191,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
     }
 
     boolean isInMemoryHashing() {
