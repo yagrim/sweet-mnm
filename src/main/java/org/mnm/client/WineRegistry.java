@@ -23,20 +23,15 @@ class WineRegistry {
     private WineRegistry() {
     }
 
-    // Sets the cursor size. Wine scales the cursor with the "LogPixels" (DPI) value.
-    static boolean setLogPixels(Path winePrefix, int logPixels) {
-        return setIntValue(winePrefix, LOG_PIXELS, logPixels);
+    static void setLogPixels(Path winePrefix, int logPixels) {
+        setIntValue(winePrefix, LOG_PIXELS, logPixels);
     }
 
-    // Sets all the dword values with this key in the "system.reg" file of the prefix.
-    // Before the first change, makes a backup of the original file. Later changes keep that backup.
-    // Returns false when the file or the key does not exist. For example, before the first run,
-    // Wine did not create the prefix yet.
-    private static boolean setIntValue(Path winePrefix, String key, int value) {
+    private static void setIntValue(Path winePrefix, String key, int value) {
         Path systemReg = winePrefix.resolve(SYSTEM_REG);
         if (!Files.isRegularFile(systemReg)) {
             logger.info("Cannot set {}: {} not found. Run the client one time and try again", key, systemReg);
-            return false;
+            return;
         }
 
         try {
@@ -45,7 +40,7 @@ class WineRegistry {
             Matcher matcher = dwordPattern(key).matcher(content);
             if (!matcher.find()) {
                 logger.info("Cannot set {}: key not found in {}", key, systemReg);
-                return false;
+                return;
             }
             String line = "\"%s\"=dword:%08x".formatted(key, value);
             String updated = matcher.replaceAll(Matcher.quoteReplacement(line));
@@ -54,10 +49,8 @@ class WineRegistry {
                 Files.writeString(systemReg, updated, StandardCharsets.ISO_8859_1);
                 logger.info("Set {} in {}", line, systemReg);
             }
-            return true;
         } catch (IOException e) {
             logger.warn("Cannot set {} in {}: {}", key, systemReg, e.getMessage());
-            return false;
         }
     }
 
@@ -65,22 +58,22 @@ class WineRegistry {
         return Pattern.compile("^" + Pattern.quote("\"" + key + "\"") + "=dword:[0-9a-fA-F]{8}$", Pattern.MULTILINE);
     }
 
-    // Replaces "system.reg" with the backup of the original file, and removes the backup.
-    // Returns false when there is no backup.
-    static boolean restore(Path winePrefix) {
+    /**
+     * Replaces "system.reg" with the backup of the original file, and removes the backup.
+     * Does nothing when there is no backup.
+     */
+    static void restore(Path winePrefix) {
         Path backup = winePrefix.resolve(SYSTEM_REG_BACKUP);
         if (!Files.isRegularFile(backup)) {
-            return false;
+            return;
         }
 
         Path systemReg = winePrefix.resolve(SYSTEM_REG);
         try {
             Files.move(backup, systemReg, StandardCopyOption.REPLACE_EXISTING);
             logger.info("Restored original {}", systemReg);
-            return true;
         } catch (IOException e) {
             logger.warn("Cannot restore {} from {}: {}", systemReg, backup, e.getMessage());
-            return false;
         }
     }
 
