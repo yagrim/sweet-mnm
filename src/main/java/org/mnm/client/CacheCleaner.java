@@ -29,6 +29,9 @@ public class CacheCleaner {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheCleaner.class);
 
+    // Manifest files are kept. Only the "Clear cache" button deletes them.
+    private static final String MANIFEST_EXTENSION = ".manifest";
+
     public record Result(int deletedFiles, long freedBytes) {
 
         static final Result EMPTY = new Result(0, 0);
@@ -85,7 +88,10 @@ public class CacheCleaner {
         }
         final List<Path> files;
         try (Stream<Path> stream = Files.walk(downloadsPath)) {
-            files = stream.filter(Files::isRegularFile).toList();
+            files = stream
+                .filter(Files::isRegularFile)
+                .filter(file -> !isManifest(file))
+                .toList();
         } catch (IOException e) {
             logger.warn("Could not read cache folder {}: {}", downloadsPath, e.getMessage());
             return Result.EMPTY;
@@ -106,5 +112,9 @@ public class CacheCleaner {
             }
         }
         return new Result(deletedFiles, freedBytes);
+    }
+
+    private static boolean isManifest(Path file) {
+        return file.getFileName().toString().endsWith(MANIFEST_EXTENSION);
     }
 }

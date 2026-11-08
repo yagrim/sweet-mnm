@@ -140,6 +140,24 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldDeleteManifestFilesWhenClearCache(@TempDir Path tempDir) throws IOException {
+        GeneralOptionsPanel panel = panelWithCache(tempDir);
+        Path manifest = tempDir.resolve("downloads").resolve("65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest");
+        Files.writeString(manifest, "manifest");
+        JButton clearCacheButton = button(panel, "clearCache");
+
+        try (MockedStatic<ConfirmationDialog> dialogMock = Mockito.mockStatic(ConfirmationDialog.class)) {
+            dialogMock.when(() -> ConfirmationDialog.showConfirmationDialog(any(), anyString(), anyString()))
+                .thenReturn(JOptionPane.OK_OPTION);
+
+            clearCacheButton.doClick();
+        }
+
+        assertThat(manifest).doesNotExist();
+        assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
+    }
+
+    @Test
     void shouldThrowErrorAndRefreshWhenClearCacheFails(@TempDir Path tempDir) throws IOException {
         GeneralOptionsPanel panel = panelWithCache(tempDir);
         JButton clearCacheButton = button(panel, "clearCache");

@@ -24,12 +24,14 @@ import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 
 class CacheCleanerTest {
 
-    private static final Instant NOW = Instant.parse("2026-11-07T12:00:00Z");
-    private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
+    // A fixed time makes the results the same on each test run.
+    // Test files dates are created from it.
+    private static final Instant FIXED_NOW = Instant.parse("2026-11-07T12:00:00Z");
+    private static final Clock CLOCK = Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
 
     @Test
-    void shouldUseDefaultsAndNotWriteSettingsWhenOptionsAreNotSet(@TempDir Path tempDir) throws IOException {
-        Path keptFile = cacheFile(tempDir, "kept.bin", "1", 9);
+    void shouldUseDefaultOptionsWhenOptionsAreNotSet(@TempDir Path tempDir) throws IOException {
+        Path keptFile = cacheFile(tempDir, "kept.bin", 9);
         Path deletedFile = cacheFile(tempDir, "bundles/deleted.bin", "12345", 11);
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
 
@@ -38,13 +40,22 @@ class CacheCleanerTest {
         assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(keptFile).exists();
         assertThat(deletedFile).doesNotExist();
+    }
+
+    @Test
+    void shouldNotWriteSettingsWhenOptionsAreNotSet(@TempDir Path tempDir) throws IOException {
+        cacheFile(tempDir, "bundles/deleted.bin", 11);
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+
+        new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+
         assertThat(settings.values()).isEmpty();
     }
 
     @Test
     void shouldNotDeleteFilesWhenAutoClearIsDisabled(@TempDir Path tempDir) throws IOException {
-        Path oldFile = cacheFile(tempDir, "bundles/old.bin", "12345", 100);
-        InMemorySettingsStore settings = settings("false", "10");
+        Path oldFile = cacheFile(tempDir, "bundles/old.bin", 100);
+        InMemorySettingsStore settings = settings("false", 10);
 
         CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
 
@@ -55,17 +66,30 @@ class CacheCleanerTest {
     @Test
     void shouldDeleteOnlyFilesOlderThanRetentionPeriod(@TempDir Path tempDir) throws IOException {
         Path oldBundle = cacheFile(tempDir, "bundles/old.bin", "12345", 11);
-        Path oldManifest = cacheFile(tempDir, "manifest.json", "123", 20);
+        Path oldJson = cacheFile(tempDir, "manifest.json", "123", 20);
         Path newBundle = cacheFile(tempDir, "bundles/new.bin", "1234567", 9);
-        InMemorySettingsStore settings = settings("true", "10");
+        InMemorySettingsStore settings = settings("true", 10);
 
         CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(2, 8));
         assertThat(oldBundle).doesNotExist();
-        assertThat(oldManifest).doesNotExist();
+        assertThat(oldJson).doesNotExist();
         assertThat(newBundle).exists();
         assertThat(tempDir.resolve("downloads").resolve("bundles")).isDirectory();
+    }
+
+    @Test
+    void shouldNotDeleteManifestFiles(@TempDir Path tempDir) throws IOException {
+        Path oldManifest = cacheFile(tempDir, "65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest", "123", 100);
+        Path oldBundle = cacheFile(tempDir, "bundles/old.bin", "12345", 100);
+        InMemorySettingsStore settings = settings("true", 10);
+
+        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+
+        assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
+        assertThat(oldManifest).exists();
+        assertThat(oldBundle).doesNotExist();
     }
 
     @ParameterizedTest
@@ -73,7 +97,7 @@ class CacheCleanerTest {
     void shouldUseConfiguredRetentionPeriod(int retentionDays, @TempDir Path tempDir) throws IOException {
         Path keptFile = cacheFile(tempDir, "kept.bin", "1", retentionDays - 1);
         Path deletedFile = cacheFile(tempDir, "deleted.bin", "12", retentionDays + 1);
-        InMemorySettingsStore settings = settings("true", Integer.toString(retentionDays));
+        InMemorySettingsStore settings = settings("true", retentionDays);
 
         CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
 
@@ -83,10 +107,10 @@ class CacheCleanerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"7", "invalid"})
+    @ValueSource(strings = {"0", "-3", "7", "invalid"})
     void shouldUseDefaultRetentionPeriodWhenValueIsNotValid(String retentionDays, @TempDir Path tempDir) throws IOException {
-        Path keptFile = cacheFile(tempDir, "kept.bin", "1", 9);
-        Path deletedFile = cacheFile(tempDir, "deleted.bin", "12", 11);
+        Path keptFile = cacheFile(tempDir, "kept.bin", 9);
+        Path deletedFile = cacheFile(tempDir, "deleted.bin", 11);
         InMemorySettingsStore settings = settings("true", retentionDays);
 
         new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
@@ -101,7 +125,7 @@ class CacheCleanerTest {
         Path otherPath = tempDir.resolve("other");
         cacheFile(sharedPath, "a.bin", "123", 11);
         cacheFile(otherPath, "b.bin", "12", 11);
-        InMemorySettingsStore settings = settings("true", "10");
+        InMemorySettingsStore settings = settings("true", 10);
 
         CacheCleaner.Result result = new CacheCleaner(settings, CLOCK)
             .clean(List.of(sharedPath, otherPath, sharedPath));
@@ -111,11 +135,15 @@ class CacheCleanerTest {
 
     @Test
     void shouldIgnoreMissingDownloadsFolder(@TempDir Path tempDir) {
-        InMemorySettingsStore settings = settings("true", "10");
+        InMemorySettingsStore settings = settings("true", 10);
 
         CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir.resolve("missing")));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(0, 0));
+    }
+
+    private static InMemorySettingsStore settings(String autoClear, int retentionDays) {
+        return settings(autoClear, Integer.toString(retentionDays));
     }
 
     private static InMemorySettingsStore settings(String autoClear, String retentionDays) {
@@ -124,11 +152,15 @@ class CacheCleanerTest {
             CACHE_RETENTION_DAYS_KEY, retentionDays));
     }
 
+    private static Path cacheFile(Path clientPath, String name, int ageInDays) throws IOException {
+        return cacheFile(clientPath, name, "content", ageInDays);
+    }
+
     private static Path cacheFile(Path clientPath, String name, String content, int ageInDays) throws IOException {
         Path file = clientPath.resolve("downloads").resolve(name);
         Files.createDirectories(file.getParent());
         Files.writeString(file, content);
-        Files.setLastModifiedTime(file, FileTime.from(NOW.minus(Duration.ofDays(ageInDays))));
+        Files.setLastModifiedTime(file, FileTime.from(FIXED_NOW.minus(Duration.ofDays(ageInDays))));
         return file;
     }
 }
