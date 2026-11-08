@@ -9,9 +9,6 @@ public interface SettingsStore {
     String OPTIONS_FONT_SCALING_KEY = "ui.scaling";
     String SELECTED_SLUG_KEY = "ui.selected-slug";
 
-    String CACHE_AUTO_CLEAR_KEY = "cache.auto-clear";
-    String CACHE_RETENTION_DAYS_KEY = "cache.retention-days";
-
     String MANGOHUD_KEY = "linux.mangohud";
 
     String PROTON_USE_WINED3D = "linux.proton.proton-use-wined3d";

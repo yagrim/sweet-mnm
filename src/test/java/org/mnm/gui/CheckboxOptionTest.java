@@ -1,5 +1,7 @@
 package org.mnm.gui;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,28 @@ class CheckboxOptionTest {
 
         option.doClick();
         assertThat(settings.get(SETTING_KEY)).isEqualTo("false");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldUseInitialValueWithoutCallingConsumer(boolean selected) {
+        List<Boolean> changes = new ArrayList<>();
+        CheckboxOption option = new CheckboxOption(TEST_TEXT, selected, changes::add);
+
+        assertThat(option.getText()).isEqualTo(TEST_TEXT);
+        assertThat(option.isSelected()).isEqualTo(selected);
+        assertThat(changes).isEmpty();
+    }
+
+    @Test
+    void shouldCallConsumerWithSelectionWhenClicked() {
+        List<Boolean> changes = new ArrayList<>();
+        CheckboxOption option = new CheckboxOption(TEST_TEXT, false, changes::add);
+
+        option.doClick();
+        option.doClick();
+
+        assertThat(changes).containsExactly(true, false);
     }
 
 }

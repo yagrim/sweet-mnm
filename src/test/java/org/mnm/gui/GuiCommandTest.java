@@ -34,6 +34,7 @@ import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.client.CacheCleaner;
+import org.mnm.client.CacheHandler;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -53,9 +54,9 @@ import static org.mnm.TestUtils.expiredToken;
 import static org.mnm.TestUtils.validToken;
 import static org.mnm.config.Client.Status.NEEDS_UPDATE;
 import static org.mnm.config.Client.Status.NOT_INSTALLED;
-import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
-import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
+import static org.mnm.gui.InMemorySettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.gui.InMemorySettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mockito.ArgumentMatchers.any;
@@ -168,7 +169,7 @@ class GuiCommandTest {
         final AtomicReference<CompletableFuture<CacheCleaner.Result>> cleanup = new AtomicReference<>();
         final Runnable cacheCleanupAction = () -> cleanup.set(GuiCommand.startCacheCleanup(() -> dbFile));
 
-        GuiCommand.initCacheAndStartCleanup(settingsStore, cacheCleanupAction);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cacheCleanupAction);
 
         assertThat(cleanup.get()).isNull();
         assertThat(oldFile).exists();
@@ -177,7 +178,7 @@ class GuiCommandTest {
             assertThat(configDb.getSettings(CACHE_RETENTION_DAYS_KEY)).isEqualTo("10");
         }
 
-        GuiCommand.initCacheAndStartCleanup(settingsStore, cacheCleanupAction);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cacheCleanupAction);
 
         assertThat(cleanup.get().get(10, TimeUnit.SECONDS)).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(oldFile).doesNotExist();
@@ -217,7 +218,7 @@ class GuiCommandTest {
         final InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(CACHE_RETENTION_DAYS_KEY, "30"));
         final AtomicInteger cleanups = new AtomicInteger();
 
-        GuiCommand.initCacheAndStartCleanup(settingsStore, cleanups::incrementAndGet);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cleanups::incrementAndGet);
 
         assertThat(cleanups.get()).isZero();
         assertThat(settingsStore.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("true");
@@ -229,7 +230,7 @@ class GuiCommandTest {
         final InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(CACHE_AUTO_CLEAR_KEY, "true"));
         final AtomicInteger cleanups = new AtomicInteger();
 
-        GuiCommand.initCacheAndStartCleanup(settingsStore, cleanups::incrementAndGet);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cleanups::incrementAndGet);
 
         assertThat(cleanups.get()).isEqualTo(1);
         assertThat(settingsStore.get(CACHE_RETENTION_DAYS_KEY)).isNull();

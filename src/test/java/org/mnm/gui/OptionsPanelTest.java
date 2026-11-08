@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import org.mnm.client.CacheHandler;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
@@ -16,7 +17,7 @@ class OptionsPanelTest {
     @Test
     void shouldReturnDefaultRunnerOptions() {
         SettingsStore settings = new InMemorySettingsStore(Map.of());
-        OptionsPanel panel = new OptionsPanel(null, settings, new CredentialsHandler(settings));
+        OptionsPanel panel = new OptionsPanel(null, settings, new CredentialsHandler(settings), new CacheHandler(settings));
 
         RunnerOptions options = panel.getRunnerOptions("other-game");
 

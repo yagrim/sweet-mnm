@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import org.mnm.client.CacheHandler;
 import org.mnm.config.Client;
 import org.mnm.config.SettingsStore;
 
@@ -53,7 +54,7 @@ class MainTabsTest {
                 }
             }, () -> false, settingsStore, credentialsHandler, new SlugSelectorPanel(_ -> new ClientStatus(null, false, null), 1f), 1f);
 
-        var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(null, settingsStore, credentialsHandler));
+        var tabs = new MainTabs(settingsStore, clientPanel, new OptionsPanel(null, settingsStore, credentialsHandler, new CacheHandler(settingsStore)));
 
         assertThat(tabs).isNotNull();
     }

@@ -11,6 +11,9 @@ public record InMemorySettingsStore(Map<String, String> values) implements Setti
     static final String EMAIL_KEY = "user.email";
     static final String PASSWORD_KEY = "user.password";
 
+    public static final String CACHE_AUTO_CLEAR_KEY = "cache.auto-clear";
+    public static final String CACHE_RETENTION_DAYS_KEY = "cache.retention-days";
+
     public InMemorySettingsStore(Map<String, String> values) {
         this.values = new HashMap<>(values);
     }
