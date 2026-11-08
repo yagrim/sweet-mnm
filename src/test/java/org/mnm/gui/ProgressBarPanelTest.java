@@ -97,7 +97,8 @@ class ProgressBarPanelTest {
     @Nested
     class FileSizeBarTest extends BaseClass {
 
-        int FACTOR = 1024 * 1024;
+        int KB = 1024;
+        int FACTOR = 1024 * KB;
 
         @Override
         ProgressBarPanel createPanel(Color color) {
@@ -105,9 +106,10 @@ class ProgressBarPanelTest {
         }
 
         @Test
-        void shouldSetMaximumInMegabytes() {
+        void shouldSetMaximumInKilobytes() {
             long bytes = 17343956L;
             progressBar.setMaximum(bytes);
+            assertProgressValues(0, 16938, 0);
             assertThat(label.getText()).isEqualTo("Test label");
         }
 
@@ -125,12 +127,64 @@ class ProgressBarPanelTest {
             assertThat(label.getText()).isEqualTo("Test label");
 
             progressBar.increment(Long.valueOf(FACTOR * 8));
-            assertProgressValues(0, (int) (bytes / FACTOR), 8);
+            assertProgressValues(0, 16938, 8 * KB);
             assertThat(label.getText()).isEqualTo("Test label... 8 of 16 MB");
 
             progressBar.increment(Long.valueOf(FACTOR * 8));
-            assertProgressValues(0, (int) (bytes / FACTOR), 16);
+            assertProgressValues(0, 16938, 16 * KB);
             assertThat(label.getText()).isEqualTo("Test label... 16 of 16 MB");
+
+            progressBar.increment(bytes - FACTOR * 16);
+            assertProgressValues(0, 16938, 16938);
+            assertThat(label.getText()).isEqualTo("Test label... 16 of 16 MB");
+        }
+
+        @Test
+        void shouldShowProgressForFileSmallerThanOneMegabyte() {
+            long bytes = 300 * KB + 5;
+            progressBar.setMaximum(bytes);
+            assertProgressValues(0, 301, 0);
+
+            progressBar.increment(100L * KB);
+            assertProgressValues(0, 301, 100);
+
+            progressBar.increment(bytes - 100L * KB);
+            assertProgressValues(0, 301, 301);
+            assertThat(label.getText()).isEqualTo("Test label... 0 of 0 MB");
+        }
+
+        @Test
+        void shouldShowProgressForFileSmallerThanOneKilobyte() {
+            progressBar.setMaximum(42L);
+            assertProgressValues(0, 1, 0);
+
+            progressBar.increment(42L);
+            assertProgressValues(0, 1, 1);
+        }
+
+        @Test
+        void shouldShowMultiStepProgressForFileSmallerThanOneMegabyte() {
+            progressBar = new FileSizeBar("Test label", Color.GREEN, Color.GREEN, 1f, 2);
+            bar = ReflectionTestTools.getField(progressBar, "bar", JProgressBar.class);
+
+            long bytes = 500;
+            progressBar.setMaximum(bytes);
+            assertProgressValues(0, 1, 0);
+
+            progressBar.increment(bytes);
+            progressBar.increment(bytes);
+            assertProgressValues(0, 1, 1);
+        }
+
+        @Test
+        void shouldSupportLargeSizes() {
+            long bytes = 500L * 1024 * FACTOR;
+            progressBar.setMaximum(bytes);
+            assertProgressValues(0, 500 * 1024 * KB, 0);
+
+            progressBar.increment(bytes);
+            assertProgressValues(0, 500 * 1024 * KB, 500 * 1024 * KB);
+            assertThat(label.getText()).isEqualTo("Test label... 512000 of 512000 MB");
         }
 
         @Test
@@ -142,7 +196,7 @@ class ProgressBarPanelTest {
             progressBar.setMaximum(Long.valueOf(FACTOR * 16));
             progressBar.increment(Long.valueOf(FACTOR * 8));
 
-            assertProgressValues(0, 32, 8);
+            assertProgressValues(0, 32 * KB, 8 * KB);
             assertThat(label.getText()).isEqualTo("Test label... 4 of 16 MB");
         }
 
@@ -155,7 +209,7 @@ class ProgressBarPanelTest {
             progressBar.increment(Long.valueOf(FACTOR * 8));
             progressBar.increment(Long.valueOf(FACTOR * 8));
             progressBar.increment(Long.valueOf(FACTOR * 2));
-            assertProgressValues(0, (int) (bytes / FACTOR), 16);
+            assertProgressValues(0, 16938, 16938);
             assertThat(label.getText()).isEqualTo("Test label... 18 of 16 MB");
         }
 

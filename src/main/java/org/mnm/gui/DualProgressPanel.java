@@ -185,7 +185,11 @@ public class DualProgressPanel extends JPanel
 
     static class FileSizeBar extends ProgressBarPanel<Long> {
 
+        private static final long KILOBYTE = 1024;
+        private static final long MEGABYTE = 1024 * KILOBYTE;
+
         long value;
+        private long maximum = 100 * MEGABYTE;
         private final int progressMultiplier;
 
         FileSizeBar(String labelText, Color barColor, Color backgroundColor, float uiScaling, int progressMultiplier) {
@@ -193,32 +197,39 @@ public class DualProgressPanel extends JPanel
             this.progressMultiplier = progressMultiplier;
         }
 
+        // The bar uses KB internally, so that files smaller than 1 MB also show progress.
+        // The label shows MB.
         @Override
         void setMaximum(Long value) {
+            this.maximum = value;
             if (value == 0) {
                 bar.setMaximum(100);
                 bar.setValue(100);
             } else {
-                bar.setMaximum(toMegaBytes(value * progressMultiplier));
+                bar.setMaximum(toKiloBytes(value * progressMultiplier));
                 bar.setValue(0);
             }
         }
 
         @Override
         void increment(Long amount) {
-            int megaBytes;
+            long current;
             synchronized (bar) {
                 value += amount;
-                megaBytes = toMegaBytes(value);
-//                float gigaBytes = megaBytes / 1024;
-                bar.setValue(megaBytes);
+                current = value;
+                bar.setValue(toKiloBytes(current));
             }
             label.setText("%s... %s of %s %s".formatted(
-                labelTitle, megaBytes / progressMultiplier, bar.getMaximum() / progressMultiplier, "MB"));
+                labelTitle, toMegaBytes(current) / progressMultiplier, toMegaBytes(maximum), "MB"));
         }
 
-        private int toMegaBytes(long bytes) {
-            return Math.toIntExact(bytes / (1024 * 1024));
+        // Round up, so that a file that is not empty has a size of at least 1 KB.
+        private static int toKiloBytes(long bytes) {
+            return Math.toIntExact((bytes + KILOBYTE - 1) / KILOBYTE);
+        }
+
+        private static long toMegaBytes(long bytes) {
+            return bytes / MEGABYTE;
         }
 
         public void reset() {
