@@ -56,7 +56,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private final JLabel uiScalingLabel = new JLabel("Font Scaling");
     private final JComboBox<Float> uiScalingSelector = new JComboBox<>();
     private final JPanel uiScalingPanel = new JPanel();
-    private final JLabel cacheRetentionLabel = new JLabel("Delete cached files after (days)");
     private final JComboBox<Integer> cacheRetentionSelector = new JComboBox<>();
     private final JPanel cacheRetentionPanel = new JPanel();
 
@@ -105,7 +104,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
                 settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, (Integer) cacheRetentionSelector.getSelectedItem());
             }
         });
-        cacheRetentionPanel.add(cacheRetentionLabel);
+        cacheRetentionPanel.add(new JLabel("Delete cached files after (days)"));
         cacheRetentionPanel.add(cacheRetentionSelector);
         cacheRetentionPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         cacheRetentionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

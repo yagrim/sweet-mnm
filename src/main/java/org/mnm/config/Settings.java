@@ -20,7 +20,13 @@ public class Settings {
     public static final List<Integer> CACHE_RETENTION_DAYS = List.of(5, 10, 15, 30);
     public static final int DEFAULT_CACHE_RETENTION_DAYS = 10;
 
-    // Returns true when the options were not set and the defaults were written
+    /**
+     * Writes the default cache auto-clear options when they are not set.
+     *
+     * @param settingsStore the store that keeps the options
+     * @return {@code true} when the options were not set and the defaults were written,
+     *         {@code false} when the options were already set
+     */
     public static boolean initCacheAutoClearDefaults(SettingsStore settingsStore) {
         if (settingsStore.get(CACHE_AUTO_CLEAR_KEY) != null) {
             return false;

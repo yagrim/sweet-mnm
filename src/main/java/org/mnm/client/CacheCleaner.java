@@ -23,7 +23,8 @@ import static org.mnm.config.Settings.readCacheRetentionDays;
 import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
 import static org.mnm.tools.FileUtils.humanReadableSize;
 
-// Deletes the files in the downloads cache that are older than the retention period.
+// TODO Move to separated package with https://github.com/yagrim/sweet-mnm/issues/131.
+//      It will become something independent from the clients.
 public class CacheCleaner {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheCleaner.class);
@@ -51,7 +52,7 @@ public class CacheCleaner {
 
     public Result clean(Collection<Path> clientPaths) {
         if (!settingsStore.getBoolean(CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR)) {
-            logger.debug("Cache auto-clear disabled");
+            logger.debug("Cache auto-clear not active");
             return Result.EMPTY;
         }
 

@@ -69,7 +69,7 @@ class CacheCleanerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {5, 15, 30})
+    @ValueSource(ints = {5, 10, 15, 30})
     void shouldUseConfiguredRetentionPeriod(int retentionDays, @TempDir Path tempDir) throws IOException {
         Path keptFile = cacheFile(tempDir, "kept.bin", "1", retentionDays - 1);
         Path deletedFile = cacheFile(tempDir, "deleted.bin", "12", retentionDays + 1);
