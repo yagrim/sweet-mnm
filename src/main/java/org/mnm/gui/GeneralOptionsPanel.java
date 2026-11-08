@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mnm.LoggerHandler;
+import org.mnm.client.CacheHandler;
 import org.mnm.client.Installation;
 import org.mnm.config.Client;
 import org.mnm.config.OS;
@@ -24,14 +25,9 @@ import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Environment.NATIVE_IMAGE;
-import static org.mnm.config.Settings.CACHE_RETENTION_DAYS;
-import static org.mnm.config.Settings.DEFAULT_CACHE_AUTO_CLEAR;
 import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
-import static org.mnm.config.Settings.readCacheRetentionDays;
 import static org.mnm.config.Settings.readUiScaling;
-import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
-import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.HIDE_CREDENTIALS;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
@@ -59,7 +55,8 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private ClientStatus clientStatus;
 
 
-    public GeneralOptionsPanel(SettingsStore settingsStore, CredentialsHandler credentialsHandler, Container parent) {
+    public GeneralOptionsPanel(SettingsStore settingsStore, CredentialsHandler credentialsHandler,
+                               CacheHandler cacheHandler, Container parent) {
         super("General");
         this.credentialsHandler = credentialsHandler;
         skipUIWarnings = settingsStore.getBoolean(SKIP_UI_WARNINGS, false);
@@ -84,13 +81,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         clearCache.addActionListener(_ -> handleClearCache(parent, clearCache));
 
-        autoClearCacheOption = new CheckboxOption("Auto-clear cache", settingsStore, CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR);
+        autoClearCacheOption = new CheckboxOption("Auto-clear cache", cacheHandler.isAutoClear(), cacheHandler::saveAutoClear);
         autoClearCacheOption.setToolTipText("Delete old cached files on startup");
 
         cacheRetentionSelector = new ComboBoxOption<>("Delete cached files after (days)",
-            CACHE_RETENTION_DAYS,
-            readCacheRetentionDays(settingsStore),
-            days -> settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, days));
+            CacheHandler.RETENTION_DAYS,
+            cacheHandler.getRetentionDays(),
+            cacheHandler::saveRetentionDays);
         cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected());
         autoClearCacheOption.addActionListener(_ -> cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected()));
 

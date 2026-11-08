@@ -5,6 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.GridLayout;
 
+import org.mnm.client.CacheHandler;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
@@ -14,12 +15,12 @@ class OptionsPanel extends JPanel {
     private final GeneralOptionsPanel generalPanel;
     private final LinuxOptionsPanel linuxPanel;
 
-    OptionsPanel(JFrame owner, SettingsStore settingsStore, CredentialsHandler credentialsHandler) {
+    OptionsPanel(JFrame owner, SettingsStore settingsStore, CredentialsHandler credentialsHandler, CacheHandler cacheHandler) {
         super();
         this.setLayout(new GridLayout(1, 2, 10, 0));
         this.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
 
-        generalPanel = new GeneralOptionsPanel(settingsStore, credentialsHandler, this);
+        generalPanel = new GeneralOptionsPanel(settingsStore, credentialsHandler, cacheHandler, this);
         linuxPanel = new LinuxOptionsPanel(settingsStore, () -> new ProtonOptionsWindow(owner, settingsStore));
 
         this.add(generalPanel);

@@ -23,6 +23,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
 import org.mnm.client.CacheCleaner;
+import org.mnm.client.CacheHandler;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.Factories;
@@ -46,7 +47,6 @@ import org.mnm.tools.ProcessUtils;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
-import static org.mnm.config.Settings.initCacheAutoClearDefaults;
 import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
@@ -147,17 +147,19 @@ public class GuiCommand implements Command {
         initialize();
         UncaughtErrorHandler.install();
         guiStarter.start(() -> {
+            ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
                 return initGuiState(
                     configDb,
                     apiEndpoint,
                     Factories.releaseChecker(),
-                    new ConfigDbSettingsStore(configDbLocator),
+                    settingsStore,
                     message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message))
                 );
             } finally {
                 // Starts after the Config DB is closed, to prevent concurrent writes
-                initCacheAndStartCleanup(new ConfigDbSettingsStore(configDbLocator), cacheCleanupAction);
+                CacheHandler cacheHandler = new CacheHandler(settingsStore);
+                initCacheAndStartCleanup(cacheHandler, cacheCleanupAction);
             }
         });
     }
@@ -213,6 +215,7 @@ public class GuiCommand implements Command {
             SwingUtilities.invokeAndWait(() -> {
                 final ConfigDbSettingsStore settingsStore = new ConfigDbSettingsStore(configDbLocator);
                 final CredentialsHandler credentialsHandler = new CredentialsHandler(settingsStore);
+                final CacheHandler cacheHandler = new CacheHandler(settingsStore);
                 float uiScaling = readUiScaling(settingsStore);
 
                 // For popup windows
@@ -222,7 +225,7 @@ public class GuiCommand implements Command {
 
                 this.frame = new JFrame("Sweet GUI");
 
-                final var optionsPanel = new OptionsPanel(frame, settingsStore, credentialsHandler);
+                final var optionsPanel = new OptionsPanel(frame, settingsStore, credentialsHandler, cacheHandler);
                 this.slugSelector = new SlugSelectorPanel(selectSlugAction, uiScaling);
                 final var clientPanel = new ClientPanel(frame, loginAction, logoutAction, repairAction, () -> optionsPanel.useInMemoryHashing(), settingsStore, credentialsHandler, slugSelector, uiScaling);
                 final var playPanel = new PlayPanel(runAction, () -> optionsPanel.getRunnerOptions(slugSelector.getSelectedSlug()), uiScaling);
@@ -326,8 +329,8 @@ public class GuiCommand implements Command {
     // On the first start, it only sets the default options and does not delete files.
     // The cleanup starts on the next start. If the user changes the option before
     // the next start, the next start uses the value of the user.
-    static void initCacheAndStartCleanup(SettingsStore settingsStore, Runnable cacheCleanupAction) {
-        final boolean firstStart = initCacheAutoClearDefaults(settingsStore);
+    static void initCacheAndStartCleanup(CacheHandler cacheHandler, Runnable cacheCleanupAction) {
+        final boolean firstStart = cacheHandler.initDefaults();
         if (firstStart) {
             logger.debug("Cache auto-clear starts on the next start");
             return;
@@ -342,7 +345,7 @@ public class GuiCommand implements Command {
                 try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
                     clientPaths = configDb.getClients().stream().map(Client::path).toList();
                 }
-                return new CacheCleaner(new ConfigDbSettingsStore(configDbLocator)).clean(clientPaths);
+                return new CacheCleaner(new CacheHandler(new ConfigDbSettingsStore(configDbLocator))).clean(clientPaths);
             })
             .whenComplete((result, error) -> {
                 if (error != null) {

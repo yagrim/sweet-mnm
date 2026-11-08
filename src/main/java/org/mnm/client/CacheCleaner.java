@@ -16,11 +16,6 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.mnm.config.SettingsStore;
-
-import static org.mnm.config.Settings.DEFAULT_CACHE_AUTO_CLEAR;
-import static org.mnm.config.Settings.readCacheRetentionDays;
-import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
 import static org.mnm.tools.FileUtils.humanReadableSize;
 
 // TODO Move to separated package with https://github.com/yagrim/sweet-mnm/issues/131.
@@ -41,25 +36,25 @@ public class CacheCleaner {
         }
     }
 
-    private final SettingsStore settingsStore;
+    private final CacheHandler cacheHandler;
     private final Clock clock;
 
-    public CacheCleaner(SettingsStore settingsStore) {
-        this(settingsStore, Clock.systemUTC());
+    public CacheCleaner(CacheHandler cacheHandler) {
+        this(cacheHandler, Clock.systemUTC());
     }
 
-    CacheCleaner(SettingsStore settingsStore, Clock clock) {
-        this.settingsStore = settingsStore;
+    CacheCleaner(CacheHandler cacheHandler, Clock clock) {
+        this.cacheHandler = cacheHandler;
         this.clock = clock;
     }
 
     public Result clean(Collection<Path> clientPaths) {
-        if (!settingsStore.getBoolean(CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR)) {
+        if (!cacheHandler.isAutoClear()) {
             logger.debug("Cache auto-clear not active");
             return Result.EMPTY;
         }
 
-        final int retentionDays = readCacheRetentionDays(settingsStore);
+        final int retentionDays = cacheHandler.getRetentionDays();
         final Instant threshold = clock.instant().minus(Duration.ofDays(retentionDays));
 
         Result result = Result.EMPTY;

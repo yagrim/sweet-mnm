@@ -19,8 +19,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mnm.gui.InMemorySettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
-import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
+import static org.mnm.gui.InMemorySettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.gui.InMemorySettingsStore.CACHE_RETENTION_DAYS_KEY;
 
 class CacheCleanerTest {
 
@@ -35,7 +35,7 @@ class CacheCleanerTest {
         Path deletedFile = cacheFile(tempDir, "bundles/deleted.bin", "12345", 11);
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(keptFile).exists();
@@ -47,7 +47,7 @@ class CacheCleanerTest {
         cacheFile(tempDir, "bundles/deleted.bin", 11);
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
 
-        new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(settings.values()).isEmpty();
     }
@@ -57,7 +57,7 @@ class CacheCleanerTest {
         Path oldFile = cacheFile(tempDir, "bundles/old.bin", 100);
         InMemorySettingsStore settings = settings("false", 10);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(0, 0));
         assertThat(oldFile).exists();
@@ -70,7 +70,7 @@ class CacheCleanerTest {
         Path newBundle = cacheFile(tempDir, "bundles/new.bin", "1234567", 9);
         InMemorySettingsStore settings = settings("true", 10);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(2, 8));
         assertThat(oldBundle).doesNotExist();
@@ -85,7 +85,7 @@ class CacheCleanerTest {
         Path oldBundle = cacheFile(tempDir, "bundles/old.bin", "12345", 100);
         InMemorySettingsStore settings = settings("true", 10);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(oldManifest).exists();
@@ -99,7 +99,7 @@ class CacheCleanerTest {
         Path deletedFile = cacheFile(tempDir, "deleted.bin", "12", retentionDays + 1);
         InMemorySettingsStore settings = settings("true", retentionDays);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(1, 2));
         assertThat(keptFile).exists();
@@ -113,7 +113,7 @@ class CacheCleanerTest {
         Path deletedFile = cacheFile(tempDir, "deleted.bin", 11);
         InMemorySettingsStore settings = settings("true", retentionDays);
 
-        new CacheCleaner(settings, CLOCK).clean(List.of(tempDir));
+        new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir));
 
         assertThat(keptFile).exists();
         assertThat(deletedFile).doesNotExist();
@@ -127,7 +127,7 @@ class CacheCleanerTest {
         cacheFile(otherPath, "b.bin", "12", 11);
         InMemorySettingsStore settings = settings("true", 10);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK)
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK)
             .clean(List.of(sharedPath, otherPath, sharedPath));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(2, 5));
@@ -137,7 +137,7 @@ class CacheCleanerTest {
     void shouldIgnoreMissingDownloadsFolder(@TempDir Path tempDir) {
         InMemorySettingsStore settings = settings("true", 10);
 
-        CacheCleaner.Result result = new CacheCleaner(settings, CLOCK).clean(List.of(tempDir.resolve("missing")));
+        CacheCleaner.Result result = new CacheCleaner(new CacheHandler(settings), CLOCK).clean(List.of(tempDir.resolve("missing")));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(0, 0));
     }
