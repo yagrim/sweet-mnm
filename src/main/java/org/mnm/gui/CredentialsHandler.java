@@ -5,15 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.config.SettingsStore;
 
+import static org.mnm.config.SettingsStore.HIDE_CREDENTIALS;
+
 public class CredentialsHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CredentialsHandler.class);
 
-    static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
-    static final String EMAIL_KEY = "user.email";
-    static final String PASSWORD_KEY = "user.password";
-
-    static final String HIDE_CREDENTIALS = "ui.hide-credentials";
+    private static final String STORE_CREDENTIALS_KEY = "user.store-credentials";
+    private static final String EMAIL_KEY = "user.email";
+    private static final String PASSWORD_KEY = "user.password";
 
     private final SettingsStore settingsStore;
 
