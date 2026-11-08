@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.CursorSize;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.config.WinePrefix;
@@ -55,6 +56,18 @@ public class ClientRunner {
         }
 
         ProcessUtils.run(clientPath, command, environment);
+    }
+
+    private static void applyCursorSize(CursorSize cursorSize, String winePrefix) {
+        if (cursorSize == null || isEmpty(winePrefix)) {
+            return;
+        }
+        Path winePrefixPath = Path.of(winePrefix);
+        if (cursorSize.logPixels() == null) {
+            WineRegistry.restore(winePrefixPath);
+        } else {
+            WineRegistry.setLogPixels(winePrefixPath, cursorSize.logPixels());
+        }
     }
 
     private static void tokenIsNotExpired(Token token) {
@@ -137,24 +150,14 @@ public class ClientRunner {
         Objects.requireNonNull(linuxOptions, "linuxOptions cannot be null");
         Objects.requireNonNull(linuxOptions.umuOptions(), "linuxOptions.umuOptions cannot be null");
         Objects.requireNonNull(linuxOptions.protonOptions(), "linuxOptions.protonOptions cannot be null");
+        Objects.requireNonNull(linuxOptions.wineOptions(), "linuxOptions.wineOptions cannot be null");
 
         environment.put("GAMEID", currentEnvironment.getOrDefault("GAMEID", linuxOptions.umuOptions().gameId()));
         environment.put("PROTONPATH", currentEnvironment.getOrDefault("PROTONPATH", linuxOptions.umuOptions().protonPath()));
 
-        String candidateWinePrefixPath;
-        if (linuxOptions.useClientAsPrefix() || isEmpty(linuxOptions.umuOptions().winePrefix())) {
-            candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(WinePrefix.name(slug)).toString();
-        } else {
-            String prefix = linuxOptions.umuOptions().winePrefix();
-            Path prefixPath = Path.of(prefix);
-            if (prefixPath.isAbsolute()) {
-                candidateWinePrefixPath = prefix;
-            } else {
-                candidateWinePrefixPath = clientPath.toAbsolutePath().resolve(prefixPath).toString();
-            }
-        }
-
-        environment.put("WINEPREFIX", currentEnvironment.getOrDefault("WINEPREFIX", candidateWinePrefixPath));
+        String winePrefix = currentEnvironment.getOrDefault("WINEPREFIX", resolveWinePrefix(slug, clientPath, linuxOptions));
+        environment.put("WINEPREFIX", winePrefix);
+        applyCursorSize(linuxOptions.wineOptions().cursorSize(), winePrefix);
 
         if (linuxOptions.enableMangoHud()) {
             environment.put("MANGOHUD", "1");
@@ -167,6 +170,18 @@ public class ClientRunner {
         }
 
         return Map.copyOf(environment);
+    }
+
+    private static String resolveWinePrefix(String slug, Path clientPath, RunnerOptions.LinuxOptions linuxOptions) {
+        String prefix = linuxOptions.umuOptions().winePrefix();
+        if (linuxOptions.useClientAsPrefix() || isEmpty(prefix)) {
+            return clientPath.toAbsolutePath().resolve(WinePrefix.name(slug)).toString();
+        }
+        Path prefixPath = Path.of(prefix);
+        if (prefixPath.isAbsolute()) {
+            return prefix;
+        }
+        return clientPath.toAbsolutePath().resolve(prefixPath).toString();
     }
 
     private static Map<String, String> buildWine(boolean mangoHudEnabled) {

@@ -3,6 +3,8 @@ package org.mnm.client;
 import org.mnm.client.RunnerOptions.LinuxOptions;
 import org.mnm.client.RunnerOptions.ProtonOptions;
 import org.mnm.client.RunnerOptions.UmuOptions;
+import org.mnm.client.RunnerOptions.WineOptions;
+import org.mnm.config.CursorSize;
 
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_PROTONPATH;
@@ -14,11 +16,11 @@ public class LinuxOptionsTestFactory {
     }
 
     public static LinuxOptions linuxOptions(boolean mangoHud) {
-        return new LinuxOptions(mangoHud, true, umuOptions(), protonOptions(false, false));
+        return new LinuxOptions(mangoHud, true, umuOptions(), protonOptions(false, false), wineOptions(CursorSize.DEFAULT));
     }
 
     public static LinuxOptions linuxOptions(boolean useClientAsPrefix, UmuOptions umuOptions) {
-        return new LinuxOptions(false, useClientAsPrefix, umuOptions, protonOptions(false, false));
+        return new LinuxOptions(false, useClientAsPrefix, umuOptions, protonOptions(false, false), wineOptions(CursorSize.DEFAULT));
     }
 
     public static LinuxOptions linuxOptions(UmuOptions umuOptions) {
@@ -31,5 +33,9 @@ public class LinuxOptionsTestFactory {
 
     public static ProtonOptions protonOptions(boolean useWined3d, boolean enableWayland) {
         return new ProtonOptions(useWined3d, enableWayland);
+    }
+
+    public static WineOptions wineOptions(CursorSize cursorSize) {
+        return new WineOptions(cursorSize);
     }
 }

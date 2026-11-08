@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.mnm.cli.Arguments;
+import org.mnm.config.CursorSize;
 import org.mnm.gui.InMemorySettingsStore;
 import org.mnm.tools.PanicException;
 
@@ -23,6 +24,7 @@ import static org.mnm.config.SettingsStore.UMU_GAMEID;
 import static org.mnm.config.SettingsStore.UMU_PROTONPATH;
 import static org.mnm.config.SettingsStore.UMU_USE_CLIENT_AS_PREFIX;
 import static org.mnm.config.SettingsStore.UMU_WINEPREFIX;
+import static org.mnm.gui.InMemorySettingsStore.CURSOR_SIZE_KEY;
 
 class RunnerOptionsTest {
 
@@ -177,6 +179,16 @@ class RunnerOptionsTest {
 
             assertThat(options.linuxOptions().protonOptions().useWined3d()).isTrue();
             assertThat(options.linuxOptions().protonOptions().enableWayland()).isTrue();
+        }
+
+        @Test
+        void shouldReadCursorSizeFromSettings() {
+            Arguments arguments = Arguments.parse();
+            InMemorySettingsStore settingsStore = new InMemorySettingsStore(Map.of(CURSOR_SIZE_KEY, "SCALE_150"));
+
+            RunnerOptions options = RunnerOptions.parse(arguments, settingsStore);
+
+            assertThat(options.linuxOptions().wineOptions().cursorSize()).isEqualTo(CursorSize.SCALE_150);
         }
 
         @Test
