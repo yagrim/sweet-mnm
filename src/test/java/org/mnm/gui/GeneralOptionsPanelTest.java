@@ -3,7 +3,6 @@ package org.mnm.gui;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.io.IOException;
@@ -203,7 +202,7 @@ class GeneralOptionsPanelTest {
         GeneralOptionsPanel panel = panel(settings);
 
         JComboBox<Integer> selector = uiScalingSelector(panel);
-        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(comboBoxOption(panel, "uiScalingSelector").getLabelText()).isEqualTo("Font Scaling");
         assertThat(selector.getItemCount()).isEqualTo(7);
 
         // 1.0 is the default
@@ -224,7 +223,7 @@ class GeneralOptionsPanelTest {
         GeneralOptionsPanel panel = panel(settings);
 
         JComboBox<Integer> selector = uiScalingSelector(panel);
-        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(comboBoxOption(panel, "uiScalingSelector").getLabelText()).isEqualTo("Font Scaling");
         assertThat(selector.getItemCount()).isEqualTo(7);
 
         selector.setSelectedIndex(1);
@@ -274,18 +273,19 @@ class GeneralOptionsPanelTest {
         return (JButton) ReflectionTestTools.get(panel, fieldName);
     }
 
-    private static JLabel label(GeneralOptionsPanel panel, String fieldName) {
-        return (JLabel) ReflectionTestTools.get(panel, fieldName);
+    @SuppressWarnings("rawtypes")
+    private static ComboBoxOption comboBoxOption(GeneralOptionsPanel panel, String fieldName) {
+        return (ComboBoxOption) ReflectionTestTools.get(panel, fieldName);
     }
 
     @SuppressWarnings("unchecked")
     private static JComboBox<Integer> cacheRetentionSelector(GeneralOptionsPanel panel) {
-        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "cacheRetentionSelector");
+        return comboBoxOption(panel, "cacheRetentionSelector").getComboBox();
     }
 
     @SuppressWarnings("unchecked")
     private static JComboBox<Integer> uiScalingSelector(GeneralOptionsPanel panel) {
-        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "uiScalingSelector");
+        return comboBoxOption(panel, "uiScalingSelector").getComboBox();
     }
 
 }

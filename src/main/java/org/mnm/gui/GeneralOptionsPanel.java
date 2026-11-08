@@ -3,18 +3,14 @@ package org.mnm.gui;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import java.awt.Component;
 import java.awt.Container;
-import java.awt.FlowLayout;
-import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.mnm.LoggerHandler;
 import org.mnm.client.Installation;
@@ -53,11 +49,8 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
-    private final JLabel uiScalingLabel = new JLabel("Font Scaling");
-    private final JComboBox<Float> uiScalingSelector = new JComboBox<>();
-    private final JPanel uiScalingPanel = new JPanel();
-    private final JComboBox<Integer> cacheRetentionSelector = new JComboBox<>();
-    private final JPanel cacheRetentionPanel = new JPanel();
+    private final ComboBoxOption<Float> uiScalingSelector;
+    private final ComboBoxOption<Integer> cacheRetentionSelector;
 
     private final CredentialsHandler credentialsHandler;
 
@@ -93,21 +86,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         autoClearCacheOption = new CheckboxOption("Auto-clear cache", settingsStore, CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR);
         autoClearCacheOption.setToolTipText("Delete old cached files on startup");
-        autoClearCacheOption.addActionListener(_ -> cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected()));
 
-        CACHE_RETENTION_DAYS.forEach(cacheRetentionSelector::addItem);
-        cacheRetentionSelector.setSelectedItem(readCacheRetentionDays(settingsStore));
+        cacheRetentionSelector = new ComboBoxOption<>("Delete cached files after (days)",
+            CACHE_RETENTION_DAYS,
+            readCacheRetentionDays(settingsStore),
+            days -> settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, days));
         cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected());
-        // triggers only when value changes
-        cacheRetentionSelector.addItemListener(evt -> {
-            if (evt.getStateChange() == ItemEvent.SELECTED) {
-                settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, (Integer) cacheRetentionSelector.getSelectedItem());
-            }
-        });
-        cacheRetentionPanel.add(new JLabel("Delete cached files after (days)"));
-        cacheRetentionPanel.add(cacheRetentionSelector);
-        cacheRetentionPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        cacheRetentionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        autoClearCacheOption.addActionListener(_ -> cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected()));
 
         hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
         hideCredentials.setToolTipText("aka. Streamer mode");
@@ -115,41 +100,38 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
-        for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
-            uiScalingSelector.addItem(i);
-        }
-        uiScalingSelector.setSelectedItem(readUiScaling(settingsStore));
-        // triggers only when value changes
-        uiScalingSelector.addItemListener(evt -> {
-            if (evt.getStateChange() == ItemEvent.SELECTED) {
-                Float scale = (Float) uiScalingSelector.getSelectedItem();
+        uiScalingSelector = new ComboBoxOption<>("Font Scaling",
+            uiScalingAvailableValues(),
+            readUiScaling(settingsStore),
+            scale -> {
                 settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
                 if (!skipUIWarnings) {
                     MessageDialog.showInfoMessageDialogSync("Close and relaunch Sweet to update UI", scale);
                 }
-            }
-        });
-
-        uiScalingPanel.add(uiScalingLabel);
-        uiScalingPanel.add(uiScalingSelector);
-        // must go after adding the label and selector:
-        uiScalingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        uiScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            });
 
         this.add(debugOption);
         this.add(inMemoryHashingOption);
         this.add(hideCredentials);
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
-        this.add(uiScalingPanel);
+        this.add(uiScalingSelector);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(clearCache);
         this.add(autoClearCacheOption);
-        this.add(cacheRetentionPanel);
+        this.add(cacheRetentionSelector);
         this.add(Box.createVerticalStrut(SCALE));
 
         // post-init
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private static List<Float> uiScalingAvailableValues() {
+        List<Float> uiScalingValues = new ArrayList<>();
+        for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5f) {
+            uiScalingValues.add(i);
+        }
+        return uiScalingValues;
     }
 
     private static void initConsoleWindow(boolean selected) {
