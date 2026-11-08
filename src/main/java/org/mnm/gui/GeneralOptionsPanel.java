@@ -3,33 +3,35 @@ package org.mnm.gui;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import java.awt.Component;
 import java.awt.Container;
-import java.awt.FlowLayout;
-import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.mnm.LoggerHandler;
 import org.mnm.client.Installation;
 import org.mnm.config.Client;
 import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
+import org.mnm.events.CacheListener;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
 import org.mnm.tools.FileUtils;
 
 import static org.mnm.config.Environment.NATIVE_IMAGE;
+import static org.mnm.config.Settings.CACHE_RETENTION_DAYS;
+import static org.mnm.config.Settings.DEFAULT_CACHE_AUTO_CLEAR;
 import static org.mnm.config.Settings.DEFAULT_FONT_SCALING;
 import static org.mnm.config.Settings.MAX_FONT_SCALING;
+import static org.mnm.config.Settings.readCacheRetentionDays;
 import static org.mnm.config.Settings.readUiScaling;
+import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -38,17 +40,17 @@ import static org.mnm.gui.CredentialsHandler.HIDE_CREDENTIALS;
 import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel
-    implements RepairListener, Refreshable {
+    implements RepairListener, Refreshable, CacheListener {
 
     private final CheckboxOption debugOption;
     private final JCheckBox inMemoryHashingOption;
     private final JCheckBox hideCredentials;
+    private final CheckboxOption autoClearCacheOption;
 
     private final JButton deleteCredentials = new JButton("Delete login information");
     private final JButton clearCache = new JButton("Clear cache");
-    private final JLabel uiScalingLabel = new JLabel("Font Scaling");
-    private final JComboBox<Float> uiScalingSelector = new JComboBox<>();
-    private final JPanel uiScalingPanel = new JPanel();
+    private final ComboBoxOption<Float> uiScalingSelector;
+    private final ComboBoxOption<Integer> cacheRetentionSelector;
 
     private final CredentialsHandler credentialsHandler;
 
@@ -82,45 +84,54 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
 
         clearCache.addActionListener(_ -> handleClearCache(parent, clearCache));
 
+        autoClearCacheOption = new CheckboxOption("Auto-clear cache", settingsStore, CACHE_AUTO_CLEAR_KEY, DEFAULT_CACHE_AUTO_CLEAR);
+        autoClearCacheOption.setToolTipText("Delete old cached files on startup");
+
+        cacheRetentionSelector = new ComboBoxOption<>("Delete cached files after (days)",
+            CACHE_RETENTION_DAYS,
+            readCacheRetentionDays(settingsStore),
+            days -> settingsStore.putInt(CACHE_RETENTION_DAYS_KEY, days));
+        cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected());
+        autoClearCacheOption.addActionListener(_ -> cacheRetentionSelector.setEnabled(autoClearCacheOption.isSelected()));
+
         hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
         hideCredentials.setToolTipText("aka. Streamer mode");
 
         deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
         deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
-        for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5) {
-            uiScalingSelector.addItem(i);
-        }
-        uiScalingSelector.setSelectedItem(readUiScaling(settingsStore));
-        // triggers only when value changes
-        uiScalingSelector.addItemListener(evt -> {
-            if (evt.getStateChange() == ItemEvent.SELECTED) {
-                Float scale = (Float) uiScalingSelector.getSelectedItem();
+        uiScalingSelector = new ComboBoxOption<>("Font Scaling",
+            uiScalingAvailableValues(),
+            readUiScaling(settingsStore),
+            scale -> {
                 settingsStore.putFloat(OPTIONS_FONT_SCALING_KEY, scale);
                 if (!skipUIWarnings) {
                     MessageDialog.showInfoMessageDialogSync("Close and relaunch Sweet to update UI", scale);
                 }
-            }
-        });
-
-        uiScalingPanel.add(uiScalingLabel);
-        uiScalingPanel.add(uiScalingSelector);
-        // must go after adding the label and selector:
-        uiScalingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        uiScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            });
 
         this.add(debugOption);
         this.add(inMemoryHashingOption);
-        this.add(clearCache);
-        this.add(Box.createVerticalStrut(SCALE));
         this.add(hideCredentials);
         this.add(deleteCredentials);
         this.add(Box.createVerticalStrut(SCALE));
-        this.add(uiScalingPanel);
+        this.add(uiScalingSelector);
+        this.add(Box.createVerticalStrut(SCALE));
+        this.add(clearCache);
+        this.add(autoClearCacheOption);
+        this.add(cacheRetentionSelector);
         this.add(Box.createVerticalStrut(SCALE));
 
         // post-init
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private static List<Float> uiScalingAvailableValues() {
+        List<Float> uiScalingValues = new ArrayList<>();
+        for (float i = DEFAULT_FONT_SCALING; i <= MAX_FONT_SCALING; i += 0.5f) {
+            uiScalingValues.add(i);
+        }
+        return uiScalingValues;
     }
 
     private static void initConsoleWindow(boolean selected) {
@@ -141,9 +152,18 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     }
 
     @Override
+    public void cacheCleared() {
+        refreshClearCache();
+    }
+
+    @Override
     public void refresh(ClientStatus clientStatus) {
         this.clientStatus = clientStatus;
+        refreshClearCache();
+        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
+    }
 
+    private void refreshClearCache() {
         long folderSize = 0;
         if (clientStatus != null && clientStatus.client() != null) {
             final Path downloadsPath = getDownloadsPath(clientStatus.client());
@@ -152,7 +172,6 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
         clearCache.setText("Clear cache (%s)".formatted(size));
-        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
     }
 
     boolean isInMemoryHashing() {

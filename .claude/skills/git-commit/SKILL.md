@@ -18,7 +18,7 @@ Make a commit only when the user asks for it.
 3. Run `git diff --staged` to see all the changes for the commit.
 4. If the branch name has an issue number, read the issue with `gh issue view <number>` to find the goal of the PR.
 5. Write the commit message in the format below. Describe only the staged changes.
-6. Show the message to the user before you commit.
+6. Show the message to the user. Do not ask the user to approve the message. Continue to the next step immediately.
 7. Commit. Use a HEREDOC to keep the format of the message.
 
 ## Message format

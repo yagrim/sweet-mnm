@@ -36,4 +36,15 @@ class SettingsStoreTest {
         assertThat(settingsStore.getBoolean("not-present", true)).isTrue();
         assertThat(settingsStore.getBoolean("not-present", false)).isFalse();
     }
+
+    @Test
+    void shouldGetAndPutIntValueOrDefault() {
+        SettingsStore settingsStore = new InMemorySettingsStore(Map.of(OPTION1_KEY, "15"));
+
+        assertThat(settingsStore.getInt(OPTION1_KEY, 10)).isEqualTo(15);
+        assertThat(settingsStore.getInt("not-present", 10)).isEqualTo(10);
+
+        settingsStore.putInt(OPTION2_KEY, 30);
+        assertThat(settingsStore.get(OPTION2_KEY)).isEqualTo("30");
+    }
 }

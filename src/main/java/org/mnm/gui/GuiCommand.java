@@ -22,6 +22,7 @@ import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
+import org.mnm.client.CacheCleaner;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.Factories;
@@ -45,6 +46,7 @@ import org.mnm.tools.ProcessUtils;
 import static org.mnm.config.Environment.API_BASE_URL;
 import static org.mnm.config.Environment.NATIVE_IMAGE;
 import static org.mnm.config.Environment.getWorkDir;
+import static org.mnm.config.Settings.initCacheAutoClearDefaults;
 import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.config.SettingsStore.SELECTED_SLUG_KEY;
 import static org.mnm.gui.MessageDialog.showErrorMessageDialogSync;
@@ -102,6 +104,7 @@ public class GuiCommand implements Command {
     private final Supplier<Path> configDbLocator;
     private final GuiStarter guiStarter;
     private final PostInitializationAction postInitAction;
+    private final Runnable cacheCleanupAction;
 
     private final PlayAction runAction;
     private final RepairAction repairAction;
@@ -130,6 +133,7 @@ public class GuiCommand implements Command {
         this.selectSlugAction = slug -> storeSlug(configDbLocator, slug);
         this.guiStarter = this::startSwingInterface;
         this.postInitAction = this::postInitializeSwing;
+        this.cacheCleanupAction = () -> startCacheCleanup(configDbLocator);
 
         this.apiConnector = Factories.apiConnector(API_BASE_URL);
         this.tokenSupplier = new PopUpTwoFactorTokenSupplier(apiConnector);
@@ -151,6 +155,9 @@ public class GuiCommand implements Command {
                     new ConfigDbSettingsStore(configDbLocator),
                     message -> SwingUtilities.invokeLater(() -> MessageDialog.showWarningMessageDialogSync(message))
                 );
+            } finally {
+                // Starts after the Config DB is closed, to prevent concurrent writes
+                initCacheAndStartCleanup(new ConfigDbSettingsStore(configDbLocator), cacheCleanupAction);
             }
         });
     }
@@ -311,6 +318,39 @@ public class GuiCommand implements Command {
         return guiStateBuilder(configDb, configDb.getSettings(SELECTED_SLUG_KEY))
             .newRelease(releaseChecker.findNewRelease(settingsStore).orElse(null))
             .build();
+    }
+
+    // "First start" is a start where the auto-clear option is not in the Config DB. For example:
+    // - the first start after an update to a Sweet version with this feature
+    // - the first start with a new Config DB
+    // On the first start, it only sets the default options and does not delete files.
+    // The cleanup starts on the next start. If the user changes the option before
+    // the next start, the next start uses the value of the user.
+    static void initCacheAndStartCleanup(SettingsStore settingsStore, Runnable cacheCleanupAction) {
+        final boolean firstStart = initCacheAutoClearDefaults(settingsStore);
+        if (firstStart) {
+            logger.debug("Cache auto-clear starts on the next start");
+            return;
+        }
+        cacheCleanupAction.run();
+    }
+
+    static CompletableFuture<CacheCleaner.Result> startCacheCleanup(Supplier<Path> configDbLocator) {
+        return CompletableFuture
+            .supplyAsync(() -> {
+                final List<Path> clientPaths;
+                try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+                    clientPaths = configDb.getClients().stream().map(Client::path).toList();
+                }
+                return new CacheCleaner(new ConfigDbSettingsStore(configDbLocator)).clean(clientPaths);
+            })
+            .whenComplete((result, error) -> {
+                if (error != null) {
+                    logger.warn("Cache auto-clear failed: {}", error.getMessage());
+                } else if (result.deletedFiles() > 0) {
+                    SwingUtilities.invokeLater(() -> ClientEventHandler.getInstance().cacheCleared());
+                }
+            });
     }
 
     static GuiState loadGuiState(ConfigDb configDb, String slug) {

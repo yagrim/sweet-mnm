@@ -3,7 +3,6 @@ package org.mnm.gui;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.io.IOException;
@@ -24,6 +23,8 @@ import org.mnm.tools.FileUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
+import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
@@ -102,6 +103,26 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldUpdateOnlyClearCacheButtonWhenCacheIsCleared(@TempDir Path tempDir) throws IOException {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
+        CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
+        credentialsHandler.saveStoreCredentials(true);
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new JPanel());
+        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        Files.writeString(downloadsPath.resolve("cache"), "cache");
+        panel.refresh(new ClientStatus(new Client("test", "1.0.0", Client.Status.UPDATED, tempDir), false, null));
+        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+
+        credentialsHandler.saveStoreCredentials(false);
+        Files.delete(downloadsPath.resolve("cache"));
+        panel.cacheCleared();
+
+        assertThat(button(panel, "clearCache").getText()).isEqualTo("Clear cache (empty)");
+        assertThat(button(panel, "clearCache").isEnabled()).isFalse();
+        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+    }
+
+    @Test
     void shouldClearCache(@TempDir Path tempDir) throws IOException {
         GeneralOptionsPanel panel = panelWithCache(tempDir);
         JButton clearCacheButton = button(panel, "clearCache");
@@ -115,6 +136,24 @@ class GeneralOptionsPanelTest {
 
         assertThat(tempDir.resolve("downloads").resolve("cache")).doesNotExist();
         assertThat(clearCacheButton.isEnabled()).isFalse();
+        assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
+    }
+
+    @Test
+    void shouldDeleteManifestFilesWhenClearCache(@TempDir Path tempDir) throws IOException {
+        GeneralOptionsPanel panel = panelWithCache(tempDir);
+        Path manifest = tempDir.resolve("downloads").resolve("65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest");
+        Files.writeString(manifest, "manifest");
+        JButton clearCacheButton = button(panel, "clearCache");
+
+        try (MockedStatic<ConfirmationDialog> dialogMock = Mockito.mockStatic(ConfirmationDialog.class)) {
+            dialogMock.when(() -> ConfirmationDialog.showConfirmationDialog(any(), anyString(), anyString()))
+                .thenReturn(JOptionPane.OK_OPTION);
+
+            clearCacheButton.doClick();
+        }
+
+        assertThat(manifest).doesNotExist();
         assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
     }
 
@@ -143,12 +182,45 @@ class GeneralOptionsPanelTest {
     }
 
     @Test
+    void shouldRestorePersistedCacheAutoClearOptions() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(
+            CACHE_AUTO_CLEAR_KEY, "false",
+            CACHE_RETENTION_DAYS_KEY, "30"));
+
+        GeneralOptionsPanel panel = panel(settings);
+
+        assertThat(option(panel, "autoClearCacheOption").isSelected()).isFalse();
+        assertThat(cacheRetentionSelector(panel).getSelectedItem()).isEqualTo(30);
+        assertThat(cacheRetentionSelector(panel).isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldPersistModifiedCacheAutoClearOptions() {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        GeneralOptionsPanel panel = panel(settings);
+        JComboBox<Integer> selector = cacheRetentionSelector(panel);
+
+        selector.setSelectedItem(15);
+        assertThat(settings.get(CACHE_RETENTION_DAYS_KEY)).isEqualTo("15");
+        selector.setSelectedItem(5);
+        assertThat(settings.get(CACHE_RETENTION_DAYS_KEY)).isEqualTo("5");
+
+        option(panel, "autoClearCacheOption").doClick();
+        assertThat(settings.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("false");
+        assertThat(selector.isEnabled()).isFalse();
+
+        option(panel, "autoClearCacheOption").doClick();
+        assertThat(settings.get(CACHE_AUTO_CLEAR_KEY)).isEqualTo("true");
+        assertThat(selector.isEnabled()).isTrue();
+    }
+
+    @Test
     void shouldNotUpdateUIScalingWhenNotModified() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
         GeneralOptionsPanel panel = panel(settings);
 
         JComboBox<Integer> selector = uiScalingSelector(panel);
-        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(comboBoxOption(panel, "uiScalingSelector").getLabelText()).isEqualTo("Font Scaling");
         assertThat(selector.getItemCount()).isEqualTo(7);
 
         // 1.0 is the default
@@ -169,7 +241,7 @@ class GeneralOptionsPanelTest {
         GeneralOptionsPanel panel = panel(settings);
 
         JComboBox<Integer> selector = uiScalingSelector(panel);
-        assertThat(label(panel, "uiScalingLabel").getText()).isEqualTo("Font Scaling");
+        assertThat(comboBoxOption(panel, "uiScalingSelector").getLabelText()).isEqualTo("Font Scaling");
         assertThat(selector.getItemCount()).isEqualTo(7);
 
         selector.setSelectedIndex(1);
@@ -219,13 +291,19 @@ class GeneralOptionsPanelTest {
         return (JButton) ReflectionTestTools.get(panel, fieldName);
     }
 
-    private static JLabel label(GeneralOptionsPanel panel, String fieldName) {
-        return (JLabel) ReflectionTestTools.get(panel, fieldName);
+    @SuppressWarnings("rawtypes")
+    private static ComboBoxOption comboBoxOption(GeneralOptionsPanel panel, String fieldName) {
+        return (ComboBoxOption) ReflectionTestTools.get(panel, fieldName);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JComboBox<Integer> cacheRetentionSelector(GeneralOptionsPanel panel) {
+        return comboBoxOption(panel, "cacheRetentionSelector").getComboBox();
     }
 
     @SuppressWarnings("unchecked")
     private static JComboBox<Integer> uiScalingSelector(GeneralOptionsPanel panel) {
-        return (JComboBox<Integer>) ReflectionTestTools.get(panel, "uiScalingSelector");
+        return comboBoxOption(panel, "uiScalingSelector").getComboBox();
     }
 
 }
