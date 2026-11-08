@@ -1,5 +1,5 @@
 name: Setup Environment
-description: Checks out the repository, sets up GraalVM, captures the runner architecture, and displays tool versions.
+description: Checks out the repository, sets up GraalVM and Gradle, captures the runner architecture, and displays tool versions.
 
 inputs:
   github-token:
@@ -28,6 +28,8 @@ runs:
         distribution: graalvm-community
         java-version: ${{ inputs.java-version }}
         github-token: ${{ inputs.github-token }}
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v6
     - name: Set artifact architecture
       id: arch
       shell: bash
