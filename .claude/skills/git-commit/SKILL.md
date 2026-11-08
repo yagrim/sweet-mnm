@@ -1,7 +1,7 @@
 ---
 name: git-commit
 context: fork
-description: Create a git commit for the current changes, with a title that summarizes the goal of the PR and a bullet list of the changes. Use when the user asks to commit.
+description: ALWAYS use this skill to create any git commit in this repository. Do not run git commit directly. It creates a commit for the current changes, with a title that summarizes the goal of the PR and a bullet list of the changes. Use only when the user asks to commit.
 ---
 
 # Commit
