@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.mnm.config.SettingsStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mnm.gui.CredentialsHandler.EMAIL_KEY;
-import static org.mnm.gui.CredentialsHandler.PASSWORD_KEY;
+import static org.mnm.gui.InMemorySettingsStore.EMAIL_KEY;
+import static org.mnm.gui.InMemorySettingsStore.PASSWORD_KEY;
 import static org.mnm.gui.InMemorySettingsStore.STORE_CREDENTIALS_KEY;
 
 class CredentialsHandlerTest {

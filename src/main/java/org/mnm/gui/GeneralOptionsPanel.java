@@ -33,10 +33,10 @@ import static org.mnm.config.Settings.readUiScaling;
 import static org.mnm.config.SettingsStore.CACHE_AUTO_CLEAR_KEY;
 import static org.mnm.config.SettingsStore.CACHE_RETENTION_DAYS_KEY;
 import static org.mnm.config.SettingsStore.DEBUG_KEY;
+import static org.mnm.config.SettingsStore.HIDE_CREDENTIALS;
 import static org.mnm.config.SettingsStore.IN_MEMORY_HASHING_KEY;
 import static org.mnm.config.SettingsStore.OPTIONS_FONT_SCALING_KEY;
 import static org.mnm.config.SettingsStore.SKIP_UI_WARNINGS;
-import static org.mnm.gui.CredentialsHandler.HIDE_CREDENTIALS;
 import static org.mnm.gui.Style.SCALE;
 
 public class GeneralOptionsPanel extends BaseOptionsPanel

@@ -29,6 +29,8 @@ public interface SettingsStore {
     // To avoid popups in testing
     String SKIP_UI_WARNINGS = "ui.skip-warnings";
 
+    String HIDE_CREDENTIALS = "ui.hide-credentials";
+
     String get(String key);
 
     default String get(String key, String defaultValue) {
