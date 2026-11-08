@@ -1,6 +1,7 @@
 package org.mnm;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -19,6 +20,8 @@ public class LoggerHandler {
 
     private static final String FILE_APPENDER_NAME = "MNM_FILE";
     public static final String LOG_FILE = "sweet-messages";
+    // Set to "false" to not write logs to a file (for example, in tests)
+    static final String FILE_LOGS_PROPERTY = "sweet_log_to_file";
 
     private static final String MAX_FILE_SIZE = "10MB";
     private static final int MAX_ARCHIVES = 1;
@@ -46,12 +49,20 @@ public class LoggerHandler {
         attachFileAppender(context, logger);
     }
 
+    static boolean fileLogsEnabled() {
+        return !"false".equalsIgnoreCase(System.getProperty(FILE_LOGS_PROPERTY));
+    }
+
     private static void attachFileAppender(LoggerContext context, Logger logger) {
-        if (logger.getAppender(FILE_APPENDER_NAME) != null) {
-            return; // already attached
+        if (!fileLogsEnabled() || logger.getAppender(FILE_APPENDER_NAME) != null) {
+            return;
         }
 
-        File logDir = getSweetConfigLocation().resolve("logs").toFile();
+        logger.addAppender(createFileAppender(context, getSweetConfigLocation().resolve("logs")));
+    }
+
+    static RollingFileAppender<ILoggingEvent> createFileAppender(LoggerContext context, Path logPath) {
+        File logDir = logPath.toFile();
         String file = new File(logDir, LOG_FILE + ".log").getPath();
         String archivePattern = new File(logDir, LOG_FILE + ".%i.log").getPath();
 
@@ -84,8 +95,7 @@ public class LoggerHandler {
         appender.setTriggeringPolicy(trigger);
         appender.start();
 
-        logger.addAppender(appender);
+        return appender;
     }
-
 
 }

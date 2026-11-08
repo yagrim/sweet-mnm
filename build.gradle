@@ -63,6 +63,8 @@ jacocoTestReport {
 
 tasks.named('test') {
   useJUnitPlatform()
+  // Do not write test logs into the user log file (issue #134)
+  systemProperty 'sweet_log_to_file', 'false'
   beforeTest { descriptor ->
     def className = descriptor.className.tokenize('.').last()
     println("Running test: ${className}.${descriptor.name}")
