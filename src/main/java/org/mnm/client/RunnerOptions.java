@@ -1,6 +1,7 @@
 package org.mnm.client;
 
 import org.mnm.cli.Arguments;
+import org.mnm.config.CursorSize;
 import org.mnm.config.SettingsStore;
 
 import static org.mnm.config.SettingsStore.DEFAULT_UMU_GAMEID;
@@ -21,13 +22,17 @@ import static org.mnm.tools.StringUtils.isEmpty;
  */
 public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionCheck, LinuxOptions linuxOptions) {
 
-    public record LinuxOptions(boolean enableMangoHud, boolean useClientAsPrefix, UmuOptions umuOptions, ProtonOptions protonOptions) {
+    public record LinuxOptions(boolean enableMangoHud, boolean useClientAsPrefix, UmuOptions umuOptions,
+                               ProtonOptions protonOptions, WineOptions wineOptions) {
     }
 
     public record UmuOptions(String gameId, String protonPath, String winePrefix) {
     }
 
     public record ProtonOptions(boolean useWined3d, boolean enableWayland) {
+    }
+
+    public record WineOptions(CursorSize cursorSize) {
     }
 
     public static RunnerOptions parse(Arguments args, SettingsStore settingsStore) {
@@ -47,7 +52,9 @@ public record RunnerOptions(String slug, Integer tokenId, boolean skipVersionChe
                     getWinePrefix(useClientAsPrefix, settingsStore)),
                 new ProtonOptions(
                     settingsStore.getBoolean(PROTON_USE_WINED3D, false),
-                    settingsStore.getBoolean(PROTON_ENABLE_WAYLAND, false))));
+                    settingsStore.getBoolean(PROTON_ENABLE_WAYLAND, false)),
+                new WineOptions(
+                    CursorSize.read(settingsStore))));
     }
 
     private static boolean getMangoHud(Arguments args, SettingsStore settingsStore) {

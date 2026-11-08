@@ -14,6 +14,8 @@ public record InMemorySettingsStore(Map<String, String> values) implements Setti
     public static final String CACHE_AUTO_CLEAR_KEY = "cache.auto-clear";
     public static final String CACHE_RETENTION_DAYS_KEY = "cache.retention-days";
 
+    public static final String CURSOR_SIZE_KEY = "linux.wine.cursor-size";
+
     public InMemorySettingsStore(Map<String, String> values) {
         this.values = new HashMap<>(values);
     }

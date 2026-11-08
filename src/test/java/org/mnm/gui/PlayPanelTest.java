@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mnm.client.RunnerOptions;
 import org.mnm.client.RunnerOptions.LinuxOptions;
 import org.mnm.config.Client;
+import org.mnm.config.CursorSize;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mnm.ApiServerStubs.TEST_SLUG;
@@ -38,7 +39,7 @@ class PlayPanelTest {
         PlayPanel playPanel = new PlayPanel(options -> {
             optionSupplied.set(options.slug());
             actionPerformed.set(true);
-        }, () -> new RunnerOptions(randomSlug, null, false, new LinuxOptions(false, false, null, new RunnerOptions.ProtonOptions(false, false))));
+        }, () -> new RunnerOptions(randomSlug, null, false, new LinuxOptions(false, false, null, new RunnerOptions.ProtonOptions(false, false), new RunnerOptions.WineOptions(CursorSize.DEFAULT))));
         play = getButton(playPanel, "play");
 
         play.setEnabled(true);

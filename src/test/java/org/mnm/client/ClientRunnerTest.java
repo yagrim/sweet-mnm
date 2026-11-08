@@ -1,5 +1,7 @@
 package org.mnm.client;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import org.mockito.Mockito;
 import org.mnm.client.RunnerOptions.LinuxOptions;
 import org.mnm.client.RunnerOptions.UmuOptions;
 import org.mnm.config.Client;
+import org.mnm.config.CursorSize;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
@@ -27,6 +30,7 @@ import static org.mnm.client.LinuxOptionsTestFactory.defaultLinuxOptions;
 import static org.mnm.client.LinuxOptionsTestFactory.linuxOptions;
 import static org.mnm.client.LinuxOptionsTestFactory.protonOptions;
 import static org.mnm.client.LinuxOptionsTestFactory.umuOptions;
+import static org.mnm.client.LinuxOptionsTestFactory.wineOptions;
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -206,12 +210,25 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
 
-        var linuxOptions = new LinuxOptions(true, true, null, protonOptions(false, false));
+        var linuxOptions = new LinuxOptions(true, true, null, protonOptions(false, false), wineOptions(CursorSize.DEFAULT));
         var options = new RunnerOptions(null, null, true, linuxOptions);
 
         assertThatThrownBy(() -> runClient(installPath, token, false, options))
             .isInstanceOfAny(NullPointerException.class)
             .hasMessage("linuxOptions.umuOptions cannot be null");
+    }
+
+    @Test
+    void shouldFailWhenWineOptionsAreNull(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+
+        var linuxOptions = new LinuxOptions(false, true, umuOptions(), protonOptions(false, false), null);
+        var options = new RunnerOptions(null, null, true, linuxOptions);
+
+        assertThatThrownBy(() -> runClient(installPath, token, false, options))
+            .isInstanceOfAny(NullPointerException.class)
+            .hasMessage("linuxOptions.wineOptions cannot be null");
     }
 
     @Test
@@ -284,7 +301,7 @@ class ClientRunnerTest {
         Path installPath = tempDir.resolve("install");
         String token = validToken();
         var options = new RunnerOptions(null, null, true,
-            new LinuxOptions(false, true, umuOptions(), protonOptions(true, true)));
+            new LinuxOptions(false, true, umuOptions(), protonOptions(true, true), wineOptions(CursorSize.DEFAULT)));
 
         var result = runClient(installPath, token, false, options);
 
@@ -404,6 +421,78 @@ class ClientRunnerTest {
                 "PROTONPATH", "GE-Proton",
                 "WINEPREFIX", clientRelativeWinePrefix(installPath)
             ));
+    }
+
+    @Test
+    void shouldSetLogPixelsInWinePrefixForLinuxClient(@TempDir Path tempDir) throws IOException {
+        Path installPath = tempDir.resolve("install");
+        Path systemReg = writeSystemReg(Path.of(clientRelativeWinePrefix(installPath)));
+        var options = new RunnerOptions(null, null, true,
+            new LinuxOptions(false, true, umuOptions(), protonOptions(false, false), wineOptions(CursorSize.SCALE_200)));
+
+        runClient(installPath, validToken(), false, options);
+
+        assertThat(Files.readString(systemReg)).isEqualTo(SYSTEM_REG.replace("00000060", "000000c0"));
+    }
+
+    @Test
+    void shouldNotChangeWinePrefixWhenCursorSizeIsDefault(@TempDir Path tempDir) throws IOException {
+        Path installPath = tempDir.resolve("install");
+        Path systemReg = writeSystemReg(Path.of(clientRelativeWinePrefix(installPath)));
+        var options = new RunnerOptions(null, null, true, defaultLinuxOptions());
+
+        runClient(installPath, validToken(), false, options);
+
+        assertThat(Files.readString(systemReg)).isEqualTo(SYSTEM_REG);
+        assertThat(systemReg.resolveSibling("system.reg.sweet-backup")).doesNotExist();
+    }
+
+    @Test
+    void shouldRestoreOriginalSystemRegWhenCursorSizeIsDefault(@TempDir Path tempDir) throws IOException {
+        Path installPath = tempDir.resolve("install");
+        Path systemReg = writeSystemReg(Path.of(clientRelativeWinePrefix(installPath)));
+        runClient(installPath, validToken(), false, new RunnerOptions(null, null, true,
+            new LinuxOptions(false, true, umuOptions(), protonOptions(false, false), wineOptions(CursorSize.SCALE_200))));
+
+        runClient(installPath, validToken(), false, new RunnerOptions(null, null, true, defaultLinuxOptions()));
+
+        assertThat(Files.readString(systemReg)).isEqualTo(SYSTEM_REG);
+        assertThat(systemReg.resolveSibling("system.reg.sweet-backup")).doesNotExist();
+    }
+
+    @Test
+    void shouldNotChangeWinePrefixOnWindows(@TempDir Path tempDir) throws IOException {
+        Path installPath = tempDir.resolve("install");
+        Path systemReg = writeSystemReg(Path.of(clientRelativeWinePrefix(installPath)));
+        var options = new RunnerOptions(null, null, true,
+            new LinuxOptions(false, true, umuOptions(), protonOptions(false, false), wineOptions(CursorSize.SCALE_200)));
+
+        runClient(installPath, validToken(), true, options);
+
+        assertThat(Files.readString(systemReg)).isEqualTo(SYSTEM_REG);
+    }
+
+    @Test
+    void shouldRunLinuxClientWhenWinePrefixDoesNotExist(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        var options = new RunnerOptions(null, null, true,
+            new LinuxOptions(false, true, umuOptions(), protonOptions(false, false), wineOptions(CursorSize.SCALE_200)));
+
+        var result = runClient(installPath, validToken(), false, options);
+
+        assertThat(result.command).isNotNull();
+        assertThat(Path.of(clientRelativeWinePrefix(installPath))).doesNotExist();
+    }
+
+    private static final String SYSTEM_REG = """
+        WINE REGISTRY Version 2
+        [System\\CurrentControlSet\\Hardware Profiles\\Current\\Software\\Fonts] 1700000000
+        "LogPixels"=dword:00000060
+        """;
+
+    private static Path writeSystemReg(Path winePrefix) throws IOException {
+        Files.createDirectories(winePrefix);
+        return Files.writeString(winePrefix.resolve("system.reg"), SYSTEM_REG);
     }
 
     // defaults to client path if prefix is null

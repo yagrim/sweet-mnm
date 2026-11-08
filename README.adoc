@@ -50,7 +50,7 @@ For the pros and cons of each build and a step-by-step guide, see link:docs/choo
 . Extract all files where you want to install the game client.
 . Run `./sweet gui`.
 . Log in and install the client (see <<first-start>>).
-. (Optional) Under "Options", configure MangoHud, the UMU options (GameId, ProtonPath, WinePrefix) and the Proton settings.
+. (Optional) Under "Options", configure MangoHud, the UMU options (GameId, ProtonPath, WinePrefix), the cursor size and the Proton settings.
 
 TIP: After the client is installed, Sweet saves its path.
 Add `sweet` to your `PATH` to run `sweet gui` from any location.

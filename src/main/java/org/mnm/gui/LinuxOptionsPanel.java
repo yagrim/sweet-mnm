@@ -4,8 +4,10 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import java.util.List;
 import java.util.function.Supplier;
 
+import org.mnm.config.CursorSize;
 import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
 
@@ -29,6 +31,7 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
     private final TextOption umuGameId;
     private final TextOption umuProtonPath;
     private final TextOption umuWinePrefix;
+    private final ComboBoxOption<CursorSize> cursorSizeSelector;
 
     private final SettingsStore settingsStore;
 
@@ -55,6 +58,14 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
         addLinuxComponent(umuProtonPath);
         addLinuxComponent(useClientAsPrefix);
         addLinuxComponent(umuWinePrefix);
+
+        cursorSizeSelector = new ComboBoxOption<>("Cursor size",
+            List.of(CursorSize.values()),
+            CursorSize.read(this.settingsStore),
+            size -> CursorSize.save(this.settingsStore, size));
+        cursorSizeSelector.getComboBox().setToolTipText(
+            "Sets LogPixels (DPI) in system.reg of the WinePrefix. This also changes the size of some game UI elements");
+        addLinuxComponent(cursorSizeSelector);
 
         protonVariables = new JButton("Proton settings");
         protonVariables.addActionListener(_ -> {
@@ -95,6 +106,10 @@ public class LinuxOptionsPanel extends BaseOptionsPanel {
 
     public String getUmuWinePrefix() {
         return umuWinePrefix.getText();
+    }
+
+    public CursorSize getCursorSize() {
+        return (CursorSize) cursorSizeSelector.getComboBox().getSelectedItem();
     }
 
     public boolean isProtonUseWined3dEnabled() {

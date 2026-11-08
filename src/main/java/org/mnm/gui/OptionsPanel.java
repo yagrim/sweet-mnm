@@ -35,7 +35,8 @@ class OptionsPanel extends JPanel {
         return new RunnerOptions(slug, null, true,
             new RunnerOptions.LinuxOptions(linuxPanel.isMangoHudEnabled(), linuxPanel.isUseClientAsPrefix(),
                 new RunnerOptions.UmuOptions(linuxPanel.getUmuGameId(), linuxPanel.getUmuProtonPath(), linuxPanel.getUmuWinePrefix()),
-                new RunnerOptions.ProtonOptions(linuxPanel.isProtonUseWined3dEnabled(), linuxPanel.isProtonWaylandEnabled()))
+                new RunnerOptions.ProtonOptions(linuxPanel.isProtonUseWined3dEnabled(), linuxPanel.isProtonWaylandEnabled()),
+                new RunnerOptions.WineOptions(linuxPanel.getCursorSize()))
         );
     }
 
