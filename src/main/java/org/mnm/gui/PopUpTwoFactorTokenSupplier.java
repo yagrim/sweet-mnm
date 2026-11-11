@@ -101,7 +101,7 @@ public class PopUpTwoFactorTokenSupplier implements TokenSupplier {
                 JButton resendButton = new JButton("Resend email code");
                 codePanel.add(Box.createHorizontalStrut(SCALE * 3));
                 codePanel.add(resendButton);
-                resendButton.addActionListener(e -> {
+                resendButton.addActionListener(_ -> {
                     try {
                         apiConnector.resendVerificationCode(challengeToken, method);
                         setInfoMessage("Verification code sent");

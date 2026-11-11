@@ -131,8 +131,46 @@ Possible outcomes:
 }
 ----
 
-At this point the server has already sent a verification code using `method`.
+`methods` lists all the methods that the account accepts.
+`method` is the method that the server selected.
 `challenge_token` identifies the pending login and expires after `expires_in` seconds.
+
+Known methods:
+
+The *Resend* column tells if the client can ask the server to send a new code with `POST account/login/2fa/{method}` (see <<resend-2fa-code>>).
+This is possible only when the server makes and sends the code.
+When the code comes from the user (an authenticator app or a saved backup code), the server has nothing to send.
+
+[cols="1,3,1"]
+|===
+|Method |Source of the code |Resend
+
+|`email`
+|The server sends the code by email when it returns this response.
+|Yes
+
+|`totp`
+|An authenticator app on the user device generates the code. The server sends nothing.
+|No
+
+|`backup`
+|One of the backup codes that the user saved when 2FA was set up.
+|No
+|===
+
+.2FA required with an authenticator app (`method=totp`)
+[,json]
+----
+{
+  "error": "Two-factor authentication required. Update your launcher if no verification prompt appears.",
+  "code": "two_factor_required",
+  "status": 6,
+  "methods": ["email", "totp", "backup"],
+  "method": "totp",
+  "challenge_token": "my-challenge-token",
+  "expires_in": 300
+}
+----
 
 .Invalid credentials
 [,json]
@@ -185,6 +223,7 @@ curl -s -X POST "$API/account/login/2fa" \
 
 This call uses `parseResponse`, so both a non-200 HTTP status and a non-zero `status` are errors.
 
+[[resend-2fa-code]]
 === 3. Resend 2FA code: `POST account/login/2fa/{method}`
 
 `ApiConnector.resendVerificationCode(challengeToken, method)`
@@ -202,6 +241,9 @@ curl -s -X POST "$API/account/login/2fa/email" \
 ----
 
 WARNING: Success is reported with `status=6`, so this call is validated only by HTTP status (`parseLoginResponse`).
+
+Only `email` is accepted, because it is the only method where the server sends the code.
+For other methods (`totp`, `backup`, unknown) `ApiConnector` throws `IllegalArgumentException` and does not call the server.
 
 === 4. Game versions: `GET game/versions?token=...`
 

@@ -13,6 +13,9 @@ public class ApiConnector {
 
     private static final Integer API_VERSION = 21;
 
+    // Only email codes are sent by the server. TOTP and backup codes are not, thus there is nothing to resend.
+    private static final String RESENDABLE_METHOD = "email";
+
     public ApiConnector(RestClient restConnector) {
         this.restClient = restConnector;
     }
@@ -55,6 +58,9 @@ public class ApiConnector {
     }
 
     public void resendVerificationCode(String challengeToken, String method) {
+        if (!RESENDABLE_METHOD.equals(method)) {
+            throw new IllegalArgumentException("Cannot resend verification code for method: " + method);
+        }
         ApiResponse response = restClient.post("account/login/2fa/" + method, Map.of("challenge_token", challengeToken));
         // Beware! Success is reported as status=6
         parseLoginResponse(response);
