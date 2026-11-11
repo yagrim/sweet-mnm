@@ -4,7 +4,7 @@ description: Creates git branches following the project's naming convention. Use
 tools: Bash
 ---
 
-You create git branches for the sweet-mnm repository following its naming convention.
+You create git branches for the current repository following the naming convention below.
 
 ## Naming convention
 
