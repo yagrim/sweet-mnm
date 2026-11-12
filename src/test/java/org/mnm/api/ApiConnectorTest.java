@@ -1,11 +1,15 @@
 package org.mnm.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import org.mnm.TestUtils;
@@ -84,6 +88,131 @@ class ApiConnectorTest {
             });
 
             assertThat(connection.isActive()).isTrue();
+        }
+
+        @Test
+        void should_login_successfully_with_totp() {
+            final String username = "username";
+            final String password = "password";
+            final String testToken = TestUtils.validToken();
+
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(new ApiResponse(200, Map.of(
+                    "error", "Two-factor authentication required. Update your launcher if no verification prompt appears.",
+                    "code", "two_factor_required",
+                    "status", 6L,
+                    "methods", List.of("email", "totp", "backup"),
+                    "method", "totp",
+                    "challenge_token", "my-challenge-token",
+                    "expires_in", 300L
+                )));
+            Mockito.when(restConnector.post(Mockito.eq("account/login/2fa"), anyMap()))
+                .thenReturn(new ApiResponse(200, Map.of("status", 0L, "token", testToken)));
+
+            ApiConnection connection = apiConnector.login(username, password, (method, methods, challengeToken) -> {
+                assertThat(method).isEqualTo("totp");
+                assertThat(methods).containsExactly("email", "totp", "backup");
+                assertThat(challengeToken).isEqualTo("my-challenge-token");
+                return apiConnector.twoFactorAuthentication(method, "123456", challengeToken);
+            });
+
+            assertThat(connection.isActive()).isTrue();
+            Mockito.verify(restConnector).post("account/login/2fa", Map.of(
+                "method", "totp",
+                "code", "123456",
+                "challenge_token", "my-challenge-token"
+            ));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"sms", ""})
+        void should_fail_with_unsupported_method(String method) {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", method, "methods", List.of("email"))));
+
+            Throwable t = catchThrowable(() -> apiConnector.login("username", "password", failingTokenSupplier()));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unsupported authentication method: " + method);
+        }
+
+        @Test
+        void should_fail_without_method() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("methods", List.of("email"))));
+
+            Throwable t = catchThrowable(() -> apiConnector.login("username", "password", failingTokenSupplier()));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unsupported authentication method: null");
+        }
+
+        @Test
+        void should_give_only_supported_methods_to_token_supplier() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", "totp", "methods", List.of("email", "sms", "totp"))));
+            List<String> received = new ArrayList<>();
+
+            apiConnector.login("username", "password", (method, methods, challengeToken) -> {
+                received.addAll(methods);
+                return TestUtils.validToken();
+            });
+
+            assertThat(received).containsExactly("email", "totp");
+        }
+
+        @Test
+        void should_give_empty_methods_to_token_supplier_when_server_sends_none() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", "email")));
+            List<String> received = new ArrayList<>(List.of("not-called"));
+
+            apiConnector.login("username", "password", (method, methods, challengeToken) -> {
+                received.clear();
+                received.addAll(methods);
+                return TestUtils.validToken();
+            });
+
+            assertThat(received).isEmpty();
+        }
+
+        private static ApiResponse twoFactorRequired(Map<String, Object> methodFields) {
+            Map<String, Object> body = new HashMap<>(Map.of(
+                "code", "two_factor_required",
+                "status", 6L,
+                "challenge_token", "my-challenge-token"
+            ));
+            body.putAll(methodFields);
+            return new ApiResponse(200, body);
+        }
+
+        private static TokenSupplier failingTokenSupplier() {
+            return (method, methods, challengeToken) -> {
+                throw new AssertionError("TokenSupplier must not be called");
+            };
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"totp", "backup", "unknown"})
+        void should_not_resend_code_for_not_resendable_method(String method) {
+            Throwable t = catchThrowable(() -> apiConnector.resendVerificationCode("my-challenge-token", method));
+
+            assertThat(t)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Cannot resend verification code for method: " + method);
+            Mockito.verifyNoInteractions(restConnector);
+        }
+
+        @Test
+        void should_resend_code_for_email() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login/2fa/email"), anyMap()))
+                .thenReturn(new ApiResponse(200, Map.of("status", 6L)));
+
+            apiConnector.resendVerificationCode("my-challenge-token", "email");
+
+            Mockito.verify(restConnector).post("account/login/2fa/email", Map.of("challenge_token", "my-challenge-token"));
         }
 
         @Test
