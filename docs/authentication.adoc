@@ -313,6 +313,7 @@ Response contains a `games` object keyed by id, each entry with `dir`, `name`, `
 
 link:../scripts/api_login.sh[`scripts/api_login.sh`] runs the whole workflow (requires `curl` and `jq`).
 Set `API` to target a different endpoint.
+Set `EMAIL` and `PASSWORD` to skip the prompts for these values.
 
 [,bash]
 ----
