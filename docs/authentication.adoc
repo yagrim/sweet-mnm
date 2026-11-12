@@ -182,6 +182,9 @@ Handling in code:
 
 * `status == 0` → use `token`.
 * `status == 6` and `code == "two_factor_required"` → call `TokenSupplier.getToken(method, methods, challenge_token)`.
+`ApiConnector` supports only `email`, `totp` and `backup`.
+If `method` is not one of them, it throws `Unsupported authentication method` and does not call the `TokenSupplier`.
+It also removes unsupported methods from `methods`, thus the CLI and the GUI receive only supported methods.
 * Anything else → `ApiException`.
 
 === 2. Submit 2FA code: `POST account/login/2fa`
@@ -190,9 +193,12 @@ Handling in code:
 
 Called from the `TokenSupplier` implementations once the user enters the code:
 
-* CLI (`CliTwoFactorTokenSupplier`): prompts `Code:` on stdin.
-Only `email` is supported, anything else throws.
+* CLI (`CliTwoFactorTokenSupplier`): shows the instructions for the method and prompts `Code:` on stdin.
+The CLI always uses the method that the server selected.
 * GUI (`PopUpTwoFactorTokenSupplier`): modal dialog; on error the dialog stays open and shows the `error` message so the user can retry.
+When `methods` has more than one method, the dialog shows a combo box to select a different method.
+The dialog sends the selected method in the request.
+For `totp`, the code field accepts only digits, maximum 6.
 
 [,bash,subs="+attributes"]
 ----
@@ -229,6 +235,8 @@ This call uses `parseResponse`, so both a non-200 HTTP status and a non-zero `st
 `ApiConnector.resendVerificationCode(challengeToken, method)`
 
 Only used by the GUI ("Resend email code" button).
+The button shows only when the selected method is `email`.
+If the user selects `email` in the combo box, the user must click this button to get a code, because the GUI does not send a request automatically.
 The method is part of the path.
 
 [,bash,subs="+attributes"]

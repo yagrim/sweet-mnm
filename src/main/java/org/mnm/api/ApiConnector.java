@@ -2,6 +2,7 @@ package org.mnm.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.mnm.api.ApiHelper.exception;
 import static org.mnm.api.ApiHelper.parseLoginResponse;
@@ -13,8 +14,8 @@ public class ApiConnector {
 
     private static final Integer API_VERSION = 21;
 
-    // Only email codes are sent by the server. TOTP and backup codes are not, thus there is nothing to resend.
     private static final String RESENDABLE_METHOD = "email";
+    private static final List<String> SUPPORTED_METHODS = List.of("email", "totp", "backup");
 
     public ApiConnector(RestClient restConnector) {
         this.restClient = restConnector;
@@ -47,10 +48,19 @@ public class ApiConnector {
     }
 
     private String handleTwoFactorAuthentication(ApiResponse response, TokenSupplier tokenSupplier) {
-        String method = response.get("method");
-        List<String> methods = response.getList("methods");
-        String challengeToken = response.get("challenge_token").toString();
+        String method = (String) response.body().get("method");
+        if (!isSupported(method)) {
+            throw new RuntimeException("Unsupported authentication method: " + method);
+        }
+        List<String> methods = Optional.ofNullable(response.getList("methods")).orElse(List.of()).stream()
+            .filter(ApiConnector::isSupported)
+            .toList();
+        String challengeToken = response.get("challenge_token");
         return tokenSupplier.getToken(method, methods, challengeToken);
+    }
+
+    private static boolean isSupported(String method) {
+        return method != null && SUPPORTED_METHODS.contains(method);
     }
 
     public ApiConnection login(String token) {

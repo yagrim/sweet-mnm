@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import org.mnm.ApiServerStubs;
@@ -16,7 +18,6 @@ import org.mnm.api.RestClient;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mnm.ApiServerStubs.stubInvalidCode;
 import static org.mnm.ApiServerStubs.stubTooManyRequests;
 
@@ -26,30 +27,22 @@ class CliTwoFactorTokenSupplierTest {
     private static final String METHOD = "email";
 
 
-    @Test
-    void shouldValidateCodeAndReturnToken(WireMockRuntimeInfo wiremock) {
+    @ParameterizedTest
+    @ValueSource(strings = {"email", "totp", "backup"})
+    void shouldValidateCodeAndReturnToken(String method, WireMockRuntimeInfo wiremock) {
         final String challengeToken = "1234567890";
         final String code = "122333";
         final String expectedToken = TestUtils.validToken();
-        ApiServerStubs.stubTwoFactorAuthentication(METHOD, challengeToken, code, expectedToken);
+        ApiServerStubs.stubTwoFactorAuthentication(method, challengeToken, code, expectedToken);
         LineReader mockLineReader = Mockito.mock(LineReader.class);
         Mockito.when(mockLineReader.readLine()).thenReturn(code);
 
         final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
         final CliTwoFactorTokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(apiConnector, mockLineReader);
 
-        String actualToken = tokenSupplier.getToken(METHOD, emptyList(), challengeToken);
+        String actualToken = tokenSupplier.getToken(method, emptyList(), challengeToken);
 
         assertThat(actualToken).isEqualTo(expectedToken);
-    }
-
-    @Test
-    void shouldFailWithUnsupportedMethod() {
-        final CliTwoFactorTokenSupplier tokenSupplier = new CliTwoFactorTokenSupplier(null, null);
-
-        assertThatThrownBy(() -> tokenSupplier.getToken("other", emptyList(), ""))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Unsupported authentication method: other");
     }
 
     @Test

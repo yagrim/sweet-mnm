@@ -1,5 +1,7 @@
 package org.mnm.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +122,76 @@ class ApiConnectorTest {
                 "code", "123456",
                 "challenge_token", "my-challenge-token"
             ));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"sms", ""})
+        void should_fail_with_unsupported_method(String method) {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", method, "methods", List.of("email"))));
+
+            Throwable t = catchThrowable(() -> apiConnector.login("username", "password", failingTokenSupplier()));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unsupported authentication method: " + method);
+        }
+
+        @Test
+        void should_fail_without_method() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("methods", List.of("email"))));
+
+            Throwable t = catchThrowable(() -> apiConnector.login("username", "password", failingTokenSupplier()));
+
+            assertThat(t)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unsupported authentication method: null");
+        }
+
+        @Test
+        void should_give_only_supported_methods_to_token_supplier() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", "totp", "methods", List.of("email", "sms", "totp"))));
+            List<String> received = new ArrayList<>();
+
+            apiConnector.login("username", "password", (method, methods, challengeToken) -> {
+                received.addAll(methods);
+                return TestUtils.validToken();
+            });
+
+            assertThat(received).containsExactly("email", "totp");
+        }
+
+        @Test
+        void should_give_empty_methods_to_token_supplier_when_server_sends_none() {
+            Mockito.when(restConnector.post(Mockito.eq("account/login"), anyMap()))
+                .thenReturn(twoFactorRequired(Map.of("method", "email")));
+            List<String> received = new ArrayList<>(List.of("not-called"));
+
+            apiConnector.login("username", "password", (method, methods, challengeToken) -> {
+                received.clear();
+                received.addAll(methods);
+                return TestUtils.validToken();
+            });
+
+            assertThat(received).isEmpty();
+        }
+
+        private static ApiResponse twoFactorRequired(Map<String, Object> methodFields) {
+            Map<String, Object> body = new HashMap<>(Map.of(
+                "code", "two_factor_required",
+                "status", 6L,
+                "challenge_token", "my-challenge-token"
+            ));
+            body.putAll(methodFields);
+            return new ApiResponse(200, body);
+        }
+
+        private static TokenSupplier failingTokenSupplier() {
+            return (method, methods, challengeToken) -> {
+                throw new AssertionError("TokenSupplier must not be called");
+            };
         }
 
         @ParameterizedTest
