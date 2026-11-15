@@ -8,14 +8,11 @@ import javax.swing.SwingUtilities;
 import java.awt.Container;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.mnm.LoggerHandler;
-import org.mnm.client.CacheHandler;
-import org.mnm.client.Installation;
-import org.mnm.config.Client;
+import org.mnm.cache.CacheHandler;
 import org.mnm.config.OS;
 import org.mnm.config.SettingsStore;
 import org.mnm.events.CacheListener;
@@ -49,6 +46,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private final ComboBoxOption<Integer> cacheRetentionSelector;
 
     private final CredentialsHandler credentialsHandler;
+    private final CacheHandler cacheHandler;
 
     private final boolean skipUIWarnings;
 
@@ -59,6 +57,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
                                CacheHandler cacheHandler, Container parent) {
         super("General");
         this.credentialsHandler = credentialsHandler;
+        this.cacheHandler = cacheHandler;
         skipUIWarnings = settingsStore.getBoolean(SKIP_UI_WARNINGS, false);
 
         debugOption = new CheckboxOption("Enable debug", settingsStore, DEBUG_KEY, false);
@@ -163,8 +162,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private void refreshClearCache() {
         long folderSize = 0;
         if (clientStatus != null && clientStatus.client() != null) {
-            final Path downloadsPath = getDownloadsPath(clientStatus.client());
-            folderSize = FileUtils.getFolderSize(downloadsPath);
+            folderSize = cacheHandler.getSize();
         }
         String size = folderSize == 0 ? "empty" : FileUtils.humanReadableSize(folderSize);
         clearCache.setEnabled(clientStatus != null && folderSize > 0);
@@ -175,17 +173,12 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         return inMemoryHashingOption.isSelected();
     }
 
-    private static Path getDownloadsPath(Client client) {
-        return new Installation(client.path(), client.slug()).getDownloadsPath();
-    }
-
     // This is quick enough, we don't bother running async and disabling button in the meantime
     private void handleClearCache(Container parent, JButton clearCache) {
         final int result = ConfirmationDialog.showConfirmationDialog(parent, "Clear download cache", "Delete all temporal downloads cache?");
         if (result == JOptionPane.OK_OPTION) {
             try {
-                final Path downloadsPath = getDownloadsPath(clientStatus.client());
-                FileUtils.deleteFolder(downloadsPath);
+                cacheHandler.clear();
                 clearCache.setText("Clear cache (empty)");
             } catch (IOException e) {
                 throw new UncheckedIOException(e.getMessage(), e);

@@ -16,7 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheHandler;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDbSettingsStore;
 import org.mnm.config.SettingsStore;
@@ -34,6 +34,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 class GeneralOptionsPanelTest {
+
+    @TempDir
+    Path globalDir;
 
     @Test
     void shouldRestorePersistedOptions() {
@@ -90,8 +93,8 @@ class GeneralOptionsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
         CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
         credentialsHandler.saveStoreCredentials(true);
-        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings), new JPanel());
-        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
+        Path downloadsPath = Files.createDirectories(globalDir.resolve("downloads"));
         Files.writeString(downloadsPath.resolve("cache"), "cache");
         Client client = new Client("test", "1.0.0", Client.Status.UPDATED, tempDir);
 
@@ -108,8 +111,8 @@ class GeneralOptionsPanelTest {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
         CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
         credentialsHandler.saveStoreCredentials(true);
-        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings), new JPanel());
-        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
+        Path downloadsPath = Files.createDirectories(globalDir.resolve("downloads"));
         Files.writeString(downloadsPath.resolve("cache"), "cache");
         panel.refresh(new ClientStatus(new Client("test", "1.0.0", Client.Status.UPDATED, tempDir), false, null));
         assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
@@ -135,7 +138,7 @@ class GeneralOptionsPanelTest {
             clearCacheButton.doClick();
         }
 
-        assertThat(tempDir.resolve("downloads").resolve("cache")).doesNotExist();
+        assertThat(globalDir.resolve("downloads").resolve("cache")).doesNotExist();
         assertThat(clearCacheButton.isEnabled()).isFalse();
         assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (empty)");
     }
@@ -143,7 +146,7 @@ class GeneralOptionsPanelTest {
     @Test
     void shouldDeleteManifestFilesWhenClearCache(@TempDir Path tempDir) throws IOException {
         GeneralOptionsPanel panel = panelWithCache(tempDir);
-        Path manifest = tempDir.resolve("downloads").resolve("65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest");
+        Path manifest = globalDir.resolve("downloads").resolve("65ab2c20cf879a5a25ea4212df4f6774ef96774e.manifest");
         Files.writeString(manifest, "manifest");
         JButton clearCacheButton = button(panel, "clearCache");
 
@@ -169,7 +172,7 @@ class GeneralOptionsPanelTest {
                 .thenReturn(JOptionPane.OK_OPTION);
             // Deletes the file and then fails, to simulate a partial delete
             fileUtilsMock.when(() -> FileUtils.deleteFolder(any())).thenAnswer(invocation -> {
-                Files.delete(tempDir.resolve("downloads").resolve("cache"));
+                Files.delete(globalDir.resolve("downloads").resolve("cache"));
                 throw new IOException("Access denied");
             });
 
@@ -259,7 +262,7 @@ class GeneralOptionsPanelTest {
     @Test
     void shouldApplySavedFontSizeOnlyWhenOptionsPanelIsCreated() {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(OPTIONS_FONT_SCALING_KEY, "16"));
-        OptionsPanel optionsPanel = new OptionsPanel(null, settings, new CredentialsHandler(settings), new CacheHandler(settings));
+        OptionsPanel optionsPanel = new OptionsPanel(null, settings, new CredentialsHandler(settings), new CacheHandler(settings, globalDir.resolve("downloads")));
         GeneralOptionsPanel generalPanel = (GeneralOptionsPanel) ReflectionTestTools.get(optionsPanel, "generalPanel");
 
         assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
@@ -270,18 +273,18 @@ class GeneralOptionsPanelTest {
         assertThat(generalPanel.getFont().getSize2D()).isEqualTo(12f);
     }
 
-    private static GeneralOptionsPanel panel(SettingsStore settings) {
-        return new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new CacheHandler(settings), new JPanel());
+    private GeneralOptionsPanel panel(SettingsStore settings) {
+        return new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
     }
 
     private static JCheckBox option(GeneralOptionsPanel panel, String fieldName) {
         return (JCheckBox) ReflectionTestTools.get(panel, fieldName);
     }
 
-    private static GeneralOptionsPanel panelWithCache(Path tempDir) throws IOException {
+    private GeneralOptionsPanel panelWithCache(Path tempDir) throws IOException {
         InMemorySettingsStore settings = new InMemorySettingsStore(Map.of(SKIP_UI_WARNINGS, "true"));
-        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new CacheHandler(settings), new JPanel());
-        Path downloadsPath = Files.createDirectories(tempDir.resolve("downloads"));
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, new CredentialsHandler(settings), new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
+        Path downloadsPath = Files.createDirectories(globalDir.resolve("downloads"));
         Files.writeString(downloadsPath.resolve("cache"), "cache");
         Client client = new Client("test", "1.0.0", Client.Status.UPDATED, tempDir);
         panel.refresh(new ClientStatus(client, false, null));

@@ -139,7 +139,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("install-selected-slug.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions("username", "password", TEST_SLUG, xxhsum);
 
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
@@ -175,7 +175,7 @@ class ClientInstallerTest {
         final Path dbFile = tempDir.resolve("install-default-slug.db");
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
 
             installer.install(options, tempDir, INSTALLING, null);
@@ -200,7 +200,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, xxhsum);
 
             installer.install(options, tempDir, INSTALLING, null);
@@ -231,7 +231,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(httpBaseUrl));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
 
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
@@ -270,7 +270,7 @@ class ClientInstallerTest {
             configDb.addToken(new Token(TEST_SLUG, VALID_TOKEN));
 
             ApiConnector apiConnector = new ApiConnector(new RestClient(httpBaseUrl));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions("username", "password", null, xxhsum);
 
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
@@ -318,7 +318,7 @@ class ClientInstallerTest {
             assertThat(tempDir.resolve("downloads")).doesNotExist();
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions("username", "password", null, fileCheck);
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
 
@@ -345,7 +345,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
 
@@ -369,7 +369,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
 
@@ -393,7 +393,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
 
@@ -424,7 +424,7 @@ class ClientInstallerTest {
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
 
             final ApiConnector apiConnector = new ApiConnector(new RestClient(wiremock.getHttpBaseUrl()));
-            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector);
+            final ClientInstaller installer = new ClientInstaller(configDb, apiConnector, tempDir.resolve("downloads"));
             InstallerOptions options = new InstallerOptions(null, null, TEST_SLUG, fileCheck);
             InstallationResult result = installer.install(options, tempDir, INSTALLING, null);
 

@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.GridLayout;
 
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheHandler;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.SettingsStore;
 
