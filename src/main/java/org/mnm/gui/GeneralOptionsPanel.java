@@ -40,7 +40,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     private final JCheckBox hideCredentials;
     private final CheckboxOption autoClearCacheOption;
 
-    private final JButton deleteCredentials = new JButton("Delete login information");
+    private final JCheckBox storeCredentials = new JCheckBox("Remember login information");
     private final JButton clearCache = new JButton("Clear cache");
     private final ComboBoxOption<Float> uiScalingSelector;
     private final ComboBoxOption<Integer> cacheRetentionSelector;
@@ -93,8 +93,9 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         hideCredentials = new CheckboxOption("Hide credentials", settingsStore, HIDE_CREDENTIALS, false);
         hideCredentials.setToolTipText("aka. Streamer mode");
 
-        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
-        deleteCredentials.addActionListener(_ -> handleClearCredentials(parent));
+        storeCredentials.setToolTipText("WARNING: Password will be saved locally, use this at your own risk");
+        refreshStoreCredentials();
+        storeCredentials.addActionListener(_ -> handleClearCredentials(parent));
 
         uiScalingSelector = new ComboBoxOption<>("Font Scaling",
             uiScalingAvailableValues(),
@@ -109,7 +110,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
         this.add(debugOption);
         this.add(inMemoryHashingOption);
         this.add(hideCredentials);
-        this.add(deleteCredentials);
+        this.add(storeCredentials);
         this.add(Box.createVerticalStrut(SCALE));
         this.add(uiScalingSelector);
         this.add(Box.createVerticalStrut(SCALE));
@@ -156,7 +157,13 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
     public void refresh(ClientStatus clientStatus) {
         this.clientStatus = clientStatus;
         refreshClearCache();
-        deleteCredentials.setEnabled(credentialsHandler.isStoreCredentials());
+        refreshStoreCredentials();
+    }
+
+    private void refreshStoreCredentials() {
+        boolean stored = credentialsHandler.isStoreCredentials();
+        storeCredentials.setSelected(stored);
+        storeCredentials.setEnabled(stored);
     }
 
     private void refreshClearCache() {
@@ -194,6 +201,7 @@ public class GeneralOptionsPanel extends BaseOptionsPanel
             credentialsHandler.clearCredentials();
             ClientEventHandler.getInstance().refresh(clientStatus);
         }
+        refreshStoreCredentials();
     }
 
 }
