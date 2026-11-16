@@ -41,7 +41,7 @@ public class Environment {
 
     // Global download cache. All clients share it.
     public static Path getDownloadsLocation() {
-        return getSweetConfigLocation().resolve("downloads");
+        return getSweetConfigLocation().resolve("cache");
     }
 
 }
