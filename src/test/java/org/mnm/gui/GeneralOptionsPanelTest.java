@@ -13,6 +13,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -103,7 +106,7 @@ class GeneralOptionsPanelTest {
         JButton clearCacheButton = button(panel, "clearCache");
         assertThat(clearCacheButton.isEnabled()).isTrue();
         assertThat(clearCacheButton.getText()).isEqualTo("Clear cache (5 B)");
-        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+        assertThat(option(panel, "storeCredentials").isEnabled()).isTrue();
     }
 
     @Test
@@ -115,7 +118,7 @@ class GeneralOptionsPanelTest {
         Path downloadsPath = Files.createDirectories(globalDir.resolve("downloads"));
         Files.writeString(downloadsPath.resolve("cache"), "cache");
         panel.refresh(new ClientStatus(new Client("test", "1.0.0", Client.Status.UPDATED, tempDir), false, null));
-        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+        assertThat(option(panel, "storeCredentials").isEnabled()).isTrue();
 
         credentialsHandler.saveStoreCredentials(false);
         Files.delete(downloadsPath.resolve("cache"));
@@ -123,7 +126,46 @@ class GeneralOptionsPanelTest {
 
         assertThat(button(panel, "clearCache").getText()).isEqualTo("Clear cache (empty)");
         assertThat(button(panel, "clearCache").isEnabled()).isFalse();
-        assertThat(button(panel, "deleteCredentials").isEnabled()).isTrue();
+        assertThat(option(panel, "storeCredentials").isEnabled()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldShowStoreCredentialsCheckboxAccordingToStoredSetting(boolean stored) {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
+        credentialsHandler.saveStoreCredentials(stored);
+
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
+
+        JCheckBox checkbox = option(panel, "storeCredentials");
+        assertThat(checkbox.getText()).isEqualTo("Remember login information");
+        assertThat(checkbox.isSelected()).isEqualTo(stored);
+        assertThat(checkbox.isEnabled()).isEqualTo(stored);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0, false",
+        "2, true"
+    })
+    void shouldDeleteCredentialsOnlyWhenUserConfirmsAfterClickingStoreCredentialsCheckbox(int dialogResult, boolean expectedStored) {
+        InMemorySettingsStore settings = new InMemorySettingsStore(Map.of());
+        CredentialsHandler credentialsHandler = new CredentialsHandler(settings);
+        credentialsHandler.saveStoreCredentials(true);
+        GeneralOptionsPanel panel = new GeneralOptionsPanel(settings, credentialsHandler, new CacheHandler(settings, globalDir.resolve("downloads")), new JPanel());
+        JCheckBox checkbox = option(panel, "storeCredentials");
+
+        try (MockedStatic<ConfirmationDialog> dialogMock = Mockito.mockStatic(ConfirmationDialog.class)) {
+            dialogMock.when(() -> ConfirmationDialog.showConfirmationDialog(any(), anyString(), anyString()))
+                .thenReturn(dialogResult);
+
+            checkbox.doClick();
+        }
+
+        assertThat(credentialsHandler.isStoreCredentials()).isEqualTo(expectedStored);
+        assertThat(checkbox.isSelected()).isEqualTo(expectedStored);
+        assertThat(checkbox.isEnabled()).isEqualTo(expectedStored);
     }
 
     @Test
