@@ -15,19 +15,35 @@ class LegacyCacheHandlerTest {
     private final LegacyCacheHandler handler = new LegacyCacheHandler();
 
     @Test
-    void shouldDeleteDownloadsFolderOfEachClientEvenWhenFilesAreNew(@TempDir Path tempDir) throws IOException {
+    void shouldDeleteKnownContentOfEachClientAndKeepDownloadsFolder(@TempDir Path tempDir) throws IOException {
         Path sharedPath = tempDir.resolve("shared");
         Path otherPath = tempDir.resolve("other");
-        Path newFile = legacyFile(sharedPath, "bundles/a.bin", "123");
-        Path otherFile = legacyFile(otherPath, "b.bin", "12");
+        Path bundle = legacyFile(sharedPath, "bundles/a.bin", "123");
+        Path manifest = legacyFile(otherPath, "abc.manifest", "12");
 
         CacheCleaner.Result result = handler.deleteLegacyDownloads(List.of(sharedPath, otherPath, sharedPath));
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(2, 5));
-        assertThat(newFile).doesNotExist();
-        assertThat(otherFile).doesNotExist();
-        assertThat(sharedPath.resolve("downloads")).doesNotExist();
-        assertThat(sharedPath).isDirectory();
+        assertThat(bundle).doesNotExist();
+        assertThat(sharedPath.resolve("downloads/bundles")).doesNotExist();
+        assertThat(manifest).doesNotExist();
+        assertThat(sharedPath.resolve("downloads")).isDirectory();
+        assertThat(otherPath.resolve("downloads")).isDirectory();
+    }
+
+    @Test
+    void shouldNotDeleteUnknownContentOfDownloadsFolder(@TempDir Path tempDir) throws IOException {
+        Path userFile = legacyFile(tempDir, "report.pdf", "user");
+        Path userFolderFile = legacyFile(tempDir, "docs/notes.txt", "notes");
+        Path nestedManifest = legacyFile(tempDir, "docs/x.manifest", "nested");
+        legacyFile(tempDir, "bundles/a.bin", "123");
+
+        CacheCleaner.Result result = handler.deleteLegacyDownloads(List.of(tempDir));
+
+        assertThat(result).isEqualTo(new CacheCleaner.Result(1, 3));
+        assertThat(userFile).exists();
+        assertThat(userFolderFile).exists();
+        assertThat(nestedManifest).exists();
     }
 
     @Test
