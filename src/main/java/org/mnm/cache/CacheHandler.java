@@ -15,11 +15,13 @@ import org.mnm.config.Environment;
 import org.mnm.config.SettingsStore;
 import org.mnm.tools.FileUtils;
 
-// Owns the global downloads cache and its options.
-// It keeps the path of the cache and does the file operations on it: get the size, delete
-// all files, and delete the files older than a date.
-// It also reads and writes the cache options (auto-clear and retention days) in the settings store.
-// CacheCleaner decides when to clean. This class does the work.
+/**
+ * Owns the global downloads cache and its options.
+ * - It keeps the path of the cache and does the file operations on it: get size, delete, ...
+ * - It reads and writes the cache options (auto-clear and retention days) in the settings store.
+ * <p>
+ * NOTE: {@link CacheCleaner} decides when to clean. This class does the work.
+ */
 public class CacheHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);

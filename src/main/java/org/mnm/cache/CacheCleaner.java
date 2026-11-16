@@ -11,11 +11,16 @@ import org.slf4j.LoggerFactory;
 
 import static org.mnm.tools.FileUtils.humanReadableSize;
 
-// Runs the automatic cleanup of the downloads cache at startup.
-// It decides what to delete: the old client-relative "downloads" directories, and the files
-// of the global cache that are older than the retention period.
-// It does not do file work. LegacyCacheHandler deletes the old directories. CacheHandler owns
-// the global cache and its path.
+/**
+ * Runs the automatic cleanup of the downloads cache at startup.
+ * <p>
+ * Coordinates what to delete:
+ * - first, old client-relative "downloads" directories
+ * - then, files in global cache that are older than the retention period.
+ * It does not do file work:
+ * - {@link LegacyCacheHandler} deletes the old client-relative directories.
+ * - {@link CacheHandler} owns the global cache and its path.
+ */
 public class CacheCleaner {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheCleaner.class);

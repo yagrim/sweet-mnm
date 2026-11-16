@@ -17,8 +17,11 @@ import org.mnm.tools.FileUtils;
 
 import static org.mnm.tools.FileUtils.humanReadableSize;
 
-// Deletes the old cache of versions before 1.8.0. These versions kept a "downloads" directory
-// inside the path of each client. Now all clients share one global cache (see CacheHandler).
+/**
+ * Deletes the old cache of versions before 1.8.0. These versions kept a "downloads" directory
+ * inside the path of each client.
+ * Now all clients share one global cache (see {@link CacheHandler}).
+ */
 // TODO eventually remove, when we feel it's been enough time or v2.0.0
 class LegacyCacheHandler {
 
