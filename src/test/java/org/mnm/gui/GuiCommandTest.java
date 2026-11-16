@@ -35,6 +35,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cache.CacheCleaner;
 import org.mnm.cache.CacheHandler;
+import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -433,6 +434,36 @@ class GuiCommandTest {
             configDb.addClient(new Client(slug, "1.2.3", UPDATED, path));
             configDb.addToken(new Token(slug, validToken()));
         }
+    }
+
+    @Test
+    void shouldReportErrorWhenGameStopsWithErrorEarly() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
+        Mockito.when(process.exitValue()).thenReturn(3);
+
+        Optional<String> error = GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2);
+
+        assertThat(error).hasValueSatisfying(message -> assertThat(message)
+            .contains("exit code 3")
+            .contains("run-mnm.log"));
+    }
+
+    @Test
+    void shouldNotReportErrorWhenGameStopsWithSuccessEarly() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
+        Mockito.when(process.exitValue()).thenReturn(0);
+
+        assertThat(GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2)).isEmpty();
+    }
+
+    @Test
+    void shouldNotReportErrorWhenGameStillRuns() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(false);
+
+        assertThat(GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2)).isEmpty();
     }
 
     static Client testClient() {

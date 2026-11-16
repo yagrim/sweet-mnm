@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -23,20 +24,54 @@ public class ProcessUtils {
         throw new PanicException(message);
     }
 
+    // XXX rename methods to runAndWait and runAsync
     public static String run(Path workingDirectory, String[] command) {
         return run(workingDirectory, command, null);
     }
 
-    public static String run(Path workingDirectory, String[] command, Map<String, String> environment) {
+    // Starts the process and returns at once. The caller must not wait for the process.
+    // Output goes to the log file. If logFile is null, the output is discarded.
+    public static Process start(Path workingDirectory, String[] command, Map<String, String> environment, Path logFile) {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            if (workingDirectory != null) {
-                processBuilder.directory(workingDirectory.toFile());
-            }
-            if (environment != null && !environment.isEmpty()) {
-                processBuilder.environment().putAll(environment);
+            ProcessBuilder processBuilder = createProcessBuilder(workingDirectory, command, environment);
+            if (logFile == null) {
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+                processBuilder.redirectError(ProcessBuilder.Redirect.DISCARD);
+            } else {
+                Files.createDirectories(logFile.toAbsolutePath().getParent());
+                processBuilder.redirectErrorStream(true);
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile.toFile()));
             }
             Process process = processBuilder.start();
+            // The game does not read from stdin
+            process.getOutputStream().close();
+            return process;
+        } catch (IOException e) {
+            throw startFailure(command, e);
+        }
+    }
+
+    private static ProcessBuilder createProcessBuilder(Path workingDirectory, String[] command, Map<String, String> environment) {
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        if (workingDirectory != null) {
+            processBuilder.directory(workingDirectory.toFile());
+        }
+        if (environment != null && !environment.isEmpty()) {
+            processBuilder.environment().putAll(environment);
+        }
+        return processBuilder;
+    }
+
+    private static RuntimeException startFailure(String[] command, IOException e) {
+        if (isCommandNotFound(e)) {
+            return new CommandNotFound(command[0], e);
+        }
+        return new RuntimeException("Process failed: " + join(command), e);
+    }
+
+    public static String run(Path workingDirectory, String[] command, Map<String, String> environment) {
+        try {
+            Process process = createProcessBuilder(workingDirectory, command, environment).start();
 
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 Future<String> standardOutput = executor.submit(() -> read(process.getInputStream()));
@@ -63,10 +98,7 @@ public class ProcessUtils {
                 return stdout;
             }
         } catch (IOException e) {
-            if (isCommandNotFound(e)) {
-                throw new CommandNotFound(command[0], e);
-            }
-            throw new RuntimeException("Process failed: " + join(command), e);
+            throw startFailure(command, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Process failed: " + join(command), e);

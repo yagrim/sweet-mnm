@@ -498,6 +498,52 @@ class ClientRunnerTest {
     // defaults to client path if prefix is null
 
 
+    @Test
+    void shouldLaunchClientWithoutWaiting(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+        Process process = Mockito.mock(Process.class);
+
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        Mockito.when(configDb.getClients()).thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, installPath)));
+        Mockito.when(configDb.getTokens(SLUG)).thenReturn(List.of(new Token(1, SLUG, token)));
+
+        AtomicReference<Path> logFile = new AtomicReference<>();
+        AtomicReference<String[]> command = new AtomicReference<>();
+
+        try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
+             MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
+            osMock.when(OS::isWindows).thenReturn(false);
+            processMock.when(() -> ProcessUtils.start(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+                .thenAnswer(invocation -> {
+                    command.set(invocation.getArgument(1));
+                    logFile.set(invocation.getArgument(3));
+                    return process;
+                });
+
+            var launch = new ClientRunner(configDb)
+                .launch(new RunnerOptions(null, null, true, defaultLinuxOptions()));
+
+            assertThat(launch.process()).isSameAs(process);
+            assertThat(launch.logFile()).isEqualTo(logFile.get());
+            processMock.verify(() -> ProcessUtils.run(any(), any(), any()), Mockito.never());
+        }
+
+        assertThat(command.get()).containsExactly("umu-run", "%s/mnm.exe".formatted(SLUG), "--token", token);
+        assertThat(logFile.get().toString()).endsWith("logs" + java.io.File.separator + "run-mnm.log");
+    }
+
+    @Test
+    void shouldNotLaunchWhenTokenIsExpired(@TempDir Path tempDir) {
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        Mockito.when(configDb.getClients()).thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, tempDir)));
+        Mockito.when(configDb.getTokens(SLUG)).thenReturn(List.of(new Token(1, SLUG, expiredToken())));
+
+        assertThatThrownBy(() -> new ClientRunner(configDb).launch(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+            .isInstanceOf(PanicException.class)
+            .hasMessageContaining("Token expired");
+    }
+
     private RunResult runClient(Path installPath, String token, boolean isWindows, RunnerOptions options) {
         return runClient(SLUG, installPath, token, isWindows, options);
     }

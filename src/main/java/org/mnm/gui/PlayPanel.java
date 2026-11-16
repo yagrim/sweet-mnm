@@ -29,6 +29,11 @@ public class PlayPanel extends JPanel
 
     final JButton play;
     final VersionPanel versionPanel;
+    // "Play" is disabled for the clients that run
+    private final RunningClients runningClients = new RunningClients();
+    // What the state of the client allows, without the running games
+    private boolean playAllowed = false;
+    private String currentSlug = null;
 
     public PlayPanel(
         GuiCommand.PlayAction runAction,
@@ -46,12 +51,28 @@ public class PlayPanel extends JPanel
 
         play = createButton("Play", uiScaling);
         play.setAlignmentX(Component.CENTER_ALIGNMENT);
-        play.addActionListener(_ -> runAction.run(optionsSupplier.get()));
+        play.addActionListener(_ -> {
+            final RunnerOptions options = optionsSupplier.get();
+            final Process process = runAction.run(options);
+            if (process != null && options != null) {
+                runningClients.track(options.slug(), process);
+            }
+        });
+        runningClients.addChangeListener(this::updatePlayEnabled);
         this.add(play);
         this.versionPanel = new VersionPanel(uiScaling);
         this.add(versionPanel);
 
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private void setPlayAllowed(boolean allowed) {
+        playAllowed = allowed;
+        updatePlayEnabled();
+    }
+
+    private void updatePlayEnabled() {
+        play.setEnabled(playAllowed && !runningClients.isRunning(currentSlug));
     }
 
     private static JButton createButton(String text, float uiScaling) {
@@ -87,7 +108,7 @@ public class PlayPanel extends JPanel
 
     @Override
     public void loginStart() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
@@ -97,22 +118,23 @@ public class PlayPanel extends JPanel
 
     @Override
     public void logoutDone() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
     public void repairStart() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
     public void repairDone(ClientStatus client) {
-        play.setEnabled(true);
+        setPlayAllowed(true);
     }
 
     @Override
     public void refresh(ClientStatus client) {
-        play.setEnabled(client != null && client.validToken() && client.statusIs(UPDATED));
+        currentSlug = client == null || client.client() == null ? null : client.client().slug();
+        setPlayAllowed(client != null && client.validToken() && client.statusIs(UPDATED));
     }
 
 }

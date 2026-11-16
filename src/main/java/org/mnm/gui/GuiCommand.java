@@ -10,7 +10,9 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -98,7 +100,8 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface PlayAction {
-        void run(RunnerOptions options);
+        // Returns the game process. The UI uses it to know when the game ends.
+        Process run(RunnerOptions options);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -127,7 +130,7 @@ public class GuiCommand implements Command {
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);
-        this.runAction = (options) -> runClient(configDbLocator, options);
+        this.runAction = new PlayRunner(configDbLocator);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.selectSlugAction = slug -> storeSlug(configDbLocator, slug);
@@ -396,11 +399,49 @@ public class GuiCommand implements Command {
         }
     }
 
-    private static void runClient(Supplier<Path> configDbLocator, RunnerOptions options) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            new ClientRunner(configDb)
-                .run(options);
+    // Starts the game and watches for an early failure
+    static class PlayRunner implements PlayAction {
+
+        private static final long EARLY_EXIT_SECONDS = 200;
+
+        private final Supplier<Path> configDbLocator;
+
+        PlayRunner(Supplier<Path> configDbLocator) {
+            this.configDbLocator = configDbLocator;
         }
+
+        @Override
+        public Process run(RunnerOptions options) {
+            try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+                final ClientRunner.Launch launch = new ClientRunner(configDb).launch(options);
+                watchEarlyExit(launch);
+                return launch.process();
+            }
+        }
+
+        // Does not block the UI. The error handler shows the error when the game stops at once.
+        private static void watchEarlyExit(ClientRunner.Launch launch) {
+            Thread.ofVirtual().name("game-start-watch").start(() -> {
+                try {
+                    earlyExitError(launch, EARLY_EXIT_SECONDS).ifPresent(message -> {
+                        throw new IllegalStateException(message);
+                    });
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        // Waits for the game up to the given time. Returns an error message if the game stops with an error in that time.
+        static Optional<String> earlyExitError(ClientRunner.Launch launch, long seconds) throws InterruptedException {
+            final Process process = launch.process();
+            if (process.waitFor(seconds, TimeUnit.SECONDS) && process.exitValue() != 0) {
+                return Optional.of("The game stopped with exit code %d. See the log: %s"
+                    .formatted(process.exitValue(), launch.logFile()));
+            }
+            return Optional.empty();
+        }
+
     }
 
 }

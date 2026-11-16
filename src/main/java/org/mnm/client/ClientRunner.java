@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.CursorSize;
+import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.config.WinePrefix;
@@ -30,7 +31,36 @@ public class ClientRunner {
         this.configDb = configDb;
     }
 
+    // Waits for the game to exit. Use for the CLI.
     public void run(RunnerOptions options) {
+        ProcessCommand command = prepare(options);
+        ProcessUtils.run(command.workingDirectory(), command.command(), command.environment());
+    }
+
+    // Starts the game and returns at once. Use for the GUI.
+    // The output of the game goes to the log file of the client.
+    public Launch launch(RunnerOptions options) {
+        ProcessCommand command = prepare(options);
+        Path logFile = logFile(command.slug());
+        logger.info("Game output: {}", logFile);
+        Process process = ProcessUtils.start(command.workingDirectory(), command.command(), command.environment(), logFile);
+        return new Launch(process, logFile);
+    }
+
+    public record Launch(Process process, Path logFile) {
+
+    }
+
+    public static Path logFile(String slug) {
+        return Environment.getSweetConfigLocation().resolve("logs").resolve("run-" + slug + ".log");
+    }
+
+    private record ProcessCommand(String slug, Path workingDirectory, String[] command,
+                                  Map<String, String> environment) {
+
+    }
+
+    private ProcessCommand prepare(RunnerOptions options) {
 
         final String slug = options.slug();
         final Integer tokenId = options.tokenId();
@@ -55,7 +85,7 @@ public class ClientRunner {
             logger.info("Environment variables: {}", environment);
         }
 
-        ProcessUtils.run(clientPath, command, environment);
+        return new ProcessCommand(client.slug(), clientPath, command, environment);
     }
 
     private static void applyCursorSize(CursorSize cursorSize, String winePrefix) {
