@@ -187,7 +187,7 @@ class GuiCommandTest {
     }
 
     @Test
-    void shouldDeleteClientRelativeDownloadsOnCleanup(@TempDir Path tempDir) throws Exception {
+    void shouldDeleteClientRelativeDownloadsContentOnCleanup(@TempDir Path tempDir) throws Exception {
         final Path dbFile = tempDir.resolve("config.db");
         final Path clientPath = tempDir.resolve("client");
         final Path legacyFile = Files.createDirectories(clientPath.resolve("downloads").resolve("bundles")).resolve("new.bin");
@@ -199,7 +199,8 @@ class GuiCommandTest {
         final CacheCleaner.Result result = GuiCommand.startCacheCleanup(() -> dbFile, tempDir.resolve("downloads")).get(10, TimeUnit.SECONDS);
 
         assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
-        assertThat(clientPath.resolve("downloads")).doesNotExist();
+        assertThat(clientPath.resolve("downloads/bundles")).doesNotExist();
+        assertThat(clientPath.resolve("downloads")).isDirectory();
     }
 
     @Test

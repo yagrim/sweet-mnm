@@ -120,8 +120,8 @@ class CacheCleanerTest {
     }
 
     @Test
-    void shouldDeleteClientRelativeDownloadsFolderWhenAutoClearIsDisabled(@TempDir Path tempDir) throws IOException {
-        Path legacyFile = cacheFile(tempDir.resolve("client"), "a.bin", 1);
+    void shouldDeleteClientRelativeDownloadsContentWhenAutoClearIsDisabled(@TempDir Path tempDir) throws IOException {
+        Path legacyFile = cacheFile(tempDir.resolve("client"), "bundles/a.bin", 1);
         Path globalFile = cacheFile(tempDir, "global-old.bin", 100);
         InMemorySettingsStore settings = settings("false", 10);
 
