@@ -98,6 +98,23 @@ The project is a Java project that uses:
 NOTE: GraalVM does not support cross compilation, to build the Windows binary you'll need an actual environment.
 It can be physical or a virtual machine.
 
+=== Building on Windows
+
+Prerequisites:
+
+* JDK 25. The Gradle toolchain in `build.gradle` uses Java 25. The Gradle wrapper needs `java` on the `PATH`, or `JAVA_HOME`.
+* `xxhsum` (from xxHash) on the `PATH`. Without it, `ClientInstallerTest` fails with `CommandNotFound: xxhsum`. Get `xxhsum.exe` from the win64 zip of the https://github.com/Cyan4973/xxHash/releases[xxHash release].
+* For a native executable (`gradlew.bat nativeCompile`): GraalVM `native-image` and the MSVC build tools.
+
+Do not set `STEAM_COMPAT_DATA_PATH` for your Windows user account.
+Sweet uses this variable to find the Proton prefix, and a wrong value breaks the "Settings & logs" path.
+
+Commands:
+
+* If `make` is not available, run the tests with `gradlew.bat clean test`.
+* `gradlew.bat installDist` puts the start scripts (`sweet` and `sweet.bat`) in `build/install/sweet/`. There is no `bin` folder.
+* To open the GUI, run `build\install\sweet\sweet.bat gui`.
+
 == Troubleshooting
 
 . Launcher gets stuck during "Install" or "Repair".
