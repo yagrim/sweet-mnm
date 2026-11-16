@@ -22,8 +22,8 @@ import org.mnm.api.TokenSupplier;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
-import org.mnm.client.CacheCleaner;
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheCleaner;
+import org.mnm.cache.CacheHandler;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.Factories;
@@ -339,13 +339,17 @@ public class GuiCommand implements Command {
     }
 
     static CompletableFuture<CacheCleaner.Result> startCacheCleanup(Supplier<Path> configDbLocator) {
+        return startCacheCleanup(configDbLocator, Environment.getDownloadsLocation());
+    }
+
+    static CompletableFuture<CacheCleaner.Result> startCacheCleanup(Supplier<Path> configDbLocator, Path downloadsPath) {
         return CompletableFuture
             .supplyAsync(() -> {
                 final List<Path> clientPaths;
                 try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
                     clientPaths = configDb.getClients().stream().map(Client::path).toList();
                 }
-                return new CacheCleaner(new CacheHandler(new ConfigDbSettingsStore(configDbLocator))).clean(clientPaths);
+                return new CacheCleaner(new CacheHandler(new ConfigDbSettingsStore(configDbLocator), downloadsPath)).clean(clientPaths);
             })
             .whenComplete((result, error) -> {
                 if (error != null) {

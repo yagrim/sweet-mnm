@@ -39,4 +39,9 @@ public class Environment {
             .toAbsolutePath();
     }
 
+    // Global download cache. All clients share it.
+    public static Path getDownloadsLocation() {
+        return getSweetConfigLocation().resolve("downloads");
+    }
+
 }

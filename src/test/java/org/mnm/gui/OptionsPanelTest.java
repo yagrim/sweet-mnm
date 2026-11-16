@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheHandler;
 import org.mnm.client.RunnerOptions;
 import org.mnm.config.CursorSize;
 import org.mnm.config.SettingsStore;

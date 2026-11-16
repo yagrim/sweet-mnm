@@ -15,6 +15,7 @@ import org.mnm.api.Session;
 import org.mnm.api.TokenSupplier;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
+import org.mnm.config.Environment;
 import org.mnm.config.Token;
 import org.mnm.events.ClientEventHandler;
 import org.mnm.events.InstallationListener;
@@ -47,6 +48,7 @@ public class ClientInstaller {
         void install(InstallerOptions options, ConfigDb configDb, Client.Status status);
     }
 
+    private final Path downloadsPath;
     private final ConfigDb configDb;
     private final ApiConnector apiConnector;
     private final ClientEventHandler eventHandler;
@@ -71,8 +73,13 @@ public class ClientInstaller {
     }
 
     public ClientInstaller(ConfigDb configDb, ApiConnector apiConnector) {
+        this(configDb, apiConnector, Environment.getDownloadsLocation());
+    }
+
+    ClientInstaller(ConfigDb configDb, ApiConnector apiConnector, Path downloadsPath) {
         this.configDb = configDb;
         this.apiConnector = apiConnector;
+        this.downloadsPath = downloadsPath;
         this.eventHandler = ClientEventHandler.getInstance();
         eventHandler.register(installationMonitor);
     }
@@ -111,7 +118,7 @@ public class ClientInstaller {
         logger.info("Running in path: {}", installDir);
 
         final GameVersion gameVersion = session.getGameVersion(slug);
-        final Installation installation = new Installation(installDir, slug);
+        final Installation installation = new Installation(installDir, slug, downloadsPath);
 
         new LoginService(configDb, apiConnector)
             .updateClientAndToken(session, slug, currentClient, installDir, status);

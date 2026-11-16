@@ -33,8 +33,8 @@ import org.mnm.api.ApiConnection.GameVersion;
 import org.mnm.api.Session;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
-import org.mnm.client.CacheCleaner;
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheCleaner;
+import org.mnm.cache.CacheHandler;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -155,8 +155,9 @@ class GuiCommandTest {
     void shouldSetCacheOptionsOnFirstStartAndClearCacheOnNextStart(@TempDir Path tempDir) throws Exception {
         final Path dbFile = tempDir.resolve("config.db");
         final Path clientPath = tempDir.resolve("client");
-        final Path oldFile = Files.createDirectories(clientPath.resolve("downloads").resolve("bundles")).resolve("old.bin");
-        final Path newFile = clientPath.resolve("downloads").resolve("manifest.json");
+        final Path downloads = tempDir.resolve("downloads");
+        final Path oldFile = Files.createDirectories(downloads.resolve("bundles")).resolve("old.bin");
+        final Path newFile = downloads.resolve("manifest.json");
         Files.writeString(oldFile, "12345");
         Files.writeString(newFile, "123");
         Files.setLastModifiedTime(oldFile, FileTime.from(Instant.now().minus(Duration.ofDays(11))));
@@ -167,9 +168,9 @@ class GuiCommandTest {
 
         final SettingsStore settingsStore = new ConfigDbSettingsStore(() -> dbFile);
         final AtomicReference<CompletableFuture<CacheCleaner.Result>> cleanup = new AtomicReference<>();
-        final Runnable cacheCleanupAction = () -> cleanup.set(GuiCommand.startCacheCleanup(() -> dbFile));
+        final Runnable cacheCleanupAction = () -> cleanup.set(GuiCommand.startCacheCleanup(() -> dbFile, tempDir.resolve("downloads")));
 
-        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cacheCleanupAction);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore, downloads), cacheCleanupAction);
 
         assertThat(cleanup.get()).isNull();
         assertThat(oldFile).exists();
@@ -178,7 +179,7 @@ class GuiCommandTest {
             assertThat(configDb.getSettings(CACHE_RETENTION_DAYS_KEY)).isEqualTo("10");
         }
 
-        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore), cacheCleanupAction);
+        GuiCommand.initCacheAndStartCleanup(new CacheHandler(settingsStore, downloads), cacheCleanupAction);
 
         assertThat(cleanup.get().get(10, TimeUnit.SECONDS)).isEqualTo(new CacheCleaner.Result(1, 5));
         assertThat(oldFile).doesNotExist();
@@ -186,10 +187,27 @@ class GuiCommandTest {
     }
 
     @Test
+    void shouldDeleteClientRelativeDownloadsOnCleanup(@TempDir Path tempDir) throws Exception {
+        final Path dbFile = tempDir.resolve("config.db");
+        final Path clientPath = tempDir.resolve("client");
+        final Path legacyFile = Files.createDirectories(clientPath.resolve("downloads").resolve("bundles")).resolve("new.bin");
+        Files.writeString(legacyFile, "12345");
+        try (ConfigDb configDb = ConfigDb.open(dbFile)) {
+            configDb.addClient(new Client("mnm", "1.2.3", UPDATED, clientPath));
+        }
+
+        final CacheCleaner.Result result = GuiCommand.startCacheCleanup(() -> dbFile, tempDir.resolve("downloads")).get(10, TimeUnit.SECONDS);
+
+        assertThat(result).isEqualTo(new CacheCleaner.Result(1, 5));
+        assertThat(clientPath.resolve("downloads")).doesNotExist();
+    }
+
+    @Test
     void shouldSendCacheClearedEventOnlyWhenFilesAreDeleted(@TempDir Path tempDir) throws Exception {
         final Path dbFile = tempDir.resolve("config.db");
         final Path clientPath = tempDir.resolve("client");
-        final Path oldFile = Files.createDirectories(clientPath.resolve("downloads")).resolve("old.bin");
+        final Path downloads = tempDir.resolve("downloads");
+        final Path oldFile = Files.createDirectories(downloads).resolve("old.bin");
         Files.writeString(oldFile, "12345");
         Files.setLastModifiedTime(oldFile, FileTime.from(Instant.now().minus(Duration.ofDays(11))));
         try (ConfigDb configDb = ConfigDb.open(dbFile)) {
@@ -199,13 +217,13 @@ class GuiCommandTest {
         ClientEventHandler.getInstance().clear();
         ClientEventHandler.getInstance().register((CacheListener) events::incrementAndGet);
         try {
-            GuiCommand.startCacheCleanup(() -> dbFile).get(10, TimeUnit.SECONDS);
+            GuiCommand.startCacheCleanup(() -> dbFile, downloads).get(10, TimeUnit.SECONDS);
             // Waits for the event sent to the Swing thread
             SwingUtilities.invokeAndWait(() -> {});
             assertThat(oldFile).doesNotExist();
             assertThat(events.get()).isEqualTo(1);
 
-            GuiCommand.startCacheCleanup(() -> dbFile).get(10, TimeUnit.SECONDS);
+            GuiCommand.startCacheCleanup(() -> dbFile, tempDir.resolve("downloads")).get(10, TimeUnit.SECONDS);
             SwingUtilities.invokeAndWait(() -> {});
             assertThat(events.get()).isEqualTo(1);
         } finally {

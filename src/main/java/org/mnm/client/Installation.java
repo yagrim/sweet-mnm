@@ -6,10 +6,12 @@ public class Installation {
 
     private final Path baseDir;
     private final String slug;
+    private final Path downloadsPath;
 
-    public Installation(Path baseDir, String slug) {
+    public Installation(Path baseDir, String slug, Path downloadsPath) {
         this.baseDir = baseDir.toAbsolutePath();
         this.slug = slug;
+        this.downloadsPath = downloadsPath.toAbsolutePath();
     }
 
     Path getInstallPath() {
@@ -21,7 +23,7 @@ public class Installation {
     }
 
     public Path getDownloadsPath() {
-        return baseDir.resolve("downloads");
+        return downloadsPath;
     }
 
     Path getBundlesPath() {

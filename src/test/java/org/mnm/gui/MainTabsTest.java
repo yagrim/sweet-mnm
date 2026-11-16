@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import org.mnm.client.CacheHandler;
+import org.mnm.cache.CacheHandler;
 import org.mnm.config.Client;
 import org.mnm.config.SettingsStore;
 
