@@ -24,14 +24,11 @@ public class ProcessUtils {
         throw new PanicException(message);
     }
 
-    // XXX rename methods to runAndWait and runAsync
-    public static String run(Path workingDirectory, String[] command) {
-        return run(workingDirectory, command, null);
+    public static String runAndWait(Path workingDirectory, String[] command) {
+        return runAndWait(workingDirectory, command, null);
     }
 
-    // Starts the process and returns at once. The caller must not wait for the process.
-    // Output goes to the log file. If logFile is null, the output is discarded.
-    public static Process start(Path workingDirectory, String[] command, Map<String, String> environment, Path logFile) {
+    public static Process runDetached(Path workingDirectory, String[] command, Map<String, String> environment, Path logFile) {
         try {
             ProcessBuilder processBuilder = createProcessBuilder(workingDirectory, command, environment);
             if (logFile == null) {
@@ -69,7 +66,7 @@ public class ProcessUtils {
         return new RuntimeException("Process failed: " + join(command), e);
     }
 
-    public static String run(Path workingDirectory, String[] command, Map<String, String> environment) {
+    public static String runAndWait(Path workingDirectory, String[] command, Map<String, String> environment) {
         try {
             Process process = createProcessBuilder(workingDirectory, command, environment).start();
 

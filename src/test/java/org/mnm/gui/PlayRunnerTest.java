@@ -131,7 +131,7 @@ class PlayRunnerTest {
         try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
             osMock.when(OS::isWindows).thenReturn(false);
-            processMock.when(() -> ProcessUtils.start(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
                 .thenAnswer(invocation -> {
                     startedWorkingDirectory = invocation.getArgument(0);
                     startedCommand = invocation.getArgument(1);

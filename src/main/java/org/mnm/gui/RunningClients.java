@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Keeps the slugs of the clients with a game process that still runs.
+ * Registers client slugs of clients that are currently running.
  * <p>
  * A second start in the same Wine prefix waits for the first game and then starts again.
  * So the UI must not start a client that already runs.

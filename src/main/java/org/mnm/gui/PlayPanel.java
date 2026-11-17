@@ -29,9 +29,8 @@ public class PlayPanel extends JPanel
 
     final JButton play;
     final VersionPanel versionPanel;
-    // "Play" is disabled for the clients that run
+
     private final RunningClients runningClients = new RunningClients();
-    // What the state of the client allows, without the running games
     private boolean playAllowed = false;
     private String currentSlug = null;
 

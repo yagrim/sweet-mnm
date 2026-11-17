@@ -39,7 +39,7 @@ public class ClientRunner {
      */
     public void runAndWait(RunnerOptions options) {
         ProcessCommand command = prepare(options);
-        ProcessUtils.run(command.workingDirectory(), command.command(), command.environment());
+        ProcessUtils.runAndWait(command.workingDirectory(), command.command(), command.environment());
     }
 
     /**
@@ -51,7 +51,7 @@ public class ClientRunner {
         ProcessCommand command = prepare(options);
         Path logFile = logFile(command.slug());
         logger.info("Game output: {}", logFile);
-        Process process = ProcessUtils.start(command.workingDirectory(), command.command(), command.environment(), logFile);
+        Process process = ProcessUtils.runDetached(command.workingDirectory(), command.command(), command.environment(), logFile);
         return new ClientRuntime(process, logFile);
     }
 

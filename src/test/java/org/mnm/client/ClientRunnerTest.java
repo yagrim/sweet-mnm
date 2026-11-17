@@ -158,7 +158,7 @@ class ClientRunnerTest {
 
             osMock.when(OS::isWindows).thenReturn(true);
             validatorsMock.when(() -> Validators.checkVersion(token, client)).thenAnswer(invocation -> null);
-            processMock.when(() -> ProcessUtils.run(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
                 .thenReturn("");
 
             runner.runAndWait(new RunnerOptions(null, null, false, defaultLinuxOptions()));
@@ -514,7 +514,7 @@ class ClientRunnerTest {
         try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
             osMock.when(OS::isWindows).thenReturn(false);
-            processMock.when(() -> ProcessUtils.start(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
                 .thenAnswer(invocation -> {
                     command.set(invocation.getArgument(1));
                     logFile.set(invocation.getArgument(3));
@@ -526,7 +526,7 @@ class ClientRunnerTest {
 
             assertThat(runtime.process()).isSameAs(process);
             assertThat(runtime.logFile()).isEqualTo(logFile.get());
-            processMock.verify(() -> ProcessUtils.run(any(), any(), any()), Mockito.never());
+            processMock.verify(() -> ProcessUtils.runAndWait(any(), any(), any()), Mockito.never());
         }
 
         assertThat(command.get()).containsExactly("umu-run", "%s/mnm.exe".formatted(SLUG), "--token", token);
@@ -565,7 +565,7 @@ class ClientRunnerTest {
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
 
             osMock.when(OS::isWindows).thenReturn(isWindows);
-            processMock.when(() -> ProcessUtils.run(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
                 .thenAnswer(invocation -> {
                     workingDirectory.set(invocation.getArgument(0));
                     command.set(invocation.getArgument(1));
