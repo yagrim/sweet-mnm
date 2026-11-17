@@ -6,6 +6,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import java.awt.GridLayout;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -18,6 +20,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
+import org.mnm.events.RunningClientsListener;
 import org.mnm.tools.CommandNotFound;
 
 import static org.mnm.config.Client.Status.INSTALLING;
@@ -30,7 +33,7 @@ import static org.mnm.gui.Style.SCALE;
 import static org.mnm.tools.StringUtils.isEmpty;
 
 class ClientButtonsPanel extends JPanel
-    implements LoginListener, RepairListener, Refreshable {
+    implements LoginListener, RepairListener, Refreshable, RunningClientsListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientButtonsPanel.class);
 
@@ -43,6 +46,9 @@ class ClientButtonsPanel extends JPanel
     private final Supplier<String> selectedSlug;
     // Store the original one to avoid size changes when uses modifies values before restart
     private final float uiScaling;
+
+    // Repair must not run while the game of the client runs
+    private final Set<String> runningSlugs = new HashSet<>();
 
     private ClientStatus clientStatus;
     private boolean refreshToken = false;
@@ -115,6 +121,22 @@ class ClientButtonsPanel extends JPanel
     }
 
     @Override
+    public void clientStarted(String slug) {
+        runningSlugs.add(slug);
+        if (slug.equals(selectedSlug.get())) {
+            refresh(clientStatus);
+        }
+    }
+
+    @Override
+    public void clientStopped(String slug) {
+        runningSlugs.remove(slug);
+        if (slug.equals(selectedSlug.get())) {
+            refresh(clientStatus);
+        }
+    }
+
+    @Override
     public void refresh(ClientStatus client) {
         this.clientStatus = client;
 
@@ -122,10 +144,12 @@ class ClientButtonsPanel extends JPanel
         boolean validToken = hasClient && client.validToken();
         boolean toInstall = hasClient && (client.statusIs(NOT_INSTALLED) || client.client().status().isInProgress());
         install.setEnabled(validToken && toInstall);
-        repair.setEnabled(validToken && !toInstall);
+        final boolean running = hasClient && runningSlugs.contains(client.client().slug());
+        repair.setEnabled(validToken && !toInstall && !running);
 
         refreshToken = validToken && credentialsHandler.isStoreCredentials();
-        login.setEnabled(refreshToken || !validToken);
+        // "Refresh" is disabled while the client runs. "Login" stays enabled to get a new token.
+        login.setEnabled((refreshToken && !running) || !validToken);
         setLoginText(refreshToken ? "Refresh" : "Login");
         setToolTip(refreshToken ? "Regenerate token with stored credentials" : "Obtain a new token");
         logout.setEnabled(validToken);

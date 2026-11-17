@@ -196,6 +196,128 @@ class ClientButtonsHandlerTest {
         assertThat(loggedOutSlug).hasValue("other-game");
     }
 
+    @Test
+    void shouldDisableRepairWhenSelectedClientRuns() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("mnm"));
+
+        handler.clientStarted("mnm");
+
+        assertThat(repair.isEnabled()).isFalse();
+        assertThat(install.isEnabled()).isFalse();
+        assertThat(logout.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldEnableRepairWhenSelectedClientStops() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("mnm"));
+        handler.clientStarted("mnm");
+
+        handler.clientStopped("mnm");
+
+        refreshEnabled();
+    }
+
+    @Test
+    void shouldKeepRepairDisabledOnRefreshWhileClientRuns() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("mnm"));
+        handler.clientStarted("mnm");
+
+        handler.refresh(updatedClient("mnm"));
+
+        assertThat(repair.isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldKeepRepairEnabledWhenAnotherClientRuns() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("mnm"));
+
+        handler.clientStarted("ptr");
+
+        refreshEnabled();
+    }
+
+    @Test
+    void shouldDisableRepairWhenSelectingRunningClient() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("ptr"));
+        handler.clientStarted("ptr");
+        handler.refresh(updatedClient("mnm"));
+        assertThat(repair.isEnabled()).isTrue();
+
+        handler.refresh(updatedClient("ptr"));
+
+        assertThat(repair.isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldNotEnableButtonsDuringRepairWhenAnotherClientStops() {
+        var handler = initComponents();
+        handler.refresh(updatedClient("mnm"));
+        handler.clientStarted("ptr");
+        handler.repairStart();
+
+        handler.clientStopped("ptr");
+
+        assertThat(repair.isEnabled()).isFalse();
+        assertThat(install.isEnabled()).isFalse();
+        assertThat(logout.isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldDisableRefreshWhenSelectedClientRuns() {
+        var handler = initComponents(true);
+        handler.refresh(updatedClient("mnm"));
+        assertThat(login.isEnabled()).isTrue();
+        assertLoginButton("Refresh", "Regenerate token with stored credentials");
+
+        handler.clientStarted("mnm");
+
+        assertThat(login.isEnabled()).isFalse();
+        assertLoginButton("Refresh", "Regenerate token with stored credentials");
+        assertThat(logout.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldEnableRefreshWhenSelectedClientStops() {
+        var handler = initComponents(true);
+        handler.refresh(updatedClient("mnm"));
+        handler.clientStarted("mnm");
+
+        handler.clientStopped("mnm");
+
+        assertThat(login.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldKeepRefreshEnabledWhenAnotherClientRuns() {
+        var handler = initComponents(true);
+        handler.refresh(updatedClient("mnm"));
+
+        handler.clientStarted("ptr");
+
+        assertThat(login.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldKeepLoginEnabledWhenTokenIsNotValidAndClientRuns() {
+        var handler = initComponents(true);
+        handler.refresh(updatedClient("mnm"));
+        handler.clientStarted("mnm");
+
+        handler.refresh(new ClientStatus(new Client("mnm", "1.2.3", UPDATED, Path.of(".")), false, null));
+
+        assertThat(login.isEnabled()).isTrue();
+        assertLoginButton("Login", "Obtain a new token");
+    }
+
+    private static ClientStatus updatedClient(String slug) {
+        return new ClientStatus(new Client(slug, "1.2.3", UPDATED, Path.of(".")), true, null);
+    }
+
     private ClientButtonsPanel initComponents() {
         return initComponents(false);
     }
