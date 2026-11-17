@@ -32,15 +32,22 @@ public class ClientRunner {
         this.configDb = configDb;
     }
 
-    // Waits for the game to exit. Use for the CLI.
-    public void run(RunnerOptions options) {
+    /**
+     * Starts the game and waits until it exits.
+     * <p>
+     * The output of the game goes to the normal Sweet log.
+     */
+    public void runAndWait(RunnerOptions options) {
         ProcessCommand command = prepare(options);
         ProcessUtils.run(command.workingDirectory(), command.command(), command.environment());
     }
 
-    // Starts the game and returns at once. Use for the GUI.
-    // The output of the game goes to the log file of the client.
-    public ClientRuntime launch(RunnerOptions options) {
+    /**
+     * Starts the game and does not wait returning the process reference.
+     * <p>
+     * The output of the game goes to the log file of the client, see {@link #logFile(String)}.
+     */
+    public ClientRuntime runDetached(RunnerOptions options) {
         ProcessCommand command = prepare(options);
         Path logFile = logFile(command.slug());
         logger.info("Game output: {}", logFile);

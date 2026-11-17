@@ -18,7 +18,7 @@ import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
-import org.mnm.gui.GuiCommand.PlayRunner;
+import org.mnm.gui.GuiCommand.DetachedPlayRunner;
 import org.mnm.tools.ProcessUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +77,7 @@ class PlayRunnerTest {
 
     @Test
     void shouldFailWhenThereIsNoClient() {
-        var runner = new PlayRunner(() -> dbFile);
+        var runner = new DetachedPlayRunner(() -> dbFile);
 
         assertThatThrownBy(() -> runner.run(runnerOptions()))
             .isInstanceOf(RuntimeException.class)
@@ -140,7 +140,7 @@ class PlayRunnerTest {
                     return process;
                 });
 
-            return new PlayRunner(() -> dbFile).run(runnerOptions());
+            return new DetachedPlayRunner(() -> dbFile).run(runnerOptions());
         }
     }
 

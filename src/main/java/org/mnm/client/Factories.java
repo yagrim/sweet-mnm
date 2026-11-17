@@ -29,7 +29,7 @@ public class Factories {
 
     static void runner(RunnerOptions options, ConfigDb configDb) {
         new ClientRunner(configDb)
-            .run(options);
+            .runAndWait(options);
     }
 
     public static ApiConnector apiConnector(String apiBaseUrl) {

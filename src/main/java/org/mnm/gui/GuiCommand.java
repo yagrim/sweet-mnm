@@ -128,7 +128,7 @@ public class GuiCommand implements Command {
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);
-        this.runAction = new PlayRunner(configDbLocator);
+        this.runAction = new DetachedPlayRunner(configDbLocator);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.selectSlugAction = slug -> storeSlug(configDbLocator, slug);
@@ -397,21 +397,20 @@ public class GuiCommand implements Command {
         }
     }
 
-    // Starts the game and watches for an early failure
-    static class PlayRunner implements PlayAction {
+    static class DetachedPlayRunner implements PlayAction {
 
         private static final long EARLY_EXIT_SECONDS = 3;
 
         private final Supplier<Path> configDbLocator;
 
-        PlayRunner(Supplier<Path> configDbLocator) {
+        DetachedPlayRunner(Supplier<Path> configDbLocator) {
             this.configDbLocator = configDbLocator;
         }
 
         @Override
         public Process run(RunnerOptions options) {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-                final ClientRunner.ClientRuntime runtime = new ClientRunner(configDb).launch(options);
+                final ClientRunner.ClientRuntime runtime = new ClientRunner(configDb).runDetached(options);
                 watchEarlyExit(runtime);
                 return runtime.process();
             }
