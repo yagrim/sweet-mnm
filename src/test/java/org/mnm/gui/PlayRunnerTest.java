@@ -46,6 +46,8 @@ class PlayRunnerTest {
     private String[] startedCommand;
     private Map<String, String> startedEnvironment;
     private Path startedLogFile;
+    // Computed with the same mocked OS as the runner, because the log path depends on the OS
+    private Path expectedLogFile;
 
     @BeforeEach
     void beforeEach() {
@@ -72,7 +74,7 @@ class PlayRunnerTest {
         assertThat(startedWorkingDirectory).isEqualTo(tempDir.resolve("install"));
         assertThat(startedCommand).containsExactly("umu-run", SLUG + "/mnm.exe", "--token", token);
         assertThat(startedEnvironment).containsKeys("GAMEID", "PROTONPATH", "WINEPREFIX");
-        assertThat(startedLogFile).isEqualTo(ClientRunner.logFile(SLUG));
+        assertThat(startedLogFile).isEqualTo(expectedLogFile);
     }
 
     @Test
@@ -140,6 +142,7 @@ class PlayRunnerTest {
                     return process;
                 });
 
+            expectedLogFile = ClientRunner.logFile(SLUG);
             return new DetachedPlayRunner(() -> dbFile).run(runnerOptions());
         }
     }
