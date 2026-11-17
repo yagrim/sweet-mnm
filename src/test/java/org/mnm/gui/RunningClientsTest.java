@@ -2,16 +2,18 @@ package org.mnm.gui;
 
 import javax.swing.SwingUtilities;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import org.mnm.events.ClientEventHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RunningClientsTest {
 
-    private final RunningClients runningClients = new RunningClients();
+    private final ClientEventHandler eventHandler = Mockito.mock(ClientEventHandler.class);
+    private final RunningClients runningClients = new RunningClients(eventHandler);
 
     @Test
     void shouldNotBeRunningByDefault() {
@@ -52,25 +54,25 @@ class RunningClientsTest {
     }
 
     @Test
-    void shouldNotifyListenersOnStartAndOnExit() throws Exception {
+    void shouldFireEventsWithSlugOnStartAndOnExit() throws Exception {
         var exit = new CompletableFuture<Process>();
-        var notifications = new AtomicInteger();
-        runningClients.addChangeListener(notifications::incrementAndGet);
 
         runningClients.track("mnm", processExiting(exit));
-        assertThat(notifications).hasValue(1);
+        Mockito.verify(eventHandler).clientStarted("mnm");
+        Mockito.verify(eventHandler, Mockito.never()).clientStopped(Mockito.any());
 
         exit.complete(null);
         flushEventQueue();
-        assertThat(notifications).hasValue(2);
+        Mockito.verify(eventHandler).clientStopped("mnm");
     }
 
     @Test
     void shouldUpdateStateOnEventDispatchThread() throws Exception {
         var exit = new CompletableFuture<Process>();
         var onEdt = new CompletableFuture<Boolean>();
+        Mockito.doAnswer(invocation -> onEdt.complete(SwingUtilities.isEventDispatchThread()))
+            .when(eventHandler).clientStopped("mnm");
         runningClients.track("mnm", processExiting(exit));
-        runningClients.addChangeListener(() -> onEdt.complete(SwingUtilities.isEventDispatchThread()));
 
         // Complete from a thread that is not the EDT
         Thread.ofPlatform().start(() -> exit.complete(null)).join();

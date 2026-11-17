@@ -1,10 +1,10 @@
 package org.mnm.gui;
 
 import javax.swing.SwingUtilities;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
+import org.mnm.events.ClientEventHandler;
 
 /**
  * Registers client slugs of clients that are currently running.
@@ -18,34 +18,27 @@ import java.util.Set;
 class RunningClients {
 
     private final Set<String> slugs = new HashSet<>();
-    private final List<Runnable> listeners = new ArrayList<>();
+    private final ClientEventHandler eventHandler;
+
+    RunningClients(ClientEventHandler eventHandler) {
+        this.eventHandler = eventHandler;
+    }
 
     /**
      * Marks the slug as running until the process ends.
      */
     void track(String slug, Process process) {
         slugs.add(slug);
-        notifyListeners();
+        eventHandler.clientStarted(slug);
         // Wrap with invokeLater because UI updates need to run in Swing's Event Dispatch Thread
         process.onExit().thenRun(() -> SwingUtilities.invokeLater(() -> {
             slugs.remove(slug);
-            notifyListeners();
+            eventHandler.clientStopped(slug);
         }));
     }
 
     boolean isRunning(String slug) {
         return slugs.contains(slug);
-    }
-
-    /**
-     * The listener runs when a slug starts or stops running.
-     */
-    void addChangeListener(Runnable listener) {
-        listeners.add(listener);
-    }
-
-    private void notifyListeners() {
-        listeners.forEach(Runnable::run);
     }
 
 }

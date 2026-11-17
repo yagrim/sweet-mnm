@@ -17,6 +17,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
+import org.mnm.events.RunningClientsListener;
 
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
@@ -25,16 +26,16 @@ import static org.mnm.gui.Style.BASE_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
 
 public class PlayPanel extends JPanel
-    implements LoginListener, RepairListener, Refreshable {
+    implements LoginListener, RepairListener, Refreshable, RunningClientsListener {
 
     final JButton play;
     final VersionPanel versionPanel;
 
-    private final RunningClients runningClients = new RunningClients();
+    private final RunningClients runningClients = new RunningClients(ClientEventHandler.getInstance());
     private boolean playAllowed = false;
     private String currentSlug = null;
 
-    public PlayPanel(
+    PlayPanel(
         GuiCommand.PlayAction runAction,
         Supplier<RunnerOptions> optionsSupplier) {
         this(runAction, optionsSupplier, 1f);
@@ -57,7 +58,6 @@ public class PlayPanel extends JPanel
                 runningClients.track(options.slug(), process);
             }
         });
-        runningClients.addChangeListener(this::updatePlayEnabled);
         this.add(play);
         this.versionPanel = new VersionPanel(uiScaling);
         this.add(versionPanel);
@@ -128,6 +128,16 @@ public class PlayPanel extends JPanel
     @Override
     public void repairDone(ClientStatus client) {
         setPlayAllowed(true);
+    }
+
+    @Override
+    public void clientStarted(String slug) {
+        updatePlayEnabled();
+    }
+
+    @Override
+    public void clientStopped(String slug) {
+        updatePlayEnabled();
     }
 
     @Override

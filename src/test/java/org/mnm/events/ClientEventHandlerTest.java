@@ -50,4 +50,30 @@ class ClientEventHandlerTest {
         assertThat(calls.get()).isEqualTo(1);
     }
 
+    @Test
+    void shouldCallRunningClientsListenerOnly() {
+        final var started = new java.util.ArrayList<String>();
+        final var stopped = new java.util.ArrayList<String>();
+        final var cacheCalls = new AtomicInteger();
+        eventHandler.register(new RunningClientsListener() {
+            @Override
+            public void clientStarted(String slug) {
+                started.add(slug);
+            }
+
+            @Override
+            public void clientStopped(String slug) {
+                stopped.add(slug);
+            }
+        });
+        eventHandler.register((CacheListener) cacheCalls::incrementAndGet);
+
+        eventHandler.clientStarted("mnm");
+        eventHandler.clientStopped("ptr");
+
+        assertThat(started).containsExactly("mnm");
+        assertThat(stopped).containsExactly("ptr");
+        assertThat(cacheCalls.get()).isZero();
+    }
+
 }
