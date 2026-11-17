@@ -443,11 +443,11 @@ class GuiCommandTest {
         Mockito.when(process.exitValue()).thenReturn(3);
 
         Optional<String> error;
-        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
-        final Process process1 = launch.process();
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
         if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
             error = Optional.of("The game stopped with exit code %d. See the log: %s"
-                .formatted(process1.exitValue(), launch.logFile()));
+                .formatted(process1.exitValue(), runtime.logFile()));
         } else {
             error = Optional.empty();
         }
@@ -464,11 +464,11 @@ class GuiCommandTest {
         Mockito.when(process.exitValue()).thenReturn(0);
 
         Optional<String> result;
-        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
-        final Process process1 = launch.process();
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
         if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
             result = Optional.of("The game stopped with exit code %d. See the log: %s"
-                .formatted(process1.exitValue(), launch.logFile()));
+                .formatted(process1.exitValue(), runtime.logFile()));
         } else {
             result = Optional.empty();
         }
@@ -481,11 +481,11 @@ class GuiCommandTest {
         Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(false);
 
         Optional<String> result;
-        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
-        final Process process1 = launch.process();
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
         if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
             result = Optional.of("The game stopped with exit code %d. See the log: %s"
-                .formatted(process1.exitValue(), launch.logFile()));
+                .formatted(process1.exitValue(), runtime.logFile()));
         } else {
             result = Optional.empty();
         }

@@ -521,11 +521,11 @@ class ClientRunnerTest {
                     return process;
                 });
 
-            var launch = new ClientRunner(configDb)
+            var runtime = new ClientRunner(configDb)
                 .launch(new RunnerOptions(null, null, true, defaultLinuxOptions()));
 
-            assertThat(launch.process()).isSameAs(process);
-            assertThat(launch.logFile()).isEqualTo(logFile.get());
+            assertThat(runtime.process()).isSameAs(process);
+            assertThat(runtime.logFile()).isEqualTo(logFile.get());
             processMock.verify(() -> ProcessUtils.run(any(), any(), any()), Mockito.never());
         }
 

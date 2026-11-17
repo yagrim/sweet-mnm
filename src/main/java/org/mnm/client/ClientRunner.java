@@ -18,6 +18,7 @@ import org.mnm.config.WinePrefix;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
+import static org.mnm.config.Messages.Errors.NO_CLIENT_FOUND;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
@@ -39,15 +40,15 @@ public class ClientRunner {
 
     // Starts the game and returns at once. Use for the GUI.
     // The output of the game goes to the log file of the client.
-    public Launch launch(RunnerOptions options) {
+    public ClientRuntime launch(RunnerOptions options) {
         ProcessCommand command = prepare(options);
         Path logFile = logFile(command.slug());
         logger.info("Game output: {}", logFile);
         Process process = ProcessUtils.start(command.workingDirectory(), command.command(), command.environment(), logFile);
-        return new Launch(process, logFile);
+        return new ClientRuntime(process, logFile);
     }
 
-    public record Launch(Process process, Path logFile) {
+    public record ClientRuntime(Process process, Path logFile) {
 
     }
 
@@ -110,14 +111,14 @@ public class ClientRunner {
         if (!isEmpty(slug)) {
             Client client = configDb.getClient(slug);
             if (client == null) {
-                panic("No client found: run 'install --username ...' first");
+                panic(NO_CLIENT_FOUND);
             }
             return client;
         }
 
         var clients = configDb.getClients();
         if (clients.isEmpty()) {
-            panic("No client found: run 'install --username ...' first");
+            panic(NO_CLIENT_FOUND);
         }
         if (clients.size() > 1) {
             panic("Could not identify client: use --slug");

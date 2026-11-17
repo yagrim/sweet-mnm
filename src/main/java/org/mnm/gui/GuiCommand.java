@@ -411,18 +411,18 @@ public class GuiCommand implements Command {
         @Override
         public Process run(RunnerOptions options) {
             try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-                final ClientRunner.Launch launch = new ClientRunner(configDb).launch(options);
-                watchEarlyExit(launch);
-                return launch.process();
+                final ClientRunner.ClientRuntime runtime = new ClientRunner(configDb).launch(options);
+                watchEarlyExit(runtime);
+                return runtime.process();
             }
         }
 
-        private static void watchEarlyExit(ClientRunner.Launch launch) {
+        private static void watchEarlyExit(ClientRunner.ClientRuntime launch) {
             Thread.ofVirtual().name("game-start-watch").start(() -> {
                 try {
                     final Process process = launch.process();
                     if (process.waitFor(EARLY_EXIT_SECONDS, TimeUnit.SECONDS) && process.exitValue() != 0) {
-                        String errorMsg = "The game stopped with exit code %d. See the log: %s"
+                        String errorMsg = "Game client stopped with exit code %d. See the log: %s"
                             .formatted(process.exitValue(), launch.logFile());
                         throw new IllegalStateException(errorMsg);
                     }
