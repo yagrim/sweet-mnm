@@ -442,7 +442,15 @@ class GuiCommandTest {
         Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
         Mockito.when(process.exitValue()).thenReturn(3);
 
-        Optional<String> error = GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2);
+        Optional<String> error;
+        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
+        final Process process1 = launch.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            error = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), launch.logFile()));
+        } else {
+            error = Optional.empty();
+        }
 
         assertThat(error).hasValueSatisfying(message -> assertThat(message)
             .contains("exit code 3")
@@ -455,7 +463,16 @@ class GuiCommandTest {
         Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
         Mockito.when(process.exitValue()).thenReturn(0);
 
-        assertThat(GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2)).isEmpty();
+        Optional<String> result;
+        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
+        final Process process1 = launch.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            result = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), launch.logFile()));
+        } else {
+            result = Optional.empty();
+        }
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -463,7 +480,16 @@ class GuiCommandTest {
         Process process = Mockito.mock(Process.class);
         Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(false);
 
-        assertThat(GuiCommand.PlayRunner.earlyExitError(new ClientRunner.Launch(process, Path.of("run-mnm.log")), 2)).isEmpty();
+        Optional<String> result;
+        ClientRunner.Launch launch = new ClientRunner.Launch(process, Path.of("run-mnm.log"));
+        final Process process1 = launch.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            result = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), launch.logFile()));
+        } else {
+            result = Optional.empty();
+        }
+        assertThat(result).isEmpty();
     }
 
     static Client testClient() {

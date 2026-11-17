@@ -10,7 +10,6 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -21,11 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.api.ApiConnector;
 import org.mnm.api.TokenSupplier;
+import org.mnm.cache.CacheCleaner;
+import org.mnm.cache.CacheHandler;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
-import org.mnm.cache.CacheCleaner;
-import org.mnm.cache.CacheHandler;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.Factories;
@@ -100,7 +99,6 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface PlayAction {
-        // Returns the game process. The UI uses it to know when the game ends.
         Process run(RunnerOptions options);
     }
 
@@ -402,7 +400,7 @@ public class GuiCommand implements Command {
     // Starts the game and watches for an early failure
     static class PlayRunner implements PlayAction {
 
-        private static final long EARLY_EXIT_SECONDS = 200;
+        private static final long EARLY_EXIT_SECONDS = 3;
 
         private final Supplier<Path> configDbLocator;
 
@@ -419,27 +417,19 @@ public class GuiCommand implements Command {
             }
         }
 
-        // Does not block the UI. The error handler shows the error when the game stops at once.
         private static void watchEarlyExit(ClientRunner.Launch launch) {
             Thread.ofVirtual().name("game-start-watch").start(() -> {
                 try {
-                    earlyExitError(launch, EARLY_EXIT_SECONDS).ifPresent(message -> {
-                        throw new IllegalStateException(message);
-                    });
+                    final Process process = launch.process();
+                    if (process.waitFor(EARLY_EXIT_SECONDS, TimeUnit.SECONDS) && process.exitValue() != 0) {
+                        String errorMsg = "The game stopped with exit code %d. See the log: %s"
+                            .formatted(process.exitValue(), launch.logFile());
+                        throw new IllegalStateException(errorMsg);
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             });
-        }
-
-        // Waits for the game up to the given time. Returns an error message if the game stops with an error in that time.
-        static Optional<String> earlyExitError(ClientRunner.Launch launch, long seconds) throws InterruptedException {
-            final Process process = launch.process();
-            if (process.waitFor(seconds, TimeUnit.SECONDS) && process.exitValue() != 0) {
-                return Optional.of("The game stopped with exit code %d. See the log: %s"
-                    .formatted(process.exitValue(), launch.logFile()));
-            }
-            return Optional.empty();
         }
 
     }
