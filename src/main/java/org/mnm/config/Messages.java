@@ -2,6 +2,10 @@ package org.mnm.config;
 
 public class Messages {
 
+    public class Errors {
+        public static final String NO_CLIENT_FOUND = "No client found: run 'install --username ...' first";
+    }
+
     public class TwoFactorAuthentication {
         public static final String EMAIL_INSTRUCTIONS = "Enter the six-digit code sent to your email. Check spam if it hasn't arrived.";
         public static final String TOTP_INSTRUCTIONS = "Enter the six-digit code from your authenticator app.";

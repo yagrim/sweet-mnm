@@ -28,6 +28,7 @@ import org.mnm.tools.StringUtils;
 import org.mnm.tools.Zstd;
 
 import static org.mnm.config.Client.Status.UPDATED;
+import static org.mnm.config.Messages.Errors.NO_CLIENT_FOUND;
 import static org.mnm.tools.FileUtils.fileExists;
 import static org.mnm.tools.FileUtils.getAllFiles;
 import static org.mnm.tools.ProcessUtils.panic;
@@ -98,11 +99,11 @@ public class ClientInstaller {
             slug = options.slug();
             currentClient = configDb.getClient(slug);
             if (currentClient == null) {
-                panic("No client found: run 'install --username ...' first");
+                panic(NO_CLIENT_FOUND);
             }
             List<Token> tokens = configDb.getTokens(slug);
             if (tokens.isEmpty()) {
-                panic("No client found: run 'install --username ...' first");
+                panic(NO_CLIENT_FOUND);
             }
             logger.debug("Found {} tokens for '{}'", tokens.size(), slug);
             validateTokens(tokens);

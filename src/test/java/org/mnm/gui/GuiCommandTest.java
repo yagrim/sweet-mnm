@@ -35,6 +35,7 @@ import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cache.CacheCleaner;
 import org.mnm.cache.CacheHandler;
+import org.mnm.client.ClientRunner;
 import org.mnm.client.InstallerOptions;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
@@ -433,6 +434,62 @@ class GuiCommandTest {
             configDb.addClient(new Client(slug, "1.2.3", UPDATED, path));
             configDb.addToken(new Token(slug, validToken()));
         }
+    }
+
+    @Test
+    void shouldReportErrorWhenGameStopsWithErrorEarly() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
+        Mockito.when(process.exitValue()).thenReturn(3);
+
+        Optional<String> error;
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            error = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), runtime.logFile()));
+        } else {
+            error = Optional.empty();
+        }
+
+        assertThat(error).hasValueSatisfying(message -> assertThat(message)
+            .contains("exit code 3")
+            .contains("run-mnm.log"));
+    }
+
+    @Test
+    void shouldNotReportErrorWhenGameStopsWithSuccessEarly() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(true);
+        Mockito.when(process.exitValue()).thenReturn(0);
+
+        Optional<String> result;
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            result = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), runtime.logFile()));
+        } else {
+            result = Optional.empty();
+        }
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldNotReportErrorWhenGameStillRuns() throws Exception {
+        Process process = Mockito.mock(Process.class);
+        Mockito.when(process.waitFor(2, TimeUnit.SECONDS)).thenReturn(false);
+
+        Optional<String> result;
+        ClientRunner.ClientRuntime runtime = new ClientRunner.ClientRuntime(process, Path.of("run-mnm.log"));
+        final Process process1 = runtime.process();
+        if (process1.waitFor((long) 2, TimeUnit.SECONDS) && process1.exitValue() != 0) {
+            result = Optional.of("The game stopped with exit code %d. See the log: %s"
+                .formatted(process1.exitValue(), runtime.logFile()));
+        } else {
+            result = Optional.empty();
+        }
+        assertThat(result).isEmpty();
     }
 
     static Client testClient() {

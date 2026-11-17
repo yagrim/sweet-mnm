@@ -11,12 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.mnm.config.Client;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.CursorSize;
+import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.config.WinePrefix;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
+import static org.mnm.config.Messages.Errors.NO_CLIENT_FOUND;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
 
@@ -30,7 +32,43 @@ public class ClientRunner {
         this.configDb = configDb;
     }
 
-    public void run(RunnerOptions options) {
+    /**
+     * Starts the game and waits until it exits.
+     * <p>
+     * The output of the game goes to the normal Sweet log.
+     */
+    public void runAndWait(RunnerOptions options) {
+        ProcessCommand command = prepare(options);
+        ProcessUtils.runAndWait(command.workingDirectory(), command.command(), command.environment());
+    }
+
+    /**
+     * Starts the game and does not wait returning the process reference.
+     * <p>
+     * The output of the game goes to the log file of the client, see {@link #logFile(String)}.
+     */
+    public ClientRuntime runDetached(RunnerOptions options) {
+        ProcessCommand command = prepare(options);
+        Path logFile = logFile(command.slug());
+        logger.info("Game output: {}", logFile);
+        Process process = ProcessUtils.runDetached(command.workingDirectory(), command.command(), command.environment(), logFile);
+        return new ClientRuntime(process, logFile);
+    }
+
+    public record ClientRuntime(Process process, Path logFile) {
+
+    }
+
+    public static Path logFile(String slug) {
+        return Environment.getSweetConfigLocation().resolve("logs").resolve("run-" + slug + ".log");
+    }
+
+    private record ProcessCommand(String slug, Path workingDirectory, String[] command,
+                                  Map<String, String> environment) {
+
+    }
+
+    private ProcessCommand prepare(RunnerOptions options) {
 
         final String slug = options.slug();
         final Integer tokenId = options.tokenId();
@@ -55,7 +93,7 @@ public class ClientRunner {
             logger.info("Environment variables: {}", environment);
         }
 
-        ProcessUtils.run(clientPath, command, environment);
+        return new ProcessCommand(client.slug(), clientPath, command, environment);
     }
 
     private static void applyCursorSize(CursorSize cursorSize, String winePrefix) {
@@ -80,14 +118,14 @@ public class ClientRunner {
         if (!isEmpty(slug)) {
             Client client = configDb.getClient(slug);
             if (client == null) {
-                panic("No client found: run 'install --username ...' first");
+                panic(NO_CLIENT_FOUND);
             }
             return client;
         }
 
         var clients = configDb.getClients();
         if (clients.isEmpty()) {
-            panic("No client found: run 'install --username ...' first");
+            panic(NO_CLIENT_FOUND);
         }
         if (clients.size() > 1) {
             panic("Could not identify client: use --slug");

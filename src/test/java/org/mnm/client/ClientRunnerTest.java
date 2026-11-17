@@ -48,7 +48,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No client found: run 'install --username ...' first");
     }
@@ -63,7 +63,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Could not identify client: use --slug");
     }
@@ -77,7 +77,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No token found: run 'install --username ...' first");
     }
@@ -92,7 +92,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Could not identify token: use --id");
     }
@@ -107,7 +107,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG_2, 1, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(SLUG_2, 1, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No token found for id 1");
     }
@@ -120,7 +120,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(SLUG, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(SLUG, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("No client found: run 'install --username ...' first");
     }
@@ -135,7 +135,7 @@ class ClientRunnerTest {
 
         ClientRunner runner = new ClientRunner(configDb);
 
-        assertThatThrownBy(() -> runner.run(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+        assertThatThrownBy(() -> runner.runAndWait(new RunnerOptions(null, null, true, defaultLinuxOptions())))
             .isInstanceOf(PanicException.class)
             .hasMessage("Token expired: run 'install --username ...' to create a new one");
     }
@@ -158,10 +158,10 @@ class ClientRunnerTest {
 
             osMock.when(OS::isWindows).thenReturn(true);
             validatorsMock.when(() -> Validators.checkVersion(token, client)).thenAnswer(invocation -> null);
-            processMock.when(() -> ProcessUtils.run(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
                 .thenReturn("");
 
-            runner.run(new RunnerOptions(null, null, false, defaultLinuxOptions()));
+            runner.runAndWait(new RunnerOptions(null, null, false, defaultLinuxOptions()));
 
             validatorsMock.verify(() -> Validators.checkVersion(token, client));
         }
@@ -498,6 +498,52 @@ class ClientRunnerTest {
     // defaults to client path if prefix is null
 
 
+    @Test
+    void shouldLaunchClientWithoutWaiting(@TempDir Path tempDir) {
+        Path installPath = tempDir.resolve("install");
+        String token = validToken();
+        Process process = Mockito.mock(Process.class);
+
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        Mockito.when(configDb.getClients()).thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, installPath)));
+        Mockito.when(configDb.getTokens(SLUG)).thenReturn(List.of(new Token(1, SLUG, token)));
+
+        AtomicReference<Path> logFile = new AtomicReference<>();
+        AtomicReference<String[]> command = new AtomicReference<>();
+
+        try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
+             MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
+            osMock.when(OS::isWindows).thenReturn(false);
+            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+                .thenAnswer(invocation -> {
+                    command.set(invocation.getArgument(1));
+                    logFile.set(invocation.getArgument(3));
+                    return process;
+                });
+
+            var runtime = new ClientRunner(configDb)
+                .runDetached(new RunnerOptions(null, null, true, defaultLinuxOptions()));
+
+            assertThat(runtime.process()).isSameAs(process);
+            assertThat(runtime.logFile()).isEqualTo(logFile.get());
+            processMock.verify(() -> ProcessUtils.runAndWait(any(), any(), any()), Mockito.never());
+        }
+
+        assertThat(command.get()).containsExactly("umu-run", "%s/mnm.exe".formatted(SLUG), "--token", token);
+        assertThat(logFile.get().toString()).endsWith("logs" + java.io.File.separator + "run-mnm.log");
+    }
+
+    @Test
+    void shouldNotLaunchWhenTokenIsExpired(@TempDir Path tempDir) {
+        ConfigDb configDb = Mockito.mock(ConfigDb.class);
+        Mockito.when(configDb.getClients()).thenReturn(List.of(new Client(SLUG, "v1.0.0", UPDATED, tempDir)));
+        Mockito.when(configDb.getTokens(SLUG)).thenReturn(List.of(new Token(1, SLUG, expiredToken())));
+
+        assertThatThrownBy(() -> new ClientRunner(configDb).runDetached(new RunnerOptions(null, null, true, defaultLinuxOptions())))
+            .isInstanceOf(PanicException.class)
+            .hasMessageContaining("Token expired");
+    }
+
     private RunResult runClient(Path installPath, String token, boolean isWindows, RunnerOptions options) {
         return runClient(SLUG, installPath, token, isWindows, options);
     }
@@ -519,7 +565,7 @@ class ClientRunnerTest {
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
 
             osMock.when(OS::isWindows).thenReturn(isWindows);
-            processMock.when(() -> ProcessUtils.run(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
                 .thenAnswer(invocation -> {
                     workingDirectory.set(invocation.getArgument(0));
                     command.set(invocation.getArgument(1));
@@ -527,7 +573,7 @@ class ClientRunnerTest {
                     return "";
                 });
 
-            runner.run(options);
+            runner.runAndWait(options);
         }
 
         return new RunResult(workingDirectory.get(), command.get(), environment.get());

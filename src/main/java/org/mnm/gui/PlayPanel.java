@@ -17,6 +17,7 @@ import org.mnm.events.ClientEventHandler;
 import org.mnm.events.LoginListener;
 import org.mnm.events.Refreshable;
 import org.mnm.events.RepairListener;
+import org.mnm.events.RunningClientsListener;
 
 import static org.mnm.config.Client.Status.UPDATED;
 import static org.mnm.gui.GuiComponents.setFontSize;
@@ -25,12 +26,16 @@ import static org.mnm.gui.Style.BASE_FONT_SIZE;
 import static org.mnm.gui.Style.SCALE;
 
 public class PlayPanel extends JPanel
-    implements LoginListener, RepairListener, Refreshable {
+    implements LoginListener, RepairListener, Refreshable, RunningClientsListener {
 
     final JButton play;
     final VersionPanel versionPanel;
 
-    public PlayPanel(
+    private final RunningClients runningClients = new RunningClients(ClientEventHandler.getInstance());
+    private boolean playAllowed = false;
+    private String currentSlug = null;
+
+    PlayPanel(
         GuiCommand.PlayAction runAction,
         Supplier<RunnerOptions> optionsSupplier) {
         this(runAction, optionsSupplier, 1f);
@@ -46,12 +51,27 @@ public class PlayPanel extends JPanel
 
         play = createButton("Play", uiScaling);
         play.setAlignmentX(Component.CENTER_ALIGNMENT);
-        play.addActionListener(_ -> runAction.run(optionsSupplier.get()));
+        play.addActionListener(_ -> {
+            final RunnerOptions options = optionsSupplier.get();
+            final Process process = runAction.run(options);
+            if (process != null && options != null) {
+                runningClients.track(options.slug(), process);
+            }
+        });
         this.add(play);
         this.versionPanel = new VersionPanel(uiScaling);
         this.add(versionPanel);
 
         ClientEventHandler.getInstance().register(this);
+    }
+
+    private void setPlayAllowed(boolean allowed) {
+        playAllowed = allowed;
+        updatePlayEnabled();
+    }
+
+    private void updatePlayEnabled() {
+        play.setEnabled(playAllowed && !runningClients.isRunning(currentSlug));
     }
 
     private static JButton createButton(String text, float uiScaling) {
@@ -87,7 +107,7 @@ public class PlayPanel extends JPanel
 
     @Override
     public void loginStart() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
@@ -97,22 +117,33 @@ public class PlayPanel extends JPanel
 
     @Override
     public void logoutDone() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
     public void repairStart() {
-        play.setEnabled(false);
+        setPlayAllowed(false);
     }
 
     @Override
     public void repairDone(ClientStatus client) {
-        play.setEnabled(true);
+        setPlayAllowed(true);
+    }
+
+    @Override
+    public void clientStarted(String slug) {
+        updatePlayEnabled();
+    }
+
+    @Override
+    public void clientStopped(String slug) {
+        updatePlayEnabled();
     }
 
     @Override
     public void refresh(ClientStatus client) {
-        play.setEnabled(client != null && client.validToken() && client.statusIs(UPDATED));
+        currentSlug = client == null || client.client() == null ? null : client.client().slug();
+        setPlayAllowed(client != null && client.validToken() && client.statusIs(UPDATED));
     }
 
 }

@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -19,11 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import org.mnm.api.ApiConnector;
 import org.mnm.api.TokenSupplier;
+import org.mnm.cache.CacheCleaner;
+import org.mnm.cache.CacheHandler;
 import org.mnm.cli.Arguments;
 import org.mnm.cli.Command;
 import org.mnm.cli.DevFlags;
-import org.mnm.cache.CacheCleaner;
-import org.mnm.cache.CacheHandler;
 import org.mnm.client.ClientInstaller;
 import org.mnm.client.ClientRunner;
 import org.mnm.client.Factories;
@@ -98,7 +99,7 @@ public class GuiCommand implements Command {
 
     @FunctionalInterface
     interface PlayAction {
-        void run(RunnerOptions options);
+        Process run(RunnerOptions options);
     }
 
     private final Supplier<Path> configDbLocator;
@@ -127,7 +128,7 @@ public class GuiCommand implements Command {
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);
-        this.runAction = (options) -> runClient(configDbLocator, options);
+        this.runAction = new DetachedPlayRunner(configDbLocator);
         this.loginAction = (username, password) -> login(configDbLocator, username, password);
         this.logoutAction = slug -> logout(configDbLocator, slug);
         this.selectSlugAction = slug -> storeSlug(configDbLocator, slug);
@@ -396,11 +397,40 @@ public class GuiCommand implements Command {
         }
     }
 
-    private static void runClient(Supplier<Path> configDbLocator, RunnerOptions options) {
-        try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
-            new ClientRunner(configDb)
-                .run(options);
+    static class DetachedPlayRunner implements PlayAction {
+
+        private static final long EARLY_EXIT_SECONDS = 3;
+
+        private final Supplier<Path> configDbLocator;
+
+        DetachedPlayRunner(Supplier<Path> configDbLocator) {
+            this.configDbLocator = configDbLocator;
         }
+
+        @Override
+        public Process run(RunnerOptions options) {
+            try (ConfigDb configDb = ConfigDb.open(configDbLocator.get())) {
+                final ClientRunner.ClientRuntime runtime = new ClientRunner(configDb).runDetached(options);
+                watchEarlyExit(runtime);
+                return runtime.process();
+            }
+        }
+
+        private static void watchEarlyExit(ClientRunner.ClientRuntime launch) {
+            Thread.ofVirtual().name("game-start-watch").start(() -> {
+                try {
+                    final Process process = launch.process();
+                    if (process.waitFor(EARLY_EXIT_SECONDS, TimeUnit.SECONDS) && process.exitValue() != 0) {
+                        String errorMsg = "Game client stopped with exit code %d. See the log: %s"
+                            .formatted(process.exitValue(), launch.logFile());
+                        throw new IllegalStateException(errorMsg);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
     }
 
 }
