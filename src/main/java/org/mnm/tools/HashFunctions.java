@@ -50,7 +50,7 @@ public class HashFunctions {
          */
         public static String xxh3(Path path) {
             return timed(() -> {
-                final String[] command = {"xxhsum", "-H2", path.toAbsolutePath().toString()};
+                final ClientCommand command = ClientCommand.of("xxhsum", "-H2", path.toAbsolutePath().toString());
                 return firstToken(ProcessUtils.runAndWait(null, command));
             }, () -> "File XXH3 hash calculated: %s, %s".formatted(path.getFileName(), humanReadableSize(path.toFile().length())));
         }

@@ -19,6 +19,7 @@ import org.mnm.config.CursorSize;
 import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
+import org.mnm.tools.ClientCommand;
 import org.mnm.tools.PanicException;
 import org.mnm.tools.ProcessUtils;
 
@@ -158,7 +159,7 @@ class ClientRunnerTest {
 
             osMock.when(OS::isWindows).thenReturn(true);
             validatorsMock.when(() -> Validators.checkVersion(token, client)).thenAnswer(invocation -> null);
-            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(ClientCommand.class), anyMap()))
                 .thenReturn("");
 
             runner.runAndWait(new RunnerOptions(null, null, false, defaultLinuxOptions()));
@@ -514,9 +515,9 @@ class ClientRunnerTest {
         try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
             osMock.when(OS::isWindows).thenReturn(false);
-            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(ClientCommand.class), anyMap(), any(Path.class)))
                 .thenAnswer(invocation -> {
-                    command.set(invocation.getArgument(1));
+                    command.set(((ClientCommand) invocation.getArgument(1)).toArray());
                     logFile.set(invocation.getArgument(3));
                     return process;
                 });
@@ -565,10 +566,10 @@ class ClientRunnerTest {
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
 
             osMock.when(OS::isWindows).thenReturn(isWindows);
-            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(String[].class), anyMap()))
+            processMock.when(() -> ProcessUtils.runAndWait(any(Path.class), any(ClientCommand.class), anyMap()))
                 .thenAnswer(invocation -> {
                     workingDirectory.set(invocation.getArgument(0));
-                    command.set(invocation.getArgument(1));
+                    command.set(((ClientCommand) invocation.getArgument(1)).toArray());
                     environment.set(invocation.getArgument(2));
                     return "";
                 });

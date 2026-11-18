@@ -15,13 +15,13 @@ import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.config.WinePrefix;
+import org.mnm.tools.ClientCommand;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
 import static org.mnm.config.Messages.Errors.NO_CLIENT_FOUND;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
-import static org.mnm.tools.StringUtils.redact;
 
 public class ClientRunner {
 
@@ -64,7 +64,7 @@ public class ClientRunner {
         return Environment.getSweetConfigLocation().resolve("logs").resolve("run-" + slug + ".log");
     }
 
-    private record ProcessCommand(String slug, Path workingDirectory, String[] command,
+    private record ProcessCommand(String slug, Path workingDirectory, ClientCommand command,
                                   Map<String, String> environment) {
 
     }
@@ -85,10 +85,10 @@ public class ClientRunner {
         final Path clientPath = client.path();
         final boolean isWindows = OS.isWindows();
 
-        String[] command = buildCommand(client.slug(), token.token(), isWindows);
+        ClientCommand command = buildCommand(client.slug(), token.token(), isWindows);
         Map<String, String> environment = buildEnvironment(isWindows, client.slug(), clientPath, System.getenv(), options.linuxOptions());
 
-        logger.info("Running: {}", String.join(" ", redact(command)));
+        logger.info("Running: {}", command);
         logger.info("Working directory: {}", clientPath);
         if (!environment.isEmpty()) {
             logger.info("Environment variables: {}", environment);
@@ -155,12 +155,12 @@ public class ClientRunner {
         return tokens.get(0);
     }
 
-    private String[] buildCommand(String slug, String token, boolean isWindows) {
+    private ClientCommand buildCommand(String slug, String token, boolean isWindows) {
         final String clientPath = concatPath(slug, "mnm.exe");
         if (isWindows) {
-            return new String[]{clientPath, "--token", token};
+            return ClientCommand.of(clientPath, "--token", token);
         }
-        return new String[]{"umu-run", clientPath, "--token", token};
+        return ClientCommand.of("umu-run", clientPath, "--token", token);
     }
 
     private static String concatPath(String... parts) {

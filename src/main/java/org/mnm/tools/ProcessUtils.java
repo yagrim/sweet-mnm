@@ -14,9 +14,6 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.mnm.tools.StringUtils.join;
-import static org.mnm.tools.StringUtils.redact;
-
 public class ProcessUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessUtils.class);
@@ -25,11 +22,11 @@ public class ProcessUtils {
         throw new PanicException(message);
     }
 
-    public static String runAndWait(Path workingDirectory, String[] command) {
+    public static String runAndWait(Path workingDirectory, ClientCommand command) {
         return runAndWait(workingDirectory, command, null);
     }
 
-    public static Process runDetached(Path workingDirectory, String[] command, Map<String, String> environment, Path logFile) {
+    public static Process runDetached(Path workingDirectory, ClientCommand command, Map<String, String> environment, Path logFile) {
         try {
             ProcessBuilder processBuilder = createProcessBuilder(workingDirectory, command, environment);
             if (logFile == null) {
@@ -49,8 +46,8 @@ public class ProcessUtils {
         }
     }
 
-    private static ProcessBuilder createProcessBuilder(Path workingDirectory, String[] command, Map<String, String> environment) {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
+    private static ProcessBuilder createProcessBuilder(Path workingDirectory, ClientCommand command, Map<String, String> environment) {
+        ProcessBuilder processBuilder = new ProcessBuilder(command.arguments());
         if (workingDirectory != null) {
             processBuilder.directory(workingDirectory.toFile());
         }
@@ -60,14 +57,14 @@ public class ProcessUtils {
         return processBuilder;
     }
 
-    private static RuntimeException startFailure(String[] command, IOException e) {
+    private static RuntimeException startFailure(ClientCommand command, IOException e) {
         if (isCommandNotFound(e)) {
-            return new CommandNotFound(command[0], e);
+            return new CommandNotFound(command.executable(), e);
         }
-        return new RuntimeException("Process failed: " + join(redact(command)), e);
+        return new RuntimeException("Process failed: " + command, e);
     }
 
-    public static String runAndWait(Path workingDirectory, String[] command, Map<String, String> environment) {
+    public static String runAndWait(Path workingDirectory, ClientCommand command, Map<String, String> environment) {
         try {
             Process process = createProcessBuilder(workingDirectory, command, environment).start();
 
@@ -99,7 +96,7 @@ public class ProcessUtils {
             throw startFailure(command, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Process failed: " + join(redact(command)), e);
+            throw new RuntimeException("Process failed: " + command, e);
         }
     }
 

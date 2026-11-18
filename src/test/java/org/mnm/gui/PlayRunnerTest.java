@@ -19,6 +19,7 @@ import org.mnm.config.ConfigDb;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.gui.GuiCommand.DetachedPlayRunner;
+import org.mnm.tools.ClientCommand;
 import org.mnm.tools.ProcessUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,10 +134,10 @@ class PlayRunnerTest {
         try (MockedStatic<OS> osMock = Mockito.mockStatic(OS.class, Mockito.CALLS_REAL_METHODS);
              MockedStatic<ProcessUtils> processMock = Mockito.mockStatic(ProcessUtils.class)) {
             osMock.when(OS::isWindows).thenReturn(false);
-            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(String[].class), anyMap(), any(Path.class)))
+            processMock.when(() -> ProcessUtils.runDetached(any(Path.class), any(ClientCommand.class), anyMap(), any(Path.class)))
                 .thenAnswer(invocation -> {
                     startedWorkingDirectory = invocation.getArgument(0);
-                    startedCommand = invocation.getArgument(1);
+                    startedCommand = ((ClientCommand) invocation.getArgument(1)).toArray();
                     startedEnvironment = invocation.getArgument(2);
                     startedLogFile = invocation.getArgument(3);
                     return process;
