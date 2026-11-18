@@ -26,8 +26,12 @@ class ClientPaths {
     private final boolean missingClient;
 
     ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix) {
+        this(clientStatus, clientAsWinePrefix, System.getenv("STEAM_COMPAT_DATA_PATH"));
+    }
+
+    ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix, String compatDataPath) {
         missingClient = !OS.isWindows() && clientAsWinePrefix && (clientStatus == null || clientStatus.client() == null);
-        winePrefix = missingClient ? Optional.empty() : getWinePrefixLocation(clientStatus, clientAsWinePrefix);
+        winePrefix = missingClient ? Optional.empty() : getWinePrefixLocation(clientStatus, clientAsWinePrefix, compatDataPath);
     }
 
     String getGameSettingsPath() {
@@ -68,10 +72,9 @@ class ClientPaths {
         return PathUtils.replaceDrive(absolutePath, 'z');
     }
 
-    private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
+    private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix, String compatDataPath) {
         // TODO Support real windows and not only Proton?
         if (OS.isWindows()) {
-            String compatDataPath = System.getenv("STEAM_COMPAT_DATA_PATH");
             return StringUtils.isEmpty(compatDataPath) ? Optional.empty() : Optional.of(compatDataPath);
         }
         if (clientAsWinePrefix) {

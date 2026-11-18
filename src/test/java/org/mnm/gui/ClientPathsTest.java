@@ -26,7 +26,7 @@ class ClientPathsTest {
     @Test
     @EnabledOnOs(OS.WINDOWS)
     void shouldUseSteamCompatibilityDataPathOnWindows() throws IOException {
-        ClientPaths paths = new ClientPaths(null, true);
+        ClientPaths paths = new ClientPaths(null, true, WINDOWS_PREFIX);
         String expected = WINDOWS_PREFIX + "/pfx/" + GAME_SETTINGS;
         Path expectedPath = Path.of(expected);
 
@@ -42,9 +42,25 @@ class ClientPathsTest {
     @EnabledOnOs(OS.WINDOWS)
     void shouldReportMissingInstallationOnWindows() {
         deleteRecursively(Path.of(WINDOWS_PREFIX));
-        ClientPaths paths = new ClientPaths(null, true);
+        ClientPaths paths = new ClientPaths(null, true, WINDOWS_PREFIX);
 
         assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldReportMissingSteamCompatibilityDataPathOnWindows() {
+        ClientPaths paths = new ClientPaths(null, true, null);
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: STEAM_COMPAT_DATA_PATH empty or not set");
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldReportEmptySteamCompatibilityDataPathOnWindows() {
+        ClientPaths paths = new ClientPaths(null, true, "");
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: STEAM_COMPAT_DATA_PATH empty or not set");
     }
 
     @Test
