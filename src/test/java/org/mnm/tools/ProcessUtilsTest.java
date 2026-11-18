@@ -17,9 +17,12 @@ import static org.mnm.config.Environment.getWorkDir;
 
 class ProcessUtilsTest {
 
+    private static final String SECRET_TOKEN = "secret-token";
+    private static final ClientCommand INVALID_COMMAND = ClientCommand.of("tool", "bad\u0000arg", "--token", SECRET_TOKEN);
+
     @Test
     void shouldHandleMissingCommand() {
-        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), new String[]{"no-no-no", "arg0", "arg-two"}))
+        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), ClientCommand.of("no-no-no", "arg0", "arg-two")))
             .isInstanceOf(CommandNotFound.class)
             .hasMessage("no-no-no")
             .hasCauseInstanceOf(IOException.class);
@@ -28,7 +31,7 @@ class ProcessUtilsTest {
     @Test
     @EnabledOnOs(OS.LINUX)
     void shouldHandleUnexpectedError() {
-        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), new String[]{"ls", "thingy"}))
+        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), ClientCommand.of("ls", "thingy")))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("Process failed: exitCode=2, stdout=, stderr=ls: cannot access 'thingy': No such file or directory")
             .hasNoCause();
@@ -37,7 +40,7 @@ class ProcessUtilsTest {
     @Test
     @EnabledOnOs(OS.LINUX)
     void shouldRunCommand() {
-        String output = ProcessUtils.runAndWait(getWorkDir(), new String[]{"ls", "-la"});
+        String output = ProcessUtils.runAndWait(getWorkDir(), ClientCommand.of("ls", "-la"));
 
         assertThat(output)
             .contains("src")
@@ -49,7 +52,7 @@ class ProcessUtilsTest {
     @EnabledOnOs(OS.LINUX)
     void shouldStartProcessWithoutWaiting(@TempDir Path tempDir) throws Exception {
         long start = System.nanoTime();
-        Process process = ProcessUtils.runDetached(getWorkDir(), new String[]{"sleep", "5"}, null, tempDir.resolve("out.log"));
+        Process process = ProcessUtils.runDetached(getWorkDir(), ClientCommand.of("sleep", "5"), null, tempDir.resolve("out.log"));
         try {
             long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
 
@@ -61,12 +64,26 @@ class ProcessUtilsTest {
     }
 
     @Test
+    void shouldNotShowTokenWhenRunFails() {
+        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), INVALID_COMMAND))
+            .hasMessageEndingWith("--token ***")
+            .hasMessageNotContaining(SECRET_TOKEN);
+    }
+
+    @Test
+    void shouldNotShowTokenWhenStartFails() {
+        assertThatThrownBy(() -> ProcessUtils.runDetached(getWorkDir(), INVALID_COMMAND, Map.of(), null))
+            .hasMessageEndingWith("--token ***")
+            .hasMessageNotContaining(SECRET_TOKEN);
+    }
+
+    @Test
     @EnabledOnOs(OS.LINUX)
     void shouldWriteProcessOutputToLogFile(@TempDir Path tempDir) throws Exception {
         Path logFile = tempDir.resolve("logs").resolve("out.log");
 
         Process process = ProcessUtils.runDetached(getWorkDir(),
-            new String[]{"sh", "-c", "echo hello; echo problem >&2"}, null, logFile);
+            ClientCommand.of("sh", "-c", "echo hello; echo problem >&2"), null, logFile);
         process.waitFor(5, TimeUnit.SECONDS);
 
         assertThat(Files.readString(logFile)).contains("hello").contains("problem");
@@ -78,7 +95,7 @@ class ProcessUtilsTest {
         Path logFile = tempDir.resolve("out.log");
 
         Process process = ProcessUtils.runDetached(getWorkDir(),
-            new String[]{"sh", "-c", "echo $SWEET_TEST_VALUE"}, Map.of("SWEET_TEST_VALUE", "abc"), logFile);
+            ClientCommand.of("sh", "-c", "echo $SWEET_TEST_VALUE"), Map.of("SWEET_TEST_VALUE", "abc"), logFile);
         process.waitFor(5, TimeUnit.SECONDS);
 
         assertThat(Files.readString(logFile)).contains("abc");
@@ -87,7 +104,7 @@ class ProcessUtilsTest {
     @Test
     @EnabledOnOs(OS.LINUX)
     void shouldStartProcessWithoutLogFile() throws Exception {
-        Process process = ProcessUtils.runDetached(getWorkDir(), new String[]{"echo", "hello"}, null, null);
+        Process process = ProcessUtils.runDetached(getWorkDir(), ClientCommand.of("echo", "hello"), null, null);
 
         assertThat(process.waitFor(5, TimeUnit.SECONDS)).isTrue();
         assertThat(process.exitValue()).isZero();
@@ -95,7 +112,7 @@ class ProcessUtilsTest {
 
     @Test
     void shouldHandleMissingCommandOnStart(@TempDir Path tempDir) {
-        assertThatThrownBy(() -> ProcessUtils.runDetached(getWorkDir(), new String[]{"no-no-no", "arg0"}, null, tempDir.resolve("out.log")))
+        assertThatThrownBy(() -> ProcessUtils.runDetached(getWorkDir(), ClientCommand.of("no-no-no", "arg0"), null, tempDir.resolve("out.log")))
             .isInstanceOf(CommandNotFound.class)
             .hasMessage("no-no-no")
             .hasCauseInstanceOf(IOException.class);

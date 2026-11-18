@@ -15,6 +15,7 @@ import org.mnm.config.Environment;
 import org.mnm.config.OS;
 import org.mnm.config.Token;
 import org.mnm.config.WinePrefix;
+import org.mnm.tools.ClientCommand;
 import org.mnm.tools.JwtParser;
 import org.mnm.tools.ProcessUtils;
 
@@ -63,7 +64,7 @@ public class ClientRunner {
         return Environment.getSweetConfigLocation().resolve("logs").resolve("run-" + slug + ".log");
     }
 
-    private record ProcessCommand(String slug, Path workingDirectory, String[] command,
+    private record ProcessCommand(String slug, Path workingDirectory, ClientCommand command,
                                   Map<String, String> environment) {
 
     }
@@ -84,10 +85,10 @@ public class ClientRunner {
         final Path clientPath = client.path();
         final boolean isWindows = OS.isWindows();
 
-        String[] command = buildCommand(client.slug(), token.token(), isWindows);
+        ClientCommand command = buildCommand(client.slug(), token.token(), isWindows);
         Map<String, String> environment = buildEnvironment(isWindows, client.slug(), clientPath, System.getenv(), options.linuxOptions());
 
-        logger.info("Running: {}", String.join(" ", redactToken(command)));
+        logger.info("Running: {}", command);
         logger.info("Working directory: {}", clientPath);
         if (!environment.isEmpty()) {
             logger.info("Environment variables: {}", environment);
@@ -154,26 +155,16 @@ public class ClientRunner {
         return tokens.get(0);
     }
 
-    private String[] buildCommand(String slug, String token, boolean isWindows) {
+    private ClientCommand buildCommand(String slug, String token, boolean isWindows) {
         final String clientPath = concatPath(slug, "mnm.exe");
         if (isWindows) {
-            return new String[]{clientPath, "--token", token};
+            return ClientCommand.of(clientPath, "--token", token);
         }
-        return new String[]{"umu-run", clientPath, "--token", token};
+        return ClientCommand.of("umu-run", clientPath, "--token", token);
     }
 
     private static String concatPath(String... parts) {
         return String.join(OS.isWindows() ? "\\" : "/", parts);
-    }
-
-    private static String[] redactToken(String[] command) {
-        String[] redacted = command.clone();
-        for (int i = 0; i < redacted.length - 1; i++) {
-            if ("--token".equals(redacted[i])) {
-                redacted[i + 1] = "***";
-            }
-        }
-        return redacted;
     }
 
     private Map<String, String> buildEnvironment(boolean isWindows, String slug, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
