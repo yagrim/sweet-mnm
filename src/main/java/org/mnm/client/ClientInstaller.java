@@ -77,6 +77,7 @@ public class ClientInstaller {
         this(configDb, apiConnector, Environment.getDownloadsLocation());
     }
 
+    // Test-only constructor. Do not call it from production code.
     ClientInstaller(ConfigDb configDb, ApiConnector apiConnector, Path downloadsPath) {
         this.configDb = configDb;
         this.apiConnector = apiConnector;

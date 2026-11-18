@@ -19,6 +19,7 @@ public class InstallCommand implements Command {
         this(configFileLocator, Factories::installer);
     }
 
+    // Test-only constructor. Do not call it from production code.
     InstallCommand(Supplier<Path> configFileLocator, Installer installer) {
         this.configFileLocator = configFileLocator;
         this.installer = installer;

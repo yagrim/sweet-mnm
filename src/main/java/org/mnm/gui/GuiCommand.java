@@ -125,6 +125,7 @@ public class GuiCommand implements Command {
     }
 
     // NOTE: we wrap logic in Actions to keep ConfigDB handling here
+    // Test-only constructor. Do not call it from production code.
     GuiCommand(Supplier<Path> configDbLocator) {
         this.configDbLocator = configDbLocator;
         this.repairAction = (slug, status, inMemoryHashing) -> repairClient(configDbLocator, slug, status, inMemoryHashing);

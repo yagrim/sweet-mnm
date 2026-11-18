@@ -35,6 +35,7 @@ public class PlayPanel extends JPanel
     private boolean playAllowed = false;
     private String currentSlug = null;
 
+    // Test-only constructor. Do not call it from production code.
     PlayPanel(
         GuiCommand.PlayAction runAction,
         Supplier<RunnerOptions> optionsSupplier) {
