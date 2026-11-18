@@ -21,12 +21,13 @@ import static org.mnm.config.Client.Status.UPDATED;
 class ClientPathsTest {
 
     private static final String GAME_SETTINGS = "drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
+    private static final String USER_GAME_SETTINGS = "AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
     private static final String WINDOWS_PREFIX = "C:/steam-compat-data";
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
     void shouldUseSteamCompatibilityDataPathOnWindows() throws IOException {
-        ClientPaths paths = new ClientPaths(null, true);
+        ClientPaths paths = new ClientPaths(null, true, WINDOWS_PREFIX, null);
         String expected = WINDOWS_PREFIX + "/pfx/" + GAME_SETTINGS;
         Path expectedPath = Path.of(expected);
 
@@ -42,7 +43,33 @@ class ClientPathsTest {
     @EnabledOnOs(OS.WINDOWS)
     void shouldReportMissingInstallationOnWindows() {
         deleteRecursively(Path.of(WINDOWS_PREFIX));
-        ClientPaths paths = new ClientPaths(null, true);
+        ClientPaths paths = new ClientPaths(null, true, WINDOWS_PREFIX, null);
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldUseUserHomeOnWindowsWithoutSteamCompatibilityDataPath(@TempDir Path tempDir) throws IOException {
+        createDirectories(tempDir.resolve(USER_GAME_SETTINGS));
+        ClientPaths paths = new ClientPaths(null, true, null, tempDir.toString());
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo(tempDir + "/" + USER_GAME_SETTINGS);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldUseUserHomeOnWindowsWithEmptySteamCompatibilityDataPath(@TempDir Path tempDir) throws IOException {
+        createDirectories(tempDir.resolve(USER_GAME_SETTINGS));
+        ClientPaths paths = new ClientPaths(null, true, "", tempDir.toString());
+
+        assertThat(paths.getGameSettingsPath()).isEqualTo(tempDir + "/" + USER_GAME_SETTINGS);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldReportMissingInstallationInUserHomeOnWindows(@TempDir Path tempDir) {
+        ClientPaths paths = new ClientPaths(null, true, null, tempDir.toString());
 
         assertThat(paths.getGameSettingsPath()).isEqualTo("Error: installation not found, run Install or Repair");
     }

@@ -15,19 +15,26 @@ class ClientPaths {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientPaths.class);
 
-    // Note: Windows 11 stores logs in "AppData/Local", in Proton all in the same path
-    private static final String gameSettings = "pfx/drive_c/users/steamuser/AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
+    // Path relative to the user home directory, on Windows and in a Wine prefix
+    private static final String USER_GAME_SETTINGS = "AppData/LocalLow/Niche Worlds Cult/Monsters and Memories";
+    private static final String gameSettings = "pfx/drive_c/users/steamuser/" + USER_GAME_SETTINGS;
 
-    private static final String STEAM_COMPAT_DATA_PATH_ERROR = "Error: STEAM_COMPAT_DATA_PATH empty or not set";
     private static final String INSTALLATION_NOT_FOUND_ERROR = "Error: installation not found, run Install or Repair";
 
     private final Optional<String> winePrefix;
 
     private final boolean missingClient;
 
+    private final String userHome;
+
     ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix) {
+        this(clientStatus, clientAsWinePrefix, System.getenv("STEAM_COMPAT_DATA_PATH"), System.getProperty("user.home"));
+    }
+
+    ClientPaths(ClientStatus clientStatus, boolean clientAsWinePrefix, String compatDataPath, String userHome) {
+        this.userHome = userHome;
         missingClient = !OS.isWindows() && clientAsWinePrefix && (clientStatus == null || clientStatus.client() == null);
-        winePrefix = missingClient ? Optional.empty() : getWinePrefixLocation(clientStatus, clientAsWinePrefix);
+        winePrefix = missingClient ? Optional.empty() : getWinePrefixLocation(clientStatus, clientAsWinePrefix, compatDataPath);
     }
 
     String getGameSettingsPath() {
@@ -39,7 +46,14 @@ class ClientPaths {
                 String path = prefix + "/" + gameSettings;
                 return exists(path) ? path : INSTALLATION_NOT_FOUND_ERROR;
             })
-            .orElse(STEAM_COMPAT_DATA_PATH_ERROR);
+            .orElseGet(this::getUserGameSettingsPath);
+    }
+
+    // Without STEAM_COMPAT_DATA_PATH, Sweet runs on Windows, or in Proton outside of Steam.
+    // In both cases, the game settings are in the home directory of the user.
+    private String getUserGameSettingsPath() {
+        String path = userHome + "/" + USER_GAME_SETTINGS;
+        return exists(path) ? path : INSTALLATION_NOT_FOUND_ERROR;
     }
 
     private boolean exists(String path) {
@@ -68,10 +82,8 @@ class ClientPaths {
         return PathUtils.replaceDrive(absolutePath, 'z');
     }
 
-    private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix) {
-        // TODO Support real windows and not only Proton?
+    private Optional<String> getWinePrefixLocation(ClientStatus client, boolean clientAsWinePrefix, String compatDataPath) {
         if (OS.isWindows()) {
-            String compatDataPath = System.getenv("STEAM_COMPAT_DATA_PATH");
             return StringUtils.isEmpty(compatDataPath) ? Optional.empty() : Optional.of(compatDataPath);
         }
         if (clientAsWinePrefix) {
