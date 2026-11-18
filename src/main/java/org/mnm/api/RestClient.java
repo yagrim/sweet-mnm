@@ -8,20 +8,18 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Map;
 
+import org.mnm.tools.Downloader;
 import org.mnm.tools.JsonParser;
 
 import static org.mnm.tools.UrlBuilder.buildUrl;
 
 public class RestClient {
 
-    // A server that accepts the connection but does not respond must not block Sweet forever
-    static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
-
     private final String baseUrl;
     private final Duration timeout;
 
     public RestClient(String baseUrl) {
-        this(baseUrl, DEFAULT_TIMEOUT);
+        this(baseUrl, Downloader.DEFAULT_TIMEOUT);
     }
 
     RestClient(String baseUrl, Duration timeout) {

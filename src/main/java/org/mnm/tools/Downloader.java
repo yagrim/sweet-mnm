@@ -19,7 +19,7 @@ public class Downloader {
     private static final Logger logger = LoggerFactory.getLogger(Downloader.class);
 
     // The read timeout applies to each read, not to the full download, so large files are not affected
-    static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
 
     private Downloader() {
     }
