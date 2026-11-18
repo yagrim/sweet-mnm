@@ -17,6 +17,10 @@ import static org.mnm.config.Environment.getWorkDir;
 
 class ProcessUtilsTest {
 
+    private static final String SECRET_TOKEN = "secret-token";
+    // Java does not start a command with a null character, and the error is not "command not found"
+    private static final String[] INVALID_COMMAND = {"tool", "bad\u0000arg", "--token", SECRET_TOKEN};
+
     @Test
     void shouldHandleMissingCommand() {
         assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), new String[]{"no-no-no", "arg0", "arg-two"}))
@@ -58,6 +62,20 @@ class ProcessUtilsTest {
         } finally {
             process.destroyForcibly();
         }
+    }
+
+    @Test
+    void shouldNotShowTokenWhenRunFails() {
+        assertThatThrownBy(() -> ProcessUtils.runAndWait(getWorkDir(), INVALID_COMMAND))
+            .hasMessageEndingWith("--token ***")
+            .hasMessageNotContaining(SECRET_TOKEN);
+    }
+
+    @Test
+    void shouldNotShowTokenWhenStartFails() {
+        assertThatThrownBy(() -> ProcessUtils.runDetached(getWorkDir(), INVALID_COMMAND, Map.of(), null))
+            .hasMessageEndingWith("--token ***")
+            .hasMessageNotContaining(SECRET_TOKEN);
     }
 
     @Test

@@ -21,6 +21,7 @@ import org.mnm.tools.ProcessUtils;
 import static org.mnm.config.Messages.Errors.NO_CLIENT_FOUND;
 import static org.mnm.tools.ProcessUtils.panic;
 import static org.mnm.tools.StringUtils.isEmpty;
+import static org.mnm.tools.StringUtils.redact;
 
 public class ClientRunner {
 
@@ -87,7 +88,7 @@ public class ClientRunner {
         String[] command = buildCommand(client.slug(), token.token(), isWindows);
         Map<String, String> environment = buildEnvironment(isWindows, client.slug(), clientPath, System.getenv(), options.linuxOptions());
 
-        logger.info("Running: {}", String.join(" ", redactToken(command)));
+        logger.info("Running: {}", String.join(" ", redact(command)));
         logger.info("Working directory: {}", clientPath);
         if (!environment.isEmpty()) {
             logger.info("Environment variables: {}", environment);
@@ -164,16 +165,6 @@ public class ClientRunner {
 
     private static String concatPath(String... parts) {
         return String.join(OS.isWindows() ? "\\" : "/", parts);
-    }
-
-    private static String[] redactToken(String[] command) {
-        String[] redacted = command.clone();
-        for (int i = 0; i < redacted.length - 1; i++) {
-            if ("--token".equals(redacted[i])) {
-                redacted[i + 1] = "***";
-            }
-        }
-        return redacted;
     }
 
     private Map<String, String> buildEnvironment(boolean isWindows, String slug, Path clientPath, Map<String, String> currentEnvironment, RunnerOptions.LinuxOptions linuxOptions) {
