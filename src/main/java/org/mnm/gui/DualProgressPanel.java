@@ -36,6 +36,7 @@ public class DualProgressPanel extends JPanel
             backgroundColor);
     }
 
+    // Test-only constructor. Do not call it from production code.
     DualProgressPanel(ProgressBarPanel manifest, ProgressBarPanel download, ProgressBarPanel assembly, Color backgroundColor) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));

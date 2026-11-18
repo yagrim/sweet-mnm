@@ -42,6 +42,7 @@ public class CacheCleaner {
         this(cacheHandler, Clock.systemUTC());
     }
 
+    // Test-only constructor. Do not call it from production code.
     CacheCleaner(CacheHandler cacheHandler, Clock clock) {
         this.cacheHandler = cacheHandler;
         this.clock = clock;

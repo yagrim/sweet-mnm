@@ -19,6 +19,7 @@ public class RunCommand implements Command {
         this(locator, Factories::runner);
     }
 
+    // Test-only constructor. Do not call it from production code.
     RunCommand(Supplier<Path> configFileLocator, BiConsumer<RunnerOptions, ConfigDb> runner) {
         this.configFileLocator = configFileLocator;
         this.runner = runner;
