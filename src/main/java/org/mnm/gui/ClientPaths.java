@@ -11,6 +11,13 @@ import org.mnm.config.OS;
 import org.mnm.config.WinePrefix;
 import org.mnm.tools.StringUtils;
 
+/**
+ * Calculates paths associated to a game client.
+ * <p>
+ * - Wine prefix of a client
+ * - Game settings and logs
+ * If the path cannot be found, it gives an error message that starts with "Error:" in place of the path.
+ */
 class ClientPaths {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientPaths.class);

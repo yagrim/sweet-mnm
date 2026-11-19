@@ -1,5 +1,8 @@
 package org.mnm.gui;
 
+import java.awt.Component;
+import java.awt.Container;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -36,5 +39,23 @@ class OptionsPanelTest {
         RunnerOptions options = panel.getRunnerOptions("mnm");
 
         assertThat(options.linuxOptions().wineOptions().cursorSize()).isEqualTo(CursorSize.SCALE_150);
+    }
+
+    @Test
+    void shouldShowSweetLogsBelowGeneralAndLinuxPanels() {
+        SettingsStore settings = new InMemorySettingsStore(Map.of());
+        OptionsPanel panel = new OptionsPanel(null, settings, new CredentialsHandler(settings), new CacheHandler(settings));
+        panel.setSize(900, 700);
+        panel.doLayout();
+        panel.getComponent(0).doLayout();
+
+        Container columns = (Container) panel.getComponent(0);
+        Component sweetLogs = Arrays.stream(panel.getComponents())
+            .filter(SweetLogsPanel.class::isInstance)
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(columns.getComponentCount()).isEqualTo(2);
+        assertThat(sweetLogs.getY()).isGreaterThanOrEqualTo(columns.getY() + columns.getHeight());
     }
 }

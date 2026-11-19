@@ -1,11 +1,11 @@
 package org.mnm.gui;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Color;
-import java.awt.Desktop;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -14,22 +14,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.MockedConstruction;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import org.mnm.config.Client;
 import org.mnm.events.ClientEventHandler;
 
 import static java.nio.file.Files.createDirectories;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mnm.config.Client.Status.UPDATED;
-import static org.mnm.gui.ReflectionTestTools.getButton;
 import static org.mnm.gui.ReflectionTestTools.getField;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 
 class ClientPathPanelTest {
 
@@ -46,9 +38,10 @@ class ClientPathPanelTest {
         Client client = new Client("mnm", "1.2.3", UPDATED, tempDir);
         ClientStatus clientStatus = new ClientStatus(client, true, null);
         ClientPathPanel panel = new ClientPathPanel(new InMemorySettingsStore(Map.of()), Color.WHITE, 1.0f);
-        JButton copy = getButton(panel, "copyToClipboard");
-        JButton open = getButton(panel, "open");
-        JTextField path = getField(panel, "textArea", JTextField.class);
+        PathPanel pathPanel = getField(panel, "pathPanel", PathPanel.class);
+        JButton copy = getField(pathPanel, "copyToClipboard", JButton.class);
+        JButton open = getField(pathPanel, "open", JButton.class);
+        JTextField path = getField(pathPanel, "textArea", JTextField.class);
 
         panel.refresh(clientStatus);
 
@@ -66,26 +59,21 @@ class ClientPathPanelTest {
     }
 
     @Test
-    @EnabledOnOs(OS.LINUX)
-    void shouldThrowErrorWhenFileExplorerCannotOpen(@TempDir Path tempDir) throws Exception {
+    void shouldNotGrowInHeightWhenParentHasMoreSpace() {
         ClientPathPanel panel = new ClientPathPanel(new InMemorySettingsStore(Map.of()), Color.WHITE, 1.0f);
-        JButton open = getButton(panel, "open");
-        getField(panel, "textArea", JTextField.class).setText(tempDir.toString());
-        open.setEnabled(true);
+        JPanel parent = new JPanel();
+        parent.setLayout(new BoxLayout(parent, BoxLayout.Y_AXIS));
+        JPanel filler = new JPanel();
+        filler.setPreferredSize(new Dimension(300, 100));
+        parent.add(filler);
+        parent.add(panel);
+        int preferredHeight = parent.getPreferredSize().height;
 
-        Desktop desktop = Mockito.mock(Desktop.class);
-        doThrow(new IOException("No desktop")).when(desktop).open(any());
+        parent.setSize(600, preferredHeight + 60);
+        parent.doLayout();
 
-        try (MockedStatic<Desktop> desktopMock = Mockito.mockStatic(Desktop.class);
-             MockedConstruction<ProcessBuilder> processBuilderMock = Mockito.mockConstruction(ProcessBuilder.class,
-                 (mock, _) -> when(mock.start()).thenThrow(new IOException("xdg-open not found")))) {
-            desktopMock.when(Desktop::getDesktop).thenReturn(desktop);
-
-            assertThatThrownBy(open::doClick)
-                .isInstanceOf(UncheckedIOException.class)
-                .hasMessage("xdg-open not found");
-            assertThat(processBuilderMock.constructed()).hasSize(1);
-        }
+        assertThat(panel.getMaximumSize().height).isLessThan(panel.getPreferredSize().height);
+        assertThat(panel.getHeight()).isEqualTo(panel.getPreferredSize().height);
     }
 
 }
