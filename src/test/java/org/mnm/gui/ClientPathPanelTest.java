@@ -1,8 +1,11 @@
 package org.mnm.gui;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -53,6 +56,24 @@ class ClientPathPanelTest {
         assertThat(path.getText()).isEqualTo(gameSettingsPath.toString());
         assertThat(copy.isEnabled()).isTrue();
         assertThat(open.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldNotGrowInHeightWhenParentHasMoreSpace() {
+        ClientPathPanel panel = new ClientPathPanel(new InMemorySettingsStore(Map.of()), Color.WHITE, 1.0f);
+        JPanel parent = new JPanel();
+        parent.setLayout(new BoxLayout(parent, BoxLayout.Y_AXIS));
+        JPanel filler = new JPanel();
+        filler.setPreferredSize(new Dimension(300, 100));
+        parent.add(filler);
+        parent.add(panel);
+        int preferredHeight = parent.getPreferredSize().height;
+
+        parent.setSize(600, preferredHeight + 60);
+        parent.doLayout();
+
+        assertThat(panel.getMaximumSize().height).isLessThan(panel.getPreferredSize().height);
+        assertThat(panel.getHeight()).isEqualTo(panel.getPreferredSize().height);
     }
 
 }

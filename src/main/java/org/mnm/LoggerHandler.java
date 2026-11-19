@@ -49,6 +49,10 @@ public class LoggerHandler {
         attachFileAppender(context, logger);
     }
 
+    public static Path getLogDirectory() {
+        return getSweetConfigLocation().resolve("logs");
+    }
+
     static boolean fileLogsEnabled() {
         return !"false".equalsIgnoreCase(System.getProperty(FILE_LOGS_PROPERTY));
     }
@@ -58,7 +62,7 @@ public class LoggerHandler {
             return;
         }
 
-        logger.addAppender(createFileAppender(context, getSweetConfigLocation().resolve("logs")));
+        logger.addAppender(createFileAppender(context, getLogDirectory()));
     }
 
     static RollingFileAppender<ILoggingEvent> createFileAppender(LoggerContext context, Path logPath) {

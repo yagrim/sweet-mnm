@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 
+import org.mnm.config.Environment;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LoggerHandlerTest {
@@ -29,6 +31,12 @@ class LoggerHandlerTest {
     void shouldDisableFileLogsInTests() {
         assertThat(System.getProperty(LoggerHandler.FILE_LOGS_PROPERTY)).isEqualTo("false");
         assertThat(LoggerHandler.fileLogsEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldReturnLogDirectoryInsideSweetConfigLocation() {
+        assertThat(LoggerHandler.getLogDirectory())
+            .isEqualTo(Environment.getSweetConfigLocation().resolve("logs"));
     }
 
     @Test

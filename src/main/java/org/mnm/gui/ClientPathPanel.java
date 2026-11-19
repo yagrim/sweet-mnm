@@ -19,11 +19,12 @@ class ClientPathPanel extends JPanel
     private final PathPanel pathPanel;
 
     ClientPathPanel(SettingsStore settingsStore, Color color, float uiScaling) {
-        // BorderLayout gives all the space to the path panel, as before the refactoring.
         super(new BorderLayout());
         this.settingsStore = settingsStore;
         this.pathPanel = new PathPanel("Settings & logs", "Settings, UI profiles and logs", color, uiScaling);
         add(pathPanel, BorderLayout.CENTER);
+        // Limits the height when the parent has more space.
+        setMaximumSize(pathPanel.getMaximumSize());
 
         ClientEventHandler.getInstance().register(this);
     }
