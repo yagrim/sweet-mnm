@@ -8,6 +8,8 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 
+image:https://github.com/yagrim/sweet-mnm/actions/workflows/tests.yml/badge.svg?branch=main[Tests status,link=https://github.com/yagrim/sweet-mnm/actions/workflows/tests.yml?query=branch%3Amain]
+
 Alternative Launcher for https://monstersandmemories.com/[Monsters and Memories] game.
 
 NOTE: If you are looking for macOS help, that is the place -> https://github.com/seathasky/MnM-on-Mac
