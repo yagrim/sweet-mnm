@@ -1,0 +1,239 @@
+= Servers API
+:api-base-url: https://account.monstersandmemories.com/api
+:toc:
+:icons: font
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+This document describes the operations of the Monsters & Memories account API that give information about the world servers.
+It also shows how to reproduce each operation with `curl`.
+
+The game client calls them to find a world server and to connect to it.
+
+For the login and the token, see link:authentication.adoc[Authentication workflow].
+
+== Base URL and conventions
+
+Base URL is `{api-base-url}/`.
+
+All operations in this document need a token from the login.
+Send the token in the `Authorization` header with the `Bearer` prefix:
+
+[,bash]
+----
+Authorization: Bearer <token>
+----
+
+NOTE: `account/me` and `account/games` in the authentication document use the raw token, without `Bearer`.
+For the server operations, use `Bearer`.
+For `connection_keys`, the server also accepts the raw token.
+It rejects the scheme `Token <token>` with HTTP `401`.
+
+=== Errors
+
+The server does not always use the HTTP status code to report an error.
+Check both the HTTP status code and the body.
+
+[cols="2,3,3"]
+|===
+|Situation |HTTP status |Body
+
+|The token is not valid or has expired
+|`200`
+|`{"error":"Invalid Token","status":4}`
+
+|The `Authorization` header is missing, or has an unknown scheme
+|`401`
+|`{"error":"Unauthorized"}`
+
+|The route does not exist, or the HTTP method is wrong
+|`404`
+|An HTML page
+|===
+
+== Overview
+
+[source]
+----
+          GET account/world_servers
+                     │
+     list of servers: id, address, port, keys
+                     │
+   POST account/world_servers/{id}/connection_keys
+                     │
+     161 bytes: version, hmac key, aes key, xor key
+                     │
+     the client connects to address:port (UDP)
+----
+
+== REST operations
+
+=== 1. List the servers: `GET account/world_servers`
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+
+curl -s "$API/account/world_servers" -H "Authorization: Bearer $TOKEN"
+----
+
+[,json]
+.response example
+----
+{
+  "servers": [
+    {
+      "id": "0feaa3e4-12e5-472f-87ef-231b5551e44f",
+      "name": "Vespyra - Goddess of Magic (EU 1)",
+      "port": 5000,
+      "address": "<IPv4>",
+      "short_name": "vespyra",
+      "requires_active_subscription": true,
+      "hmac_key": "<base64, 64 bytes>",
+      "aes_key": "<base64, 32 bytes>",
+      "xor_key": "<base64, 64 bytes>",
+      "subscription_access": "granted",
+      "status_url": "https://account.monstersandmemories.com/server_status/vespyra"
+    },
+    {
+      "id": "2fd8a88a-402b-41c4-bdb3-f14c6774d632",
+      "name": "Kravvin - God of Slaughter (NA PvP)",
+      "port": 5000,
+      "address": "<IPv4>",
+      "short_name": "kravvin",
+      "requires_active_subscription": true,
+      "hmac_key": "<base64, 64 bytes>",
+      "aes_key": "<base64, 32 bytes>",
+      "xor_key": "<base64, 64 bytes>",
+      "subscription_access": "granted",
+      "status_url": "https://account.monstersandmemories.com/server_status/kravvin"
+    },
+    {
+      "id": "77ce6272-db68-4b90-97ac-982d60ee8785",
+      "name": "Trem - God of Commerce (NA East 1)",
+      "port": 5000,
+      "address": "<IPv4>",
+      "short_name": "trem",
+      "requires_active_subscription": true,
+      "hmac_key": "<base64, 64 bytes>",
+      "aes_key": "<base64, 32 bytes>",
+      "xor_key": "<base64, 64 bytes>",
+      "subscription_access": "granted",
+      "status_url": "https://account.monstersandmemories.com/server_status/trem"
+    }
+  ]
+}
+----
+
+[cols="1,3"]
+|===
+|Field |Meaning
+
+|`id`
+|Identifier of the server (a UUID).
+
+|`name`, `short_name`
+|Display name and short name. The client uses the short name in the path of `server_status`.
+
+|`address`, `port`
+|Address and port of the world server. The client connects to them (see <<what-the-client-does>>).
+
+|`requires_active_subscription`, `subscription_access`
+|Subscription information. In the test, `subscription_access` was `granted`.
+
+|`hmac_key`, `aes_key`, `xor_key`
+|The keys of the server, encoded in base64. They have 64, 32 and 64 bytes after decoding.
+
+|`status_url`
+|Web page with the status of the server.
+|===
+
+=== 2. Get the connection keys: `POST account/world_servers/{id}/connection_keys`
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+SERVER_ID=00000000-0000-0000-0000-000000000000
+
+curl -s -X POST "$API/account/world_servers/$SERVER_ID/connection_keys" \
+  -H "Authorization: Bearer $TOKEN" \
+  -o keys.bin
+----
+
+The request needs no body.
+// A request without a body, with `{}` and with `{"serverId":"..."}` gave the same answer.
+
+The answer is binary data, not JSON.
+It has 161 bytes:
+
+[cols="1,1,3"]
+|===
+|Offset |Length |Content
+
+|0
+|1 byte
+|Version of the format. The value is `1`.
+
+|1
+|64 bytes
+|HMAC key (`hmac_key`)
+
+|65
+|32 bytes
+|AES key (`aes_key`)
+
+|97
+|64 bytes
+|XOR key (`xor_key`)
+|===
+
+The format has no separators and no length fields.
+The three keys are the same as the keys in the server list, after the base64 decoding.
+
+The next commands check the size and the version, and compare the HMAC key with the list.
+They need `curl`, `jq` and `xxd`.
+
+[,bash,subs="+attributes"]
+----
+API={api-base-url}
+TOKEN=eyJhbGciOi...
+SERVER_ID=00000000-0000-0000-0000-000000000000
+
+curl -s -X POST "$API/account/world_servers/$SERVER_ID/connection_keys" \
+  -H "Authorization: Bearer $TOKEN" -o keys.bin
+
+wc -c < keys.bin                      # expected: 161
+head -c 1 keys.bin | od -An -tu1      # expected: 1
+
+curl -s "$API/account/world_servers" -H "Authorization: Bearer $TOKEN" \
+  | jq -r --arg id "$SERVER_ID" '.servers[] | select(.id == $id) | .hmac_key' \
+  | base64 -d | xxd -p | tr -d '\n' > expected_hmac.hex
+tail -c +2 keys.bin | head -c 64 | xxd -p | tr -d '\n' > actual_hmac.hex
+cmp expected_hmac.hex actual_hmac.hex && echo "hmac key: same"
+----
+
+IMPORTANT: `keys.bin` has secret keys.
+Delete it after the test.
+
+// == Other paths seen in the client
+//
+// These paths are in the client or in its log.
+// They were not tested, and their formats are not known.
+//
+// [cols="2,3"]
+// |===
+// |Path |Where it is seen
+//
+// |`GET /api/server_status/{short_name}/starting_zones`
+// |Client log. The client sends the `Authorization` header. The client calls it once for each server in the list.
+//
+// |`/api/game/tokens/verify`, `game/servers/register`, `game/servers/{id}/zone_startup_strategies`, `game/accounts/{id}/moderate`, `game/queue/check_or_join`, `game/names/validate`, `game/heartbeat`, `game/player_snapshots`, `game/account_sessions/acquire`, `game/account_sessions/renew`, `game/account_sessions/release`
+// |Strings in the client. Their use is not known. Some can be for the game servers only.
+// |===
