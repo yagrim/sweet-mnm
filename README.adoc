@@ -64,7 +64,7 @@ Add `sweet` to your `PATH` to run `sweet gui` from any location.
 . Extract all files where you want to install the game client.
 . Set up "sweet.exe" in your preferred Proton environment and add the "gui" option. For example, in Steam:
 +
-image::docs/steam.png[]
+image::docs/images/steam.png[]
 . Start it! See <<first-start>>.
 
 [#first-start]
@@ -72,7 +72,7 @@ image::docs/steam.png[]
 
 Click "Login", then "Install".
 
-image::docs/client-panel-login.png[]
+image::docs/images/client-panel-login.png[]
 
 To save time and bandwidth, you can copy the "mnm" folder from your current installation.
 "Install" checks the files and patches only the changes.
